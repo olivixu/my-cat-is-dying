@@ -1,0 +1,1004 @@
+/* Story Scenes - Common Styles */
+.story-scene {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
+}
+
+.story-text {
+    text-align: center;
+    margin-bottom: 60px;
+    z-index: 10;
+}
+
+.story-text h2 {
+    font-size: 2.5rem;
+    line-height: 1.4;
+    color: rgba(241, 245, 249, 0.9);
+    max-width: 800px;
+    margin: 0 auto;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    font-family: 'Inria Serif', serif;
+}
+
+.interactive-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    min-height: 300px;
+    position: relative;
+}
+
+.continue-btn, .restart-btn, .give-treat-btn {
+    padding: 12px 30px;
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.5);
+    color: var(--text-primary);
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.continue-btn:hover, .restart-btn:hover, .give-treat-btn:hover {
+    background: rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Scene 1: Begin button scene */
+.scene-1 {
+    background: #DEFF96 !important; /* Bright yellow/lime background */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.scene1-text {
+    margin-bottom: 80px;
+}
+
+.scene1-text h1 {
+    color: #000000;
+    font-size: 3.5rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    font-family: 'Inria Serif', serif;
+}
+
+.begin-button-container {
+    position: relative;
+    display: inline-block;
+}
+
+.begin-button {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: #000000;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 1;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+    box-shadow: 0 118px 33px 0 rgba(0, 0, 0, 0.00), 0 76px 30px 0 rgba(0, 0, 0, 0.01), 0 43px 26px 0 rgba(0, 0, 0, 0.05), 0 19px 19px 0 rgba(0, 0, 0, 0.09), 0 5px 10px 0 rgba(0, 0, 0, 0.10);
+}
+
+.begin-button:hover {
+    transform: scale(1.05);
+}
+
+.begin-button:active {
+    transform: scale(0.98);
+}
+
+/* SVG positioned over the button */
+.begin-text-svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(0deg);
+    width: 140px;
+    height: 140px;
+    pointer-events: none; /* Allow clicks to pass through to button */
+    z-index: 2;
+    animation: rotateWithPosition 20s infinite linear;
+    filter: invert(1); /* Make the black SVG white */
+}
+
+/* Animations when expanding */
+.begin-button-container.expanding .begin-button {
+    animation: expandToFullScreen 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    cursor: default;
+    will-change: transform;
+}
+
+.begin-button-container.expanding .begin-text-svg {
+    animation: fadeOut 0.4s ease-out forwards;
+}
+
+@keyframes expandToFullScreen {
+    0% {
+        transform: scale3d(1, 1, 1);
+    }
+    100% {
+        transform: scale3d(15, 15, 1); /* Reduced scale factor for better performance */
+    }
+}
+
+@keyframes fadeOut {
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes rotateWithPosition {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+/* Scene 2: Magnifying Glass Search Game */
+.scene-2 {
+    background: #000000 !important;
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+    display: block !important; /* Override flexbox from .story-scene */
+    padding: 0 !important; /* Remove padding from .story-scene */
+}
+
+.scene2-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #7E58F9;
+    z-index: 1;
+}
+
+.black-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%), 
+        transparent 120px,
+        black 120px);
+    z-index: 20;
+    pointer-events: none;
+}
+
+.scene2-text {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    transform: translateY(-50%);
+    z-index: 100;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none; /* Allow magnifying glass to pass through text */
+}
+
+.scene2-text h2 {
+    color: #ffffff;
+    text-align: center;
+    margin: 0;
+    width: 100%;
+}
+
+.magnifying-game-container {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    z-index: 10;
+}
+
+.magnifying-glass {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    pointer-events: none;
+    transform: translate(-50%, -50%) rotate(45deg);
+    z-index: 200;
+}
+
+.magnifying-spotlight {
+    display: none; /* We're using CSS variables for the gradient now */
+}
+
+.hidden-objects {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.hidden-object {
+    position: absolute;
+    font-size: 3rem;
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    cursor: pointer;
+    user-select: none;
+    transform: translate(-50%, -50%);
+}
+
+.hidden-object.revealed {
+    opacity: 1;
+}
+
+.hidden-object.found {
+    animation: foundPulse 1s ease;
+    opacity: 1 !important;
+}
+
+.hidden-object.wiggle {
+    animation: wiggle 0.5s ease;
+}
+
+@keyframes foundPulse {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.5); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes wiggle {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+    25% { transform: translate(-50%, -50%) rotate(-10deg); }
+    75% { transform: translate(-50%, -50%) rotate(10deg); }
+}
+
+.found-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+    color: #ffffff;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 20px 40px;
+    border-radius: 10px;
+    border: 2px solid #ffffff;
+    z-index: 200;
+    animation: fadeInScale 0.5s ease;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Scene 3: Smokey Head Book Game */
+.scene-3 {
+    background: #2C1810 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.scene3-text {
+    margin-bottom: 30px;
+    pointer-events: none; /* Allow physics dragging to pass through text */
+}
+
+.smokey-game-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    width: 100%;
+    pointer-events: none; /* Make container transparent to allow physics dragging */
+}
+
+.scene-3 .physics-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.smokey-head {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    cursor: pointer;
+    user-select: none;
+    z-index: 10;
+    pointer-events: auto; /* Keep clickable for opening */
+}
+
+.cat-face {
+    font-size: 150px;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+.head-lid {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 60px;
+    z-index: 2;
+    transition: transform 0.5s ease;
+    transform-origin: center bottom;
+}
+
+.lid-top {
+    width: 100%;
+    height: 100%;
+    background: #1a1a1a;
+    border-radius: 60px 60px 0 0;
+    border: 3px solid #333;
+}
+
+.smokey-head.open .head-lid {
+    transform: translateX(-50%) rotateX(-120deg);
+}
+
+.drop-zone {
+    position: absolute;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 80px;
+    border: 2px dashed transparent;
+    border-radius: 10px;
+    z-index: 0;
+}
+
+.smokey-head.open .drop-zone {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.books-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 50px;
+    position: relative;
+    z-index: 10;
+}
+
+.draggable-book {
+    font-size: 50px;
+    cursor: grab;
+    transition: transform 0.2s ease;
+}
+
+.draggable-book:hover {
+    transform: scale(1.1);
+}
+
+.draggable-book.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.bouncing-book {
+    font-size: 50px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.bouncing-book.bounce-out {
+    animation: bounceOut 1s ease-out forwards;
+}
+
+@keyframes bounceOut {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+    20% {
+        transform: translateY(-50px) scale(0.9);
+    }
+    40% {
+        transform: translateY(-100px) scale(0.8);
+    }
+    60% {
+        transform: translateY(-80px) scale(0.85) rotate(20deg);
+    }
+    100% {
+        transform: translateY(400px) scale(1) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.speech-bubble {
+    position: absolute;
+    top: -80px;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    background: white;
+    color: black;
+    padding: 15px 25px;
+    border-radius: 20px;
+    font-size: 24px;
+    font-weight: bold;
+    opacity: 0;
+    transition: all 0.5s ease;
+    pointer-events: none; /* Already set, good for physics dragging */
+}
+
+.speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid white;
+}
+
+.speech-bubble.show {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+    animation: bubblePop 0.5s ease;
+}
+
+@keyframes bubblePop {
+    0% {
+        transform: translateX(-50%) scale(0);
+    }
+    50% {
+        transform: translateX(-50%) scale(1.2);
+    }
+    100% {
+        transform: translateX(-50%) scale(1);
+    }
+}
+
+/* Scene 4: Treat dispenser */
+.treat-dispenser {
+    text-align: center;
+}
+
+.treat-bowl {
+    width: 200px;
+    height: 100px;
+    margin: 20px auto;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: 50% 50% 40% 40%;
+    border: 2px solid rgba(139, 92, 246, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.floating-treat {
+    position: absolute;
+    font-size: 2rem;
+    animation: treat-fall 2s ease-out;
+}
+
+@keyframes treat-fall {
+    0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(50px) rotate(360deg); opacity: 0; }
+}
+
+.treat-counter {
+    color: var(--text-secondary);
+    margin-top: 20px;
+}
+
+/* Scene 5: Breathing circle */
+.breathing-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.1);
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: breathe 4s infinite ease-in-out;
+}
+
+.breath-inner {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.5);
+    animation: breathe-inner 4s infinite ease-in-out;
+}
+
+@keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+@keyframes breathe-inner {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(0.8); opacity: 0.8; }
+}
+
+.breath-text {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Scene 6: Pills */
+.pill-bottles {
+    display: flex;
+    gap: 30px;
+    margin: 30px 0;
+}
+
+.pill-bottle {
+    font-size: 3rem;
+    animation: rotate-pill 3s infinite linear;
+}
+
+@keyframes rotate-pill {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.medicine-text {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Scene 7: Door */
+.door-scene {
+    position: relative;
+}
+
+.door {
+    width: 120px;
+    height: 180px;
+    background: rgba(139, 92, 246, 0.2);
+    border: 3px solid rgba(139, 92, 246, 0.4);
+    border-radius: 8px 8px 0 0;
+    position: relative;
+    margin: 0 auto;
+}
+
+.door-frame {
+    width: 10px;
+    height: 30px;
+    background: rgba(139, 92, 246, 0.5);
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 5px;
+}
+
+.kiss-mark {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    animation: float-kiss 2s infinite ease-in-out;
+}
+
+@keyframes float-kiss {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-10px); }
+}
+
+.goodbye-text {
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: 20px;
+}
+
+/* Scene 8: Mirror */
+.human-questions {
+    text-align: center;
+}
+
+.question-pair {
+    display: flex;
+    gap: 100px;
+    align-items: center;
+    justify-content: center;
+    margin: 30px 0;
+}
+
+.cat-side, .human-side {
+    font-size: 4rem;
+    animation: mirror-pulse 3s infinite alternate;
+}
+
+@keyframes mirror-pulse {
+    0% { opacity: 0.5; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1.1); }
+}
+
+.mirror-text {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Scene 9: Thought bubbles */
+.thought-bubbles {
+    display: flex;
+    gap: 100px;
+    align-items: center;
+}
+
+.thought-bubble {
+    text-align: center;
+    animation: float-thought 3s infinite ease-in-out;
+}
+
+.thought-bubble.left { animation-delay: 0s; }
+.thought-bubble.right { animation-delay: 1.5s; }
+
+.thought-bubble span {
+    font-size: 3rem;
+    display: block;
+}
+
+.thought-bubble p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+@keyframes float-thought {
+    0%, 100% { transform: translateY(0); opacity: 0.5; }
+    50% { transform: translateY(-20px); opacity: 1; }
+}
+
+/* Scene 10: Comfort */
+.comfort-scene {
+    text-align: center;
+}
+
+.gentle-touch {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    justify-content: center;
+    margin: 30px 0;
+}
+
+.hand, .heart {
+    font-size: 3rem;
+    animation: gentle-pulse 2s infinite ease-in-out;
+}
+
+.hand { animation-delay: 0s; }
+.heart { animation-delay: 0.5s; }
+
+@keyframes gentle-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.1); opacity: 1; }
+}
+
+.comfort-text {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Scene 11: Time */
+.time-scene {
+    text-align: center;
+}
+
+.hourglass {
+    font-size: 5rem;
+    animation: rotate-slow 8s infinite linear;
+}
+
+@keyframes rotate-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.time-text {
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: 20px;
+}
+
+/* Scene 12: Connection */
+.connection-scene {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    position: relative;
+    margin: 40px 0;
+}
+
+.being {
+    font-size: 3rem;
+    z-index: 2;
+}
+
+.connection-line {
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(139, 92, 246, 0.5), 
+        rgba(59, 130, 246, 0.5),
+        transparent);
+    animation: pulse-line 2s infinite;
+}
+
+@keyframes pulse-line {
+    0%, 100% { opacity: 0.3; transform: scaleX(0.8); }
+    50% { opacity: 1; transform: scaleX(1); }
+}
+
+.connection-text {
+    color: var(--text-secondary);
+    font-style: italic;
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+/* Scene 13: Love */
+.love-scene {
+    text-align: center;
+}
+
+.eternal-hearts {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin: 40px 0;
+}
+
+.eternal-hearts .heart {
+    font-size: 2.5rem;
+    animation: heart-beat 1.5s infinite ease-in-out;
+}
+
+@keyframes heart-beat {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.2); }
+    50% { transform: scale(1); }
+    75% { transform: scale(1.1); }
+}
+
+.love-text {
+    color: var(--text-secondary);
+    font-style: italic;
+    font-size: 1.2rem;
+    margin: 20px 0;
+}
+
+
+
+/* Scene 2: Physics Playground */
+.scene2 {
+    background: linear-gradient(135deg, #1e293b, #334155);
+}
+
+.physics-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.physics-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 20px;
+    background: rgba(30, 41, 59, 0.9);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    z-index: 10;
+    min-width: 200px;
+}
+
+.control-group {
+    margin-bottom: 16px;
+}
+
+.control-group:last-child {
+    margin-bottom: 0;
+}
+
+.control-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.control-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all var(--transition-duration) ease;
+}
+
+.control-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateX(4px);
+}
+
+.control-btn:last-child {
+    margin-bottom: 0;
+}
+
+/* Scene 3: Drag and Drop Puzzle */
+.scene3 {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.puzzle-container {
+    display: grid;
+    grid-template-columns: repeat(3, 150px);
+    grid-template-rows: repeat(3, 150px);
+    gap: 20px;
+    padding: 40px;
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 20px;
+    border: 2px solid var(--border-color);
+}
+
+.puzzle-slot {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    background: rgba(51, 65, 85, 0.3);
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-duration) ease;
+}
+
+.puzzle-slot.valid-target {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.puzzle-slot.filled {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: var(--success-color);
+}
+
+.puzzle-piece {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: move;
+    z-index: 10;
+    transition: all var(--transition-duration) ease;
+    user-select: none;
+}
+
+.puzzle-piece.dragging {
+    opacity: 0.8;
+    transform: scale(1.1) rotate(5deg);
+    z-index: 100;
+    cursor: grabbing;
+}
+
+.puzzle-piece.placed {
+    cursor: default;
+    animation: placeSuccess 0.5s ease;
+}
+
+@keyframes placeSuccess {
+    0% {
+        transform: scale(1.2);
+    }
+    50% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.puzzle-pieces-tray {
+    position: absolute;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: rgba(30, 41, 59, 0.9);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    z-index: 50;
+}
+
+.success-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    padding: 40px;
+    background: linear-gradient(135deg, var(--success-color), #10b981);
+    border-radius: 20px;
+    text-align: center;
+    z-index: 200;
+    animation: successPop 0.5s ease forwards;
+}
+
+@keyframes successPop {
+    to {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.success-message h2 {
+    font-size: 36px;
+    margin-bottom: 12px;
+}
+
+.success-message p {
+    font-size: 18px;
+    opacity: 0.9;
+}

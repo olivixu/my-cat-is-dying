@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Physics Slideshow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inria+Serif:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/scenes.css">
+</head>
+<body>
+    <div id="app">
+        <div id="scene-container">
+            <!-- Scenes will be dynamically injected here -->
+        </div>
+        
+        <nav id="scene-nav">
+            <button id="prev-btn" class="nav-btn" disabled>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+                Previous
+            </button>
+            
+            <div id="progress-indicator">
+                <div class="progress-dots">
+                    <!-- Progress dots will be dynamically created -->
+                </div>
+                <div class="scene-title">Scene 1</div>
+            </div>
+            
+            <button id="next-btn" class="nav-btn">
+                Next
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18l6-6-6-6"/>
+                </svg>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Matter.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="js/physics.js"></script>
+    <script src="js/sceneManager.js"></script>
+    <script src="js/scenes/scene1.js"></script>
+    <script src="js/scenes/scene2.js"></script>
+    <script src="js/scenes/scene3.js"></script>
+    <script src="js/scenes/scene4.js"></script>
+    <script src="js/scenes/scene5.js"></script>
+    <script src="js/scenes/scene6.js"></script>
+    <script src="js/scenes/scene7.js"></script>
+    <script src="js/scenes/scene8.js"></script>
+    <script src="js/scenes/scene9.js"></script>
+    <script src="js/scenes/scene10.js"></script>
+    <script src="js/scenes/scene11.js"></script>
+    <script src="js/scenes/scene12.js"></script>
+    <script src="js/scenes/scene13.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
