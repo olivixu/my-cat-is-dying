@@ -718,8 +718,234 @@
     margin-top: 20px;
 }
 
-/* Scene 5: Breathing circle */
+/* Scene 5: Breathing rhythm game */
+.scene-5 {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    overflow: hidden;
+}
+
+.breathing-game {
+    position: relative;
+    height: 500px;
+    padding: 20px;
+}
+
+.game-instructions {
+    text-align: center;
+    color: white;
+    font-size: 16px;
+    margin-bottom: 20px;
+    opacity: 0.9;
+    font-style: italic;
+}
+
+.rhythm-track {
+    position: relative;
+    width: 100%;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    margin-bottom: 40px;
+    overflow: hidden;
+}
+
+.target-zone {
+    position: absolute;
+    left: 100px;
+    top: 0;
+    width: 100px;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(74, 222, 128, 0.1) 0%,
+        rgba(74, 222, 128, 0.3) 50%,
+        rgba(74, 222, 128, 0.1) 100%);
+    border-left: 4px solid #4ade80;
+    border-right: 4px solid #4ade80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: inset 0 0 20px rgba(74, 222, 128, 0.3);
+}
+
+.target-zone span {
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+}
+
+.lines-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.breath-line {
+    position: absolute;
+    height: 70px;
+    background: linear-gradient(90deg, 
+        rgba(100, 200, 255, 0.6) 0%, 
+        rgba(100, 200, 255, 0.9) 50%,
+        rgba(100, 200, 255, 0.6) 100%);
+    border: 3px solid rgba(100, 200, 255, 1);
+    border-radius: 10px;
+    top: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(100, 200, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    font-weight: bold;
+    color: white;
+    font-size: 18px;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    animation: breathPulse 2s ease-in-out infinite;
+}
+
+.breath-line .line-start {
+    color: #4ade80;
+    font-size: 24px;
+}
+
+.breath-line .line-end {
+    color: #f87171;
+    font-size: 24px;
+}
+
+.breath-line .line-text {
+    flex-grow: 1;
+    text-align: center;
+}
+
+@keyframes breathPulse {
+    0%, 100% {
+        opacity: 0.9;
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 4px 20px rgba(100, 200, 255, 0.5);
+    }
+}
+
+.breath-line.active {
+    background: linear-gradient(90deg, 
+        rgba(74, 222, 128, 0.7) 0%, 
+        rgba(74, 222, 128, 1) 50%,
+        rgba(74, 222, 128, 0.7) 100%);
+    border-color: #4ade80;
+    box-shadow: 0 0 30px rgba(74, 222, 128, 0.8);
+    transform: scaleY(1.1);
+}
+
+.breath-line.completed {
+    opacity: 0.3;
+}
+
+.breathing-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 250px;
+    margin-bottom: 30px;
+}
+
 .breathing-circle {
+    border-radius: 50%;
+    background: radial-gradient(circle, 
+        rgba(147, 197, 253, 0.8) 0%, 
+        rgba(59, 130, 246, 0.6) 50%,
+        rgba(37, 99, 235, 0.4) 100%);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    transition: width 0.1s ease, height 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+}
+
+.breathing-circle.inhaling {
+    animation: glow 1s ease-in-out infinite;
+}
+
+@keyframes glow {
+    0%, 100% { 
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+    }
+    50% { 
+        box-shadow: 0 0 50px rgba(59, 130, 246, 0.8);
+    }
+}
+
+.score-display {
+    text-align: center;
+    color: white;
+}
+
+.perfect-counter {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.timing-feedback {
+    font-size: 32px;
+    font-weight: bold;
+    margin-top: 20px;
+    animation: feedbackPop 0.5s ease;
+}
+
+.timing-feedback.perfect {
+    color: #4ade80;
+    text-shadow: 0 0 20px rgba(74, 222, 128, 0.8);
+}
+
+.timing-feedback.good {
+    color: #fbbf24;
+    text-shadow: 0 0 20px rgba(251, 191, 36, 0.8);
+}
+
+.timing-feedback.miss {
+    color: #f87171;
+    text-shadow: 0 0 20px rgba(248, 113, 113, 0.8);
+}
+
+@keyframes feedbackPop {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.success-message {
+    text-align: center;
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(74, 222, 128, 0.2);
+    border-radius: 10px;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    animation: fadeInScale 0.5s ease;
+}
+
+.success-message.hidden {
+    display: none;
+}
+
+/* Old breathing circle styles (kept for reference) */
+.breathing-circle-old {
     width: 150px;
     height: 150px;
     border-radius: 50%;
@@ -754,30 +980,293 @@
     font-style: italic;
 }
 
-/* Scene 6: Pills */
-.pill-bottles {
-    display: flex;
-    gap: 30px;
-    margin: 30px 0;
+/* Scene 6: Pills Catching Game */
+.pill-game-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-.pill-bottle {
-    font-size: 3rem;
-    animation: rotate-pill 3s infinite linear;
+.pill-score {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-@keyframes rotate-pill {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+.score-text {
+    font-size: 24px;
+    color: white;
+    margin-bottom: 10px;
 }
 
-.medicine-text {
+.score-text span {
+    color: #4ade80;
+    font-weight: bold;
+}
+
+.game-hint {
+    font-size: 14px;
     color: var(--text-secondary);
     font-style: italic;
 }
 
-/* Scene 7: Door */
-.door-scene {
+.pill-game-area {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    background: linear-gradient(to bottom, 
+        rgba(30, 41, 59, 0.3) 0%, 
+        rgba(30, 41, 59, 0.5) 100%);
+    border: 2px solid rgba(139, 92, 246, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.smokey-cat {
+    position: absolute;
+    bottom: 20px;
+    font-size: 48px;
+    transform: translateX(-50%);
+    transition: left 0.1s ease;
+    z-index: 10;
+    user-select: none;
+}
+
+.smokey-cat.celebrating {
+    animation: celebrate 0.5s ease infinite alternate;
+}
+
+@keyframes celebrate {
+    0% { transform: translateX(-50%) scale(1) rotate(0deg); }
+    100% { transform: translateX(-50%) scale(1.1) rotate(-5deg); }
+}
+
+.falling-pill {
+    position: absolute;
+    font-size: 32px;
+    animation: pill-rotate 2s linear infinite;
+    z-index: 5;
+    user-select: none;
+}
+
+@keyframes pill-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.catch-effect {
+    position: absolute;
+    font-size: 24px;
+    animation: sparkle 0.5s ease-out;
+    pointer-events: none;
+    z-index: 20;
+}
+
+@keyframes sparkle {
+    0% {
+        transform: scale(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.5) rotate(180deg);
+        opacity: 0;
+    }
+}
+
+.success-message {
+    text-align: center;
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(74, 222, 128, 0.2);
+    border-radius: 10px;
+    color: white;
+}
+
+.success-message p {
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.success-message.hidden {
+    display: none;
+}
+
+/* Scene 7: Kiss Photos */
+.kiss-scene {
+    padding: 20px;
+}
+
+.kiss-instructions {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-bottom: 30px;
+}
+
+.photo-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 25px;
+    justify-content: center;
+    margin: 30px 0;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.photo-frame {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.05) 100%);
+    border: 3px solid rgba(139, 92, 246, 0.3);
+    border-radius: 15px;
+    padding: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.photo-frame:hover {
+    transform: scale(1.05);
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 5px 20px rgba(139, 92, 246, 0.3);
+}
+
+.photo-frame.kissed {
+    border-color: rgba(244, 114, 182, 0.5);
+    background: linear-gradient(135deg, 
+        rgba(244, 114, 182, 0.1) 0%, 
+        rgba(139, 92, 246, 0.1) 100%);
+}
+
+.photo-frame.glowing {
+    animation: glow 1s ease infinite alternate;
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 10px rgba(244, 114, 182, 0.5); }
+    100% { box-shadow: 0 0 30px rgba(244, 114, 182, 0.8); }
+}
+
+.smokey-photo {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.smokey-emoji {
+    font-size: 80px;
+    user-select: none;
+}
+
+.head-click-zone {
+    position: absolute;
+    top: 10%;
+    left: 20%;
+    width: 60%;
+    height: 40%;
+    cursor: pointer;
+    /* Debug: uncomment to see click zone */
+    /* background: rgba(255, 0, 0, 0.2); */
+}
+
+.kiss-icon {
+    position: absolute;
+    font-size: 24px;
+    animation: kissAppear 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes kissAppear {
+    0% {
+        transform: translate(-50%, -50%) scale(0) rotate(0deg);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.3) rotate(-10deg);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+.floating-heart {
+    position: absolute;
+    font-size: 16px;
+    pointer-events: none;
+    animation: floatUp 2s ease-out forwards;
+    z-index: 20;
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(0) scale(0);
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(-30px) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-60px) scale(0.5);
+        opacity: 0;
+    }
+}
+
+.kiss-progress {
+    text-align: center;
+    font-size: 18px;
+    color: white;
+    margin: 20px 0;
+}
+
+.kiss-progress span {
+    color: #f472b6;
+    font-weight: bold;
+    font-size: 24px;
+    display: inline-block;
+}
+
+.kiss-progress span.pop {
+    animation: popScale 0.3s ease;
+}
+
+@keyframes popScale {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+.completion-message {
+    text-align: center;
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(244, 114, 182, 0.2);
+    border-radius: 10px;
+    animation: fadeInScale 0.5s ease;
+}
+
+.completion-message p {
+    font-size: 20px;
+    color: white;
+    margin-bottom: 20px;
+}
+
+.completion-message.hidden {
+    display: none;
+}
+
+/* Old door styles - keeping for reference */
+.door-scene-old {
     position: relative;
 }
 
@@ -822,8 +1311,133 @@
     margin-top: 20px;
 }
 
-/* Scene 8: Mirror */
-.human-questions {
+/* Scene 8: Vortex Spiral */
+.vortex-container {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    height: 600px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vortex-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    background: radial-gradient(circle at center, 
+        rgba(139, 92, 246, 0.05) 0%, 
+        rgba(0, 0, 0, 0.3) 100%);
+    border-radius: 10px;
+}
+
+.vortex-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 100px;
+    opacity: 0.3;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    filter: blur(2px);
+}
+
+.vortex-instructions {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    color: white;
+    pointer-events: none;
+}
+
+.vortex-instructions p {
+    margin-bottom: 10px;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.rotation-indicator {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.rotation-indicator span {
+    color: #8b5cf6;
+    font-size: 32px;
+}
+
+.speed-meter {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    pointer-events: none;
+}
+
+.speed-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.speed-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, 
+        #3b82f6 0%, 
+        #8b5cf6 50%, 
+        #ec4899 100%);
+    transition: width 0.2s ease;
+}
+
+.speed-label {
+    text-align: center;
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.vortex-transition {
+    animation: vortexGrow 1.5s ease-in forwards;
+}
+
+@keyframes vortexGrow {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(3);
+        opacity: 0;
+    }
+}
+
+@keyframes suckIntoVortex {
+    0% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(0) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+/* Old mirror styles - keeping for reference */
+.human-questions-old {
     text-align: center;
 }
 
@@ -850,7 +1464,12 @@
     font-style: italic;
 }
 
-/* Scene 9: Thought bubbles */
+/* Scene 9: Placeholder for new interaction */
+.scene-9 .placeholder-content {
+    /* Styles for new interaction will go here */
+}
+
+/* Old thought bubbles - keeping for reference */
 .thought-bubbles {
     display: flex;
     gap: 100px;
@@ -1199,4 +1818,210 @@
 .success-message p {
     font-size: 18px;
     opacity: 0.9;
+}
+
+/* Scene 9: Drawing Game */
+.drawing-game {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.drawing-instructions {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.drawing-instructions p {
+    margin: 5px 0;
+}
+
+.drawing-instructions .hint {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.canvas-container {
+    position: relative;
+    width: 400px;
+    height: 400px;
+    margin: 0 auto;
+    border: 2px solid var(--accent-purple);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.drawing-canvas {
+    cursor: crosshair;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.reference-image {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--accent-purple);
+    transition: opacity 0.3s ease;
+}
+
+.reference-image.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.reference-silhouette {
+    font-size: 60px;
+    line-height: 1;
+}
+
+.reference-image p {
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.drawing-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.drawing-controls button {
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+    color: var(--text-primary);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.drawing-controls button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(139, 92, 246, 0.3);
+}
+
+.grade-display {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.95);
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    min-width: 250px;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.grade-display.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.9);
+}
+
+.grade-score {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.score-number {
+    display: inline-block;
+}
+
+.grade-message {
+    font-size: 16px;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.continue-btn {
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+    color: var(--text-primary);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.continue-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(139, 92, 246, 0.4);
+}
+
+/* Grade color variations */
+.grade-perfect .grade-score {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: sparkle 2s infinite;
+}
+
+.grade-great .grade-score {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.grade-good .grade-score {
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.grade-try .grade-score {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.celebration {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 60px;
+    animation: celebrateBounce 2s ease-out forwards;
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+@keyframes celebrateBounce {
+    0% {
+        transform: translateX(-50%) translateY(0) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translateX(-50%) translateY(-30px) scale(1.5);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(-50%) translateY(-50px) scale(1);
+        opacity: 0;
+    }
 }
