@@ -29,9 +29,117 @@ class Scene1 extends Scene {
         svgText.alt = 'Begin';
         svgText.className = 'begin-text-svg';
         
-        // Add both to container
+        // Particle system for hover effect - add canvas BEFORE button so it's behind
+        const particles = [];
+        let isEmitting = false;
+        let animationId = null;
+        
+        // Particle class
+        class Particle {
+            constructor(x, y, vx = 0, vy = 0) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.size = 10; // Slightly larger for more presence
+                this.maxSize = 10;
+                this.shrinkRate = 0.01; // Much slower shrinking for ominous effect
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.size -= this.shrinkRate; // Shrink instead of fade
+            }
+            
+            isDead() {
+                return this.size <= 0;
+            }
+        }
+        
+        // Create particle canvas
+        const particleCanvas = document.createElement('canvas');
+        particleCanvas.className = 'particle-canvas';
+        particleCanvas.width = window.innerWidth;
+        particleCanvas.height = window.innerHeight;
+        particleCanvas.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+        `;
+        buttonContainer.insertBefore(particleCanvas, buttonContainer.firstChild);
+        
+        // Add button and text AFTER canvas so they appear on top
         buttonContainer.appendChild(beginButton);
         buttonContainer.appendChild(svgText);
+        const ctx = particleCanvas.getContext('2d');
+        
+        // Animation loop
+        function animateParticles() {
+            ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+            
+            // Emit new particles on hover
+            if (isEmitting) {
+                const rect = beginButton.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                for (let i = 0; i < 2; i++) { // Fewer particles for sparse, ominous effect
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 0.3 + Math.random() * 0.4; // Very slow, gentle movement
+                    
+                    // Start near the edge of button (80px from center, button radius is 90px)
+                    const spawnRadius = 80;
+                    const spawnX = centerX + Math.cos(angle) * spawnRadius;
+                    const spawnY = centerY + Math.sin(angle) * spawnRadius;
+                    const particle = new Particle(spawnX, spawnY);
+                    
+                    // Set velocity based on angle (radial movement)
+                    particle.vx = Math.cos(angle) * speed;
+                    particle.vy = Math.sin(angle) * speed;
+                    
+                    particles.push(particle);
+                }
+            }
+            
+            // Update and draw particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                
+                if (p.isDead()) {
+                    particles.splice(i, 1);
+                    continue;
+                }
+                
+                ctx.globalAlpha = 1; // Full opacity always
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            animationId = requestAnimationFrame(animateParticles);
+        }
+        
+        // Start/stop emitting on hover
+        beginButton.addEventListener('mouseenter', () => {
+            isEmitting = true;
+        });
+        
+        beginButton.addEventListener('mouseleave', () => {
+            isEmitting = false;
+        });
+        
+        // Start animation
+        animateParticles();
+        
+        // Store animation ID for cleanup
+        this.particleAnimationId = animationId;
         
         // Assemble scene
         this.element.appendChild(textContainer);
@@ -94,6 +202,10 @@ class Scene1 extends Scene {
         // Remove keyboard listener if it exists
         if (this.keyPressHandler) {
             document.removeEventListener('keydown', this.keyPressHandler);
+        }
+        // Cancel particle animation
+        if (this.particleAnimationId) {
+            cancelAnimationFrame(this.particleAnimationId);
         }
         super.cleanup();
     }

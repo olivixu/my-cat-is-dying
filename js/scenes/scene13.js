@@ -10,10 +10,16 @@ class Scene13 extends Scene {
         this.element = document.createElement('div');
         this.element.className = 'scene story-scene scene-13';
         
+        // Remove any white overlay from Scene 12 after a delay
+        setTimeout(() => {
+            const overlays = document.querySelectorAll('[data-overlay="white"]');
+            overlays.forEach(overlay => overlay.remove());
+        }, 500);
+        
         // Create text display
         const textContainer = document.createElement('div');
-        textContainer.className = 'story-text';
-        textContainer.innerHTML = `<h2>${this.text}</h2>`;
+        textContainer.className = 'story-text scene13-text';
+        textContainer.innerHTML = `<h1>${this.text}</h1>`;
         
         // Create interactive container - hearts
         const interactiveContainer = document.createElement('div');

@@ -1,13 +1,22 @@
-// Scene 7: "She doesn't know where I go after giving her a kiss every morning."
+// Scene 7: "I wonder if our ideas of death are the same."
 class Scene7 extends Scene {
     constructor(container) {
         super(container);
-        this.text = "She doesn't know where I go after giving her a kiss every morning.";
+        this.text = "I wonder if our ideas of death are the same.";
         
-        // Track which photos have been kissed
-        this.kissedPhotos = new Set();
-        this.requiredKisses = 5; // Number of photos to kiss
-        this.photos = [];
+        // Card matching game state
+        this.cards = [];
+        this.flippedCards = [];
+        this.matchedPairs = 0;
+        this.totalPairs = 3;
+        this.canFlip = true;
+        
+        // Card types (each appears twice for pairs)
+        this.cardTypes = [
+            { id: 'me', image: 'assets/images/Card_Olivia.PNG', name: 'Me' },
+            { id: 'smokey', image: 'assets/images/Card_Smokey.PNG', name: 'Smokey' },
+            { id: 'skull', image: 'assets/images/Card_Death.PNG', name: 'Death' }
+        ];
     }
     
     async init() {
@@ -15,192 +24,424 @@ class Scene7 extends Scene {
         this.element = document.createElement('div');
         this.element.className = 'scene story-scene scene-7';
         
+        // Create fluid background canvas
+        const fluidCanvas = document.createElement('canvas');
+        fluidCanvas.className = 'fluid-background';
+        const fluidCtx = fluidCanvas.getContext('2d');
+        
+        // Fluid simulation state
+        let mouseX = 0;
+        let mouseY = 0;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        let mouseVelX = 0;
+        let mouseVelY = 0;
+        let time = 0;
+        
+        // Set canvas size
+        const resizeFluidCanvas = () => {
+            fluidCanvas.width = window.innerWidth;
+            fluidCanvas.height = window.innerHeight;
+        };
+        resizeFluidCanvas();
+        window.addEventListener('resize', resizeFluidCanvas);
+        
+        // Simple noise function
+        const noise = (x, y, t) => {
+            const n = Math.sin(x * 0.01 + t) * Math.cos(y * 0.01 - t) +
+                     Math.sin(x * 0.02 - t * 0.5) * Math.cos(y * 0.02 + t * 0.5) +
+                     Math.sin(x * 0.005 + t * 0.3) * Math.cos(y * 0.005 - t * 0.3);
+            return n / 3;
+        };
+        
+        // Mouse tracking
+        const handleMouseMove = (e) => {
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+            const rect = fluidCanvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+            mouseVelX = mouseX - lastMouseX;
+            mouseVelY = mouseY - lastMouseY;
+        };
+        this.element.addEventListener('mousemove', handleMouseMove);
+        
+        // Animate fluid background
+        let fluidAnimationId;
+        const animateFluid = () => {
+            time += 0.008;
+            
+            // Fill with dark base color first
+            fluidCtx.fillStyle = '#1a1118';
+            fluidCtx.fillRect(0, 0, fluidCanvas.width, fluidCanvas.height);
+            
+            // Draw multiple blob layers with higher visibility
+            for (let layer = 0; layer < 4; layer++) {
+                fluidCtx.save();
+                
+                // Different movement for each layer
+                const layerTime = time * (0.3 + layer * 0.15);
+                const offsetX = Math.sin(layerTime) * 100 + Math.cos(layerTime * 1.3) * 50;
+                const offsetY = Math.cos(layerTime * 0.7) * 80 + Math.sin(layerTime * 1.1) * 40;
+                
+                // Create radial gradient for each blob
+                const centerX = fluidCanvas.width / 2 + offsetX + (layer - 1.5) * 150;
+                const centerY = fluidCanvas.height / 2 + offsetY + (layer - 1.5) * 100;
+                
+                // Mouse influence
+                const mouseDist = Math.sqrt((mouseX - centerX) ** 2 + (mouseY - centerY) ** 2);
+                const mouseInfluence = Math.max(0, 1 - mouseDist / 400);
+                const blobX = centerX + (mouseX - centerX) * mouseInfluence * 0.4;
+                const blobY = centerY + (mouseY - centerY) * mouseInfluence * 0.4;
+                
+                const gradient = fluidCtx.createRadialGradient(
+                    blobX, blobY, 0,
+                    blobX, blobY, 500 + mouseInfluence * 150
+                );
+                
+                // Much brighter, more visible colors from the reference
+                const colors = [
+                    ['rgb(120, 80, 116)', 'rgba(120, 80, 116, 0)'],  // Bright purple-mauve
+                    ['rgb(110, 85, 85)', 'rgba(110, 85, 85, 0)'],    // Bright warm brown
+                    ['rgb(95, 90, 75)', 'rgba(95, 90, 75, 0)'],      // Bright olive
+                    ['rgb(130, 75, 100)', 'rgba(130, 75, 100, 0)']   // Bright magenta
+                ];
+                
+                gradient.addColorStop(0, colors[layer][0]);
+                gradient.addColorStop(0.3, colors[layer][0].replace('rgb', 'rgba').replace(')', ', 0.7)'));
+                gradient.addColorStop(0.6, colors[layer][0].replace('rgb', 'rgba').replace(')', ', 0.3)'));
+                gradient.addColorStop(1, colors[layer][1]);
+                
+                // Apply gradient with blend mode
+                fluidCtx.globalCompositeOperation = 'screen';
+                fluidCtx.fillStyle = gradient;
+                fluidCtx.fillRect(0, 0, fluidCanvas.width, fluidCanvas.height);
+                
+                fluidCtx.restore();
+            }
+            
+            // Add vertical gradient overlay for depth
+            fluidCtx.globalCompositeOperation = 'multiply';
+            const baseGradient = fluidCtx.createLinearGradient(0, 0, 0, fluidCanvas.height);
+            baseGradient.addColorStop(0, 'rgba(90, 60, 87, 0.8)');    // Purple-mauve at top
+            baseGradient.addColorStop(0.5, 'rgba(85, 65, 65, 0.9)');  // Brown-purple in middle
+            baseGradient.addColorStop(1, 'rgba(70, 65, 55, 1)');      // Dark olive-brown at bottom
+            fluidCtx.fillStyle = baseGradient;
+            fluidCtx.fillRect(0, 0, fluidCanvas.width, fluidCanvas.height);
+            
+            fluidCtx.globalCompositeOperation = 'source-over';
+            
+            // Add noise texture
+            const imageData = fluidCtx.getImageData(0, 0, fluidCanvas.width, fluidCanvas.height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const noiseValue = (Math.random() - 0.5) * 20;
+                data[i] = Math.max(0, Math.min(255, data[i] + noiseValue));
+                data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + noiseValue));
+                data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + noiseValue));
+            }
+            
+            fluidCtx.putImageData(imageData, 0, 0);
+            
+            fluidAnimationId = requestAnimationFrame(animateFluid);
+        };
+        animateFluid();
+        
+        // Store animation ID for cleanup
+        this.fluidAnimationId = fluidAnimationId;
+        
+        // Create TV static overlay canvas
+        const staticCanvas = document.createElement('canvas');
+        staticCanvas.className = 'static-overlay';
+        const ctx = staticCanvas.getContext('2d');
+        
+        // Set canvas size to window size
+        const resizeCanvas = () => {
+            staticCanvas.width = window.innerWidth;
+            staticCanvas.height = window.innerHeight;
+        };
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Animate TV static
+        let animationId;
+        const animateStatic = () => {
+            const imageData = ctx.createImageData(staticCanvas.width, staticCanvas.height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const noise = Math.random() * 255;
+                data[i] = noise;     // red
+                data[i + 1] = noise; // green
+                data[i + 2] = noise; // blue
+                data[i + 3] = Math.random() * 30; // alpha (low opacity)
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            animationId = requestAnimationFrame(animateStatic);
+        };
+        animateStatic();
+        
+        // Store animation ID for cleanup
+        this.staticAnimationId = animationId;
+        
         // Create text display
         const textContainer = document.createElement('div');
         textContainer.className = 'story-text';
         textContainer.innerHTML = `<h2>${this.text}</h2>`;
         
-        // Create interactive container
-        const interactiveContainer = document.createElement('div');
-        interactiveContainer.className = 'interactive-container kiss-scene';
+        // Create game container
+        const gameContainer = document.createElement('div');
+        gameContainer.className = 'card-matching-game';
         
-        // Create instruction text
-        const instructions = document.createElement('p');
-        instructions.className = 'kiss-instructions';
-        instructions.innerHTML = 'Click on Smokey\'s head to give morning kisses';
+        // Remove instructions - no longer needed
         
-        // Create photo gallery
-        const photoGallery = document.createElement('div');
-        photoGallery.className = 'photo-gallery';
+        // Create card grid
+        const cardGrid = document.createElement('div');
+        cardGrid.className = 'card-grid';
         
-        // Create photos of Smokey in different poses
-        const smokeyPoses = [
-            { emoji: '🐱', pose: 'sitting' },
-            { emoji: '😸', pose: 'happy' },
-            { emoji: '😺', pose: 'smiling' },
-            { emoji: '😻', pose: 'loving' },
-            { emoji: '😿', pose: 'sleepy' }
-        ];
-        
-        smokeyPoses.forEach((smokey, index) => {
-            const photoFrame = document.createElement('div');
-            photoFrame.className = 'photo-frame';
-            photoFrame.dataset.photoId = index;
-            
-            const photo = document.createElement('div');
-            photo.className = 'smokey-photo';
-            photo.dataset.photoId = index;
-            
-            // Create the cat emoji
-            const cat = document.createElement('div');
-            cat.className = 'smokey-emoji';
-            cat.innerHTML = smokey.emoji;
-            
-            // Create invisible click zone for the head (upper part of the emoji)
-            const headZone = document.createElement('div');
-            headZone.className = 'head-click-zone';
-            headZone.dataset.photoId = index;
-            
-            photo.appendChild(cat);
-            photo.appendChild(headZone);
-            photoFrame.appendChild(photo);
-            photoGallery.appendChild(photoFrame);
-            
-            // Store reference
-            this.photos.push({
-                element: photoFrame,
-                kissed: false,
-                id: index
-            });
-            
-            // Add click handler for the head zone
-            headZone.addEventListener('click', (e) => this.giveKiss(e, index));
+        // Create cards (2 of each type for pairs)
+        const cardData = [];
+        this.cardTypes.forEach(type => {
+            cardData.push({ ...type });
+            cardData.push({ ...type });
         });
         
-        // Create progress display
-        const progressDisplay = document.createElement('div');
-        progressDisplay.className = 'kiss-progress';
-        progressDisplay.innerHTML = `
-            <span id="kiss-count">0</span> / ${this.requiredKisses} morning kisses given
-        `;
+        // Shuffle cards
+        this.shuffleArray(cardData);
         
-        // Create completion message (hidden initially)
-        const completionMessage = document.createElement('div');
-        completionMessage.className = 'completion-message hidden';
-        completionMessage.innerHTML = `
-            <p>Every morning, without fail... 💕</p>
-            <button class="continue-btn">Continue</button>
-        `;
+        // Create card elements
+        cardData.forEach((data, index) => {
+            const card = this.createCard(data, index);
+            cardGrid.appendChild(card);
+            this.cards.push({
+                element: card,
+                data: data,
+                index: index,
+                isFlipped: false,
+                isMatched: false
+            });
+        });
         
-        // Assemble interactive container
-        interactiveContainer.appendChild(instructions);
-        interactiveContainer.appendChild(photoGallery);
-        interactiveContainer.appendChild(progressDisplay);
-        interactiveContainer.appendChild(completionMessage);
+        // Remove progress display - no longer needed
         
-        // Assemble scene
-        this.element.appendChild(textContainer);
-        this.element.appendChild(interactiveContainer);
+        // Assemble game container
+        gameContainer.appendChild(cardGrid);
+        // Remove completionMessage - auto-advance instead
+        
+        // Assemble scene (layered properly)
+        this.element.appendChild(fluidCanvas); // Fluid background
+        this.element.appendChild(staticCanvas); // TV static overlay
+        this.element.appendChild(textContainer); // Text content
+        this.element.appendChild(gameContainer); // Game content
         
         // Add to container
         this.container.appendChild(this.element);
         
         // Store references
-        this.kissCountElement = this.element.querySelector('#kiss-count');
-        this.completionMessage = completionMessage;
-        this.photoGallery = photoGallery;
-        
-        // Add continue button handler
-        const btn = completionMessage.querySelector('.continue-btn');
-        btn?.addEventListener('click', () => {
-            this.onComplete();
-            if (window.sceneManager) {
-                window.sceneManager.nextScene();
-            }
-        });
+        this.cardGrid = cardGrid;
     }
     
-    giveKiss(event, photoId) {
-        // Prevent multiple kisses on the same photo
-        if (this.kissedPhotos.has(photoId)) {
+    createCard(data, index) {
+        const card = document.createElement('div');
+        card.className = 'memory-card';
+        card.dataset.cardIndex = index;
+        card.dataset.cardType = data.id;
+        
+        // Create card inner (for flip animation)
+        const cardInner = document.createElement('div');
+        cardInner.className = 'card-inner';
+        
+        // Create card front (face down)
+        const cardFront = document.createElement('div');
+        cardFront.className = 'card-front';
+        
+        // Add base layer for front
+        const frontBase = document.createElement('img');
+        frontBase.src = 'assets/images/Card_Base.PNG';
+        frontBase.alt = 'Card base';
+        frontBase.className = 'card-base';
+        cardFront.appendChild(frontBase);
+        
+        // Add back design on top
+        const cardBackImg = document.createElement('img');
+        cardBackImg.src = 'assets/images/Card_back.PNG';
+        cardBackImg.alt = 'Card back';
+        cardBackImg.className = 'card-image';
+        cardFront.appendChild(cardBackImg);
+        
+        // Create card back (face up - shows the card image)
+        const cardBack = document.createElement('div');
+        cardBack.className = 'card-back';
+        
+        // Add base layer for back
+        const backBase = document.createElement('img');
+        backBase.src = 'assets/images/Card_Base.PNG';
+        backBase.alt = 'Card base';
+        backBase.className = 'card-base';
+        cardBack.appendChild(backBase);
+        
+        // Add card face image on top
+        const cardFaceImg = document.createElement('img');
+        cardFaceImg.src = data.image;
+        cardFaceImg.alt = data.name;
+        cardFaceImg.className = 'card-image';
+        cardBack.appendChild(cardFaceImg);
+        
+        // Assemble card
+        cardInner.appendChild(cardFront);
+        cardInner.appendChild(cardBack);
+        card.appendChild(cardInner);
+        
+        // Add click handler
+        card.addEventListener('click', () => this.flipCard(index));
+        
+        return card;
+    }
+    
+    flipCard(index) {
+        const card = this.cards[index];
+        
+        // Check if card can be flipped
+        if (!this.canFlip || card.isFlipped || card.isMatched) {
             return;
         }
         
-        // Mark photo as kissed
-        this.kissedPhotos.add(photoId);
+        // Check if we already have 2 cards flipped
+        if (this.flippedCards.length >= 2) {
+            return;
+        }
         
-        // Get click position relative to the photo
-        const photo = this.photos[photoId].element;
-        const rect = photo.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
+        // Flip the card
+        card.element.classList.add('flipped');
+        card.isFlipped = true;
+        this.flippedCards.push(card);
         
-        // Create kiss icon at click position
-        const kiss = document.createElement('div');
-        kiss.className = 'kiss-icon';
-        kiss.innerHTML = '💋';
-        kiss.style.left = `${x}px`;
-        kiss.style.top = `${y}px`;
-        
-        // Add kiss to photo
-        photo.appendChild(kiss);
-        
-        // Add kissed state to photo
-        photo.classList.add('kissed');
-        
-        // Create floating hearts effect
-        this.createHearts(photo, x, y);
-        
-        // Update progress
-        this.updateProgress();
-        
-        // Check if all required kisses are given
-        if (this.kissedPhotos.size >= this.requiredKisses) {
-            this.completeScene();
+        // Check for match if 2 cards are flipped
+        if (this.flippedCards.length === 2) {
+            this.checkForMatch();
         }
     }
     
-    createHearts(photo, x, y) {
-        // Create multiple small hearts that float up
-        for (let i = 0; i < 3; i++) {
+    checkForMatch() {
+        this.canFlip = false;
+        
+        const [card1, card2] = this.flippedCards;
+        
+        if (card1.data.id === card2.data.id) {
+            // It's a match!
             setTimeout(() => {
-                const heart = document.createElement('div');
-                heart.className = 'floating-heart';
-                heart.innerHTML = '💕';
-                heart.style.left = `${x + (Math.random() - 0.5) * 20}px`;
-                heart.style.top = `${y}px`;
+                card1.element.classList.add('matched');
+                card2.element.classList.add('matched');
+                card1.isMatched = true;
+                card2.isMatched = true;
                 
-                photo.appendChild(heart);
+                this.matchedPairs++;
+                this.updateProgress();
                 
-                // Remove after animation completes
-                setTimeout(() => heart.remove(), 2000);
-            }, i * 200);
+                // Reset for next turn
+                this.flippedCards = [];
+                this.canFlip = true;
+                
+                // Check if game is complete
+                if (this.matchedPairs === this.totalPairs) {
+                    this.completeGame();
+                }
+            }, 600);
+        } else {
+            // Not a match - flip cards back
+            setTimeout(() => {
+                card1.element.classList.remove('flipped');
+                card2.element.classList.remove('flipped');
+                card1.isFlipped = false;
+                card2.isFlipped = false;
+                
+                // Reset for next turn
+                this.flippedCards = [];
+                this.canFlip = true;
+            }, 1000);
         }
     }
     
     updateProgress() {
-        this.kissCountElement.textContent = this.kissedPhotos.size;
-        
-        // Add a little celebration for each kiss
-        this.kissCountElement.classList.add('pop');
-        setTimeout(() => {
-            this.kissCountElement.classList.remove('pop');
-        }, 300);
+        // Progress display removed - no longer needed
     }
     
-    completeScene() {
-        // Show completion message
+    completeGame() {
+        // Pause to let user see all matched cards
         setTimeout(() => {
-            this.completionMessage.classList.remove('hidden');
-            
-            // Add glow effect to all photos
-            this.photos.forEach(photo => {
-                photo.element.classList.add('glowing');
+            // Add shadow-hidden class to keep shadows hidden throughout animation
+            this.cards.forEach(card => {
+                card.element.classList.add('shadow-hidden');
             });
+            
+            // Step 1: Flip cards back over sequentially (top-left to bottom-right)
+            this.cards.forEach((card, index) => {
+                // Calculate delay based on grid position (0-5 for 2x3 grid)
+                const row = Math.floor(index / 3);
+                const col = index % 3;
+                const delay = (row * 3 + col) * 100; // Stagger by position
+                
+                setTimeout(() => {
+                    card.element.classList.remove('flipped');
+                    card.element.classList.remove('matched');
+                }, delay);
+            });
+            
+            // Step 2: After all cards are flipped back, translate down and fade
+            setTimeout(() => {
+                this.cards.forEach((card, index) => {
+                    // Calculate delay based on grid position
+                    const row = Math.floor(index / 3);
+                    const col = index % 3;
+                    const delay = (row * 3 + col) * 150; // Stagger animation
+                    
+                    setTimeout(() => {
+                        card.element.classList.add('card-falling');
+                    }, delay);
+                });
+                
+                // Step 3: Create beige overlay and fade to beige
+                setTimeout(() => {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'beige-fade-overlay';
+                    this.element.appendChild(overlay);
+                    
+                    // Trigger fade animation
+                    requestAnimationFrame(() => {
+                        overlay.classList.add('fade-in');
+                    });
+                    
+                    // Step 4: Transition to next scene after fade completes
+                    setTimeout(() => {
+                        this.onComplete();
+                        if (window.sceneManager) {
+                            window.sceneManager.nextScene();
+                        }
+                    }, 1500);
+                }, 1500); // Wait longer for all cards to completely disappear
+            }, 1200); // Wait for all flips to complete
         }, 500);
     }
     
+    shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+    
     cleanup() {
+        // Stop fluid animation
+        if (this.fluidAnimationId) {
+            cancelAnimationFrame(this.fluidAnimationId);
+        }
+        // Stop static animation
+        if (this.staticAnimationId) {
+            cancelAnimationFrame(this.staticAnimationId);
+        }
         // Remove event listeners if needed
         super.cleanup();
     }

@@ -22,12 +22,18 @@ class Scene5 extends Scene {
         // Animation
         this.animationId = null;
         this.lastSpawnTime = 0;
-        this.spawnInterval = 4000; // Spawn new line every 4 seconds
+        this.spawnInterval = 2500; // Check for spawn more frequently, but spacing will prevent overlap
         
         // Breathing circle sizes
         this.circleMinSize = 60;
         this.circleMaxSize = 200;
         this.currentCircleSize = this.circleMinSize;
+        
+        // Target zone animation
+        this.targetZoneScale = 1;
+        this.targetZoneBaseScale = 1;
+        this.targetZoneMaxScale = 1.3;
+        this.pulseTime = 0;
     }
     
     async init() {
@@ -48,10 +54,9 @@ class Scene5 extends Scene {
         const trackContainer = document.createElement('div');
         trackContainer.className = 'rhythm-track';
         
-        // Create target zone
+        // Create target zone (blue circle)
         const targetZone = document.createElement('div');
         targetZone.className = 'target-zone';
-        targetZone.innerHTML = '<span>BREATHE</span>';
         
         // Create lines container
         const linesContainer = document.createElement('div');
@@ -76,15 +81,14 @@ class Scene5 extends Scene {
         instructions.className = 'game-instructions';
         instructions.innerHTML = '<p>Click and HOLD while a blue bar is in the green BREATHE zone.<br>Release while the bar is still in the zone for perfect timing!</p>';
         
-        // Create score display
-        const scoreDisplay = document.createElement('div');
-        scoreDisplay.className = 'score-display';
-        scoreDisplay.innerHTML = `
-            <div class="perfect-counter">
-                Perfect Breaths: <span id="perfect-count">0</span> / ${this.requiredPerfectBreaths}
-            </div>
-            <div class="timing-feedback hidden"></div>
-        `;
+        // Create progress dots
+        const progressDots = document.createElement('div');
+        progressDots.className = 'progress-dots';
+        for (let i = 0; i < this.requiredPerfectBreaths; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'progress-dot';
+            progressDots.appendChild(dot);
+        }
         
         // Create success message (hidden initially)
         const successMessage = document.createElement('div');
@@ -92,10 +96,9 @@ class Scene5 extends Scene {
         successMessage.innerHTML = '<p>Perfect breathing achieved!</p>';
         
         // Assemble game
-        gameContainer.appendChild(instructions);
         gameContainer.appendChild(trackContainer);
         gameContainer.appendChild(breathingContainer);
-        gameContainer.appendChild(scoreDisplay);
+        gameContainer.appendChild(progressDots);
         gameContainer.appendChild(successMessage);
         
         // Assemble scene
@@ -108,8 +111,7 @@ class Scene5 extends Scene {
         // Store references
         this.linesContainer = linesContainer;
         this.breathingCircle = breathingCircle;
-        this.perfectCountElement = this.element.querySelector('#perfect-count');
-        this.timingFeedback = this.element.querySelector('.timing-feedback');
+        this.progressDots = progressDots;
         this.successMessage = successMessage;
         this.targetZone = targetZone;
         
@@ -142,6 +144,8 @@ class Scene5 extends Scene {
         
         this.isHolding = true;
         this.breathingCircle.classList.add('inhaling');
+        // Remove the instant class change
+        // this.targetZone.classList.add('holding');
         
         // Check if we're starting on a line
         const line = this.getLineInTargetZone();
@@ -174,6 +178,8 @@ class Scene5 extends Scene {
         
         this.isHolding = false;
         this.breathingCircle.classList.remove('inhaling');
+        // Remove the instant class change
+        // this.targetZone.classList.remove('holding');
         
         // Check if we're ending on the same line
         if (this.currentLine) {
@@ -192,12 +198,24 @@ class Scene5 extends Scene {
             this.showFeedback(timing);
             
             if (timing === 'perfect') {
+                // Turn the bar green for success
+                this.currentLine.element.classList.add('success');
+                
+                // Trigger success pulse on the target zone
+                this.targetZone.classList.add('success-pulse');
+                setTimeout(() => {
+                    this.targetZone.classList.remove('success-pulse');
+                }, 1000);
+                
                 this.perfectBreaths++;
                 this.updateScore();
                 
                 if (this.perfectBreaths >= this.requiredPerfectBreaths) {
                     this.completeGame();
                 }
+            } else if (timing === 'good') {
+                // Optional: different color for good timing
+                this.currentLine.element.classList.add('active');
             }
             
             this.currentLine.element.classList.add('completed');
@@ -253,12 +271,29 @@ class Scene5 extends Scene {
         // Update breathing circle
         this.updateBreathingCircle();
         
+        // Update target zone animation
+        this.updateTargetZone();
+        
         this.animationId = requestAnimationFrame(() => this.animate());
     }
     
     spawnLine() {
         // Check if we should spawn (not too many lines)
         if (this.lines.length >= 3) return; // Max 3 lines at once
+        
+        // Check if the last bar has moved far enough
+        if (this.lines.length > 0) {
+            const lastLine = this.lines[this.lines.length - 1];
+            const minSpacing = 400; // Minimum pixels between bars
+            
+            // Get viewport width
+            const viewportWidth = window.innerWidth;
+            
+            // Check if last bar has moved far enough from spawn point
+            if (viewportWidth - lastLine.position < minSpacing) {
+                return; // Don't spawn yet, last bar is too close
+            }
+        }
         
         // Create line element
         const lineElement = document.createElement('div');
@@ -268,18 +303,13 @@ class Scene5 extends Scene {
         const length = 200 + Math.random() * 100; // 200-300px
         lineElement.style.width = `${length}px`;
         
-        // Add visual markers to the line
-        lineElement.innerHTML = `
-            <span class="line-start">▶</span>
-            <span class="line-text">HOLD</span>
-            <span class="line-end">◀</span>
-        `;
+        // No visual markers needed for minimal design
         
-        // Get container width properly
-        const containerWidth = this.linesContainer.getBoundingClientRect().width;
+        // Get viewport width to start bars off-screen
+        const viewportWidth = window.innerWidth;
         
-        // Start from right side of container
-        lineElement.style.left = `${containerWidth + 100}px`;
+        // Start from right side of viewport
+        lineElement.style.left = `${viewportWidth}px`;
         
         // Add to container
         this.linesContainer.appendChild(lineElement);
@@ -287,7 +317,7 @@ class Scene5 extends Scene {
         // Create line object
         const line = {
             element: lineElement,
-            position: containerWidth + 100,
+            position: viewportWidth,
             length: length,
             speed: 1.5, // pixels per frame (even slower for easier gameplay)
             started: false,
@@ -343,10 +373,28 @@ class Scene5 extends Scene {
         this.breathingCircle.style.height = `${this.currentCircleSize}px`;
     }
     
+    updateTargetZone() {
+        // Update pulse time for gentle pulsing
+        this.pulseTime += 0.015; // Controls pulse speed
+        
+        // Calculate base scale with gentle pulse (1 to 1.05)
+        const pulseScale = 1 + Math.sin(this.pulseTime) * 0.025; // 2.5% pulse
+        
+        // Determine target scale based on holding state
+        const targetScale = this.isHolding ? this.targetZoneMaxScale : pulseScale;
+        const speed = 0.02; // Slower speed for smooth animation
+        
+        // Smoothly interpolate to target scale
+        this.targetZoneScale += (targetScale - this.targetZoneScale) * speed;
+        
+        // Apply the transform
+        this.targetZone.style.transform = `translateY(-50%) scale(${this.targetZoneScale})`;
+    }
+    
     getLineInTargetZone() {
-        // Target zone is at left: 100px with width: 100px (from CSS)
-        const targetStart = 100;
-        const targetEnd = 200;
+        // Target zone is at left: 400px with width: 70px (from CSS)
+        const targetStart = 400;
+        const targetEnd = 470;
         
         for (const line of this.lines) {
             const lineStart = line.position;
@@ -464,40 +512,109 @@ class Scene5 extends Scene {
     }
     
     showFeedback(timing) {
-        this.timingFeedback.textContent = timing.toUpperCase() + '!';
-        this.timingFeedback.className = `timing-feedback ${timing}`;
-        this.timingFeedback.classList.remove('hidden');
-        
-        setTimeout(() => {
-            this.timingFeedback.classList.add('hidden');
-        }, 1000);
+        // No visual feedback text in minimal design
     }
     
     updateScore() {
-        this.perfectCountElement.textContent = this.perfectBreaths;
+        // Update progress dots
+        const dots = this.progressDots.querySelectorAll('.progress-dot');
+        for (let i = 0; i < this.perfectBreaths && i < dots.length; i++) {
+            dots[i].classList.add('active');
+        }
     }
     
     completeGame() {
         this.gameActive = false;
-        this.successMessage.classList.remove('hidden');
         
-        // Clear remaining lines
-        this.lines.forEach(line => line.element.remove());
-        this.lines = [];
+        // Fade out remaining lines
+        this.lines.forEach(line => {
+            line.element.style.transition = 'opacity 1.5s ease-out';
+            line.element.style.opacity = '0';
+        });
         
-        // Auto advance after showing success
+        // After fade, remove lines and trigger dot expansion
         setTimeout(() => {
-            this.onComplete();
-            if (window.sceneManager) {
-                window.sceneManager.nextScene();
+            // Clear remaining lines
+            this.lines.forEach(line => line.element.remove());
+            this.lines = [];
+            
+            // Trigger dot expansion animation - only expand the middle dot
+            const dots = this.progressDots.querySelectorAll('.progress-dot');
+            if (dots.length >= 2) {
+                const middleDot = dots[1]; // Get the middle dot (index 1)
+                
+                // Create a placeholder to maintain the gap
+                const placeholder = document.createElement('div');
+                placeholder.style.width = '12px';
+                placeholder.style.height = '12px';
+                placeholder.style.display = 'inline-block';
+                
+                // Insert placeholder before setting position
+                middleDot.parentNode.insertBefore(placeholder, middleDot.nextSibling);
+                
+                // Get the dot's position to maintain it during expansion
+                const rect = middleDot.getBoundingClientRect();
+                middleDot.style.position = 'fixed';
+                middleDot.style.left = `${rect.left + rect.width / 2}px`;
+                middleDot.style.top = `${rect.top + rect.height / 2}px`;
+                middleDot.style.transform = 'translate(-50%, -50%)';
+                
+                // Add expanding class to trigger animation
+                middleDot.classList.add('expanding');
             }
-        }, 2500);
+            
+            // Create and fade in Windows XP sky overlay during dot expansion
+            setTimeout(() => {
+                const xpSkyOverlay = document.createElement('img');
+                xpSkyOverlay.className = 'xp-sky-transition';
+                xpSkyOverlay.src = 'assets/images/windowsxp-sky.png';
+                xpSkyOverlay.alt = 'Windows XP Sky';
+                xpSkyOverlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    object-fit: cover;
+                    z-index: 9998;
+                    opacity: 0;
+                    transition: opacity 1.5s ease-in;
+                    pointer-events: none;
+                `;
+                document.body.appendChild(xpSkyOverlay);
+                
+                // Trigger fade in
+                requestAnimationFrame(() => {
+                    xpSkyOverlay.style.opacity = '1';
+                });
+                
+                // Store reference for cleanup
+                this.xpSkyOverlay = xpSkyOverlay;
+            }, 500); // Start fading in sky 0.5 seconds after dot expansion starts
+            
+            // Auto advance after expansion animation completes
+            setTimeout(() => {
+                // Clean up the sky overlay as scene transitions
+                if (this.xpSkyOverlay) {
+                    this.xpSkyOverlay.remove();
+                }
+                this.onComplete();
+                if (window.sceneManager) {
+                    window.sceneManager.nextScene();
+                }
+            }, 3000);
+        }, 1500); // 1.5 second delay for fade and pause
     }
     
     cleanup() {
         // Stop animation
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
+        }
+        
+        // Clean up XP sky overlay if it exists
+        if (this.xpSkyOverlay) {
+            this.xpSkyOverlay.remove();
         }
         
         // Remove event listeners

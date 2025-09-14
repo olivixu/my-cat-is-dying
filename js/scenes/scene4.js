@@ -6,22 +6,28 @@ class Scene4 extends Scene {
         
         // Define treats and their correct order (least to most tasty)
         this.treats = [
-            { id: 'dryfood', emoji: '🥣', name: 'Dry Food' },
-            { id: 'wetfood', emoji: '🥫', name: 'Wet Food' },
-            { id: 'tuna', emoji: '🐟', name: 'Tuna' },
-            { id: 'salmon', emoji: '🍣', name: 'Salmon' },
-            { id: 'chicken', emoji: '🍗', name: 'Chicken' }
+            { id: 'wetfood', image: 'assets/images/Treat/Treat_0000_Layer-wet-food-1.png', name: 'Wet Food', tastiness: 1 },
+            { id: 'greenies', image: 'assets/images/Treat/Treat_0004_Layer-greenies-2.png', name: 'Greenies', tastiness: 2 },
+            { id: 'chicken', image: 'assets/images/Treat/Treat_0000_Layer-chicken-3.png', name: 'Chicken', tastiness: 3 },
+            { id: 'minnows', image: 'assets/images/Treat/Treat_0003_Layer-minnows-4.png', name: 'Minnows', tastiness: 4 },
+            { id: 'churu', image: 'assets/images/Treat/Treat_0001_Layer-churu-5.png', name: 'Churu', tastiness: 5 }
         ];
         
-        // Correct order (by indices)
-        this.correctOrder = ['dryfood', 'wetfood', 'tuna', 'salmon', 'chicken'];
+        // Correct order (by IDs from least to most tasty)
+        this.correctOrder = ['wetfood', 'greenies', 'chicken', 'minnows', 'churu'];
         
-        // Current arrangement - shuffle for puzzle
-        this.currentOrder = this.shuffleArray([...this.treats]);
+        // Current arrangement - shuffle for puzzle, ensuring it's not already correct
+        this.currentOrder = this.shuffleForPuzzle([...this.treats]);
         
         // Drag state
         this.draggedTreat = null;
         this.draggedIndex = null;
+        
+        // Bind event handlers
+        this.handleDragStart = this.handleDragStart.bind(this);
+        this.handleDragEnd = this.handleDragEnd.bind(this);
+        this.handleDragOver = this.handleDragOver.bind(this);
+        this.handleDrop = this.handleDrop.bind(this);
     }
     
     shuffleArray(array) {
@@ -31,6 +37,37 @@ class Scene4 extends Scene {
             [array[i], array[j]] = [array[j], array[i]];
         }
         return array;
+    }
+    
+    shuffleForPuzzle(array) {
+        // Keep shuffling until we get an order where NO treats are in correct positions
+        let shuffled = [...array];
+        let hasCorrectPosition = true;
+        
+        while (hasCorrectPosition) {
+            shuffled = this.shuffleArray([...array]);
+            
+            // Check if ANY treat is in its correct position
+            hasCorrectPosition = false;
+            for (let i = 0; i < shuffled.length; i++) {
+                if (shuffled[i].id === this.correctOrder[i]) {
+                    hasCorrectPosition = true;
+                    break;
+                }
+            }
+        }
+        
+        return shuffled;
+    }
+    
+    isCorrectOrder(array) {
+        // Check if the current array order matches the correct order
+        for (let i = 0; i < array.length; i++) {
+            if (array[i].id !== this.correctOrder[i]) {
+                return false;
+            }
+        }
+        return true;
     }
     
     async init() {
@@ -47,71 +84,78 @@ class Scene4 extends Scene {
         const gameContainer = document.createElement('div');
         gameContainer.className = 'treat-ranking-game';
         
-        // Create labels
+        // Create empty labels container (keeping for spacing)
         const labelsContainer = document.createElement('div');
         labelsContainer.className = 'ranking-labels';
-        labelsContainer.innerHTML = `
-            <span class="label-left">Least Tasty</span>
-            <span class="label-right">Most Tasty</span>
-        `;
         
-        // Create ranking track
-        const rankingTrack = document.createElement('div');
-        rankingTrack.className = 'ranking-track';
+        // Create game board container
+        const gameBoard = document.createElement('div');
+        gameBoard.className = 'treat-game-board';
         
-        // Create positions on the track
-        for (let i = 0; i < 5; i++) {
-            const position = document.createElement('div');
-            position.className = 'track-position';
-            position.dataset.position = i;
-            rankingTrack.appendChild(position);
-        }
+        // Add Smokey images at the ends
+        const angrySmokeyImg = document.createElement('img');
+        angrySmokeyImg.className = 'board-end-left smokey-angry';
+        angrySmokeyImg.src = 'assets/images/angry smokey.png';
+        angrySmokeyImg.alt = 'Angry Smokey';
         
-        // Create treats container
-        const treatsContainer = document.createElement('div');
-        treatsContainer.className = 'treats-container';
+        const happySmokeyImg = document.createElement('img');
+        happySmokeyImg.className = 'board-end-right smokey-happy';
+        happySmokeyImg.src = 'assets/images/happy smokey.png';
+        happySmokeyImg.alt = 'Happy Smokey';
         
-        // Create treat elements
+        gameBoard.appendChild(angrySmokeyImg);
+        gameBoard.appendChild(happySmokeyImg);
+        
+        // Create the track line
+        const trackLine = document.createElement('div');
+        trackLine.className = 'track-line';
+        gameBoard.appendChild(trackLine);
+        
+        // Create slots container
+        const slotsContainer = document.createElement('div');
+        slotsContainer.className = 'slots-container';
+        
+        // Create 5 slots, each containing a treat and a feedback dot
         this.currentOrder.forEach((treat, index) => {
+            // Create slot container
+            const slot = document.createElement('div');
+            slot.className = 'treat-slot';
+            slot.dataset.index = index;
+            
+            // Create treat element
             const treatElement = document.createElement('div');
             treatElement.className = 'treat-item';
             treatElement.dataset.treatId = treat.id;
             treatElement.dataset.index = index;
             treatElement.draggable = true;
             treatElement.innerHTML = `
-                <span class="treat-emoji">${treat.emoji}</span>
+                <img class="treat-image" src="${treat.image}" alt="${treat.name}">
                 <span class="treat-name">${treat.name}</span>
             `;
             
-            // Position treat at its slot with better spacing
-            // Start at 10% and space evenly across 80% of width
-            const spacing = 70 / 4; // 70% width divided by 4 gaps
-            treatElement.style.left = `${10 + index * spacing}%`;
+            // Create feedback dot
+            const feedbackDot = document.createElement('div');
+            feedbackDot.className = 'position-feedback';
+            feedbackDot.dataset.position = index;
             
-            // Add drag event listeners
-            treatElement.addEventListener('dragstart', (e) => this.handleDragStart(e));
-            treatElement.addEventListener('dragend', (e) => this.handleDragEnd(e));
-            treatElement.addEventListener('dragover', (e) => this.handleDragOver(e));
-            treatElement.addEventListener('drop', (e) => this.handleDrop(e));
+            // Add elements to slot
+            slot.appendChild(treatElement);
+            slot.appendChild(feedbackDot);
             
-            treatsContainer.appendChild(treatElement);
+            // Add drag event listeners to treat
+            treatElement.addEventListener('dragstart', this.handleDragStart);
+            treatElement.addEventListener('dragend', this.handleDragEnd);
+            treatElement.addEventListener('dragover', this.handleDragOver);
+            treatElement.addEventListener('drop', this.handleDrop);
+            
+            slotsContainer.appendChild(slot);
         });
         
-        // Create indicator lights
-        const lightsContainer = document.createElement('div');
-        lightsContainer.className = 'indicator-lights';
-        for (let i = 0; i < 5; i++) {
-            const light = document.createElement('div');
-            light.className = 'indicator-light';
-            light.dataset.position = i;
-            lightsContainer.appendChild(light);
-        }
+        gameBoard.appendChild(slotsContainer);
         
-        // Create submit button
-        const submitButton = document.createElement('button');
-        submitButton.className = 'submit-ranking-btn';
-        submitButton.textContent = 'Submit Order';
-        submitButton.addEventListener('click', () => this.checkOrder());
+        // Store references
+        this.slotsContainer = slotsContainer;
+        this.feedbackDots = slotsContainer.querySelectorAll('.position-feedback');
         
         // Create success message (hidden initially)
         const successMessage = document.createElement('div');
@@ -120,10 +164,7 @@ class Scene4 extends Scene {
         
         // Assemble game
         gameContainer.appendChild(labelsContainer);
-        gameContainer.appendChild(rankingTrack);
-        gameContainer.appendChild(treatsContainer);
-        gameContainer.appendChild(lightsContainer);
-        gameContainer.appendChild(submitButton);
+        gameContainer.appendChild(gameBoard);
         gameContainer.appendChild(successMessage);
         
         // Assemble scene
@@ -134,22 +175,34 @@ class Scene4 extends Scene {
         this.container.appendChild(this.element);
         
         // Store references
-        this.treatsContainer = treatsContainer;
-        this.lightsContainer = lightsContainer;
         this.successMessage = successMessage;
-        this.submitButton = submitButton;
+        
+        // Check initial positions
+        this.checkPositions();
     }
     
     handleDragStart(e) {
-        this.draggedTreat = e.target;
-        this.draggedIndex = parseInt(e.target.dataset.index);
-        e.target.classList.add('dragging');
+        // Make sure we're dragging the treat element, not its children
+        const treatElement = e.target.closest('.treat-item');
+        if (!treatElement) return;
+        
+        this.draggedTreat = treatElement;
+        this.draggedIndex = parseInt(treatElement.dataset.index);
+        treatElement.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/html', e.target.innerHTML);
+        e.dataTransfer.setData('text/html', treatElement.innerHTML);
     }
     
     handleDragEnd(e) {
-        e.target.classList.remove('dragging');
+        // Make sure we're removing the class from the treat element, not its children
+        const treatElement = e.target.closest('.treat-item');
+        if (treatElement) {
+            treatElement.classList.remove('dragging');
+        }
+        // Also ensure the dragged treat loses the class
+        if (this.draggedTreat) {
+            this.draggedTreat.classList.remove('dragging');
+        }
         this.draggedTreat = null;
         this.draggedIndex = null;
     }
@@ -160,28 +213,33 @@ class Scene4 extends Scene {
         }
         e.dataTransfer.dropEffect = 'move';
         
-        // Get the treat being dragged over
-        const draggedOver = e.target.closest('.treat-item');
-        if (!draggedOver || draggedOver === this.draggedTreat) return;
+        const container = e.target.closest('.slots-container');
+        if (!container) return;
         
-        const draggedOverIndex = parseInt(draggedOver.dataset.index);
+        // Find the slot being dragged over
+        const targetSlot = e.target.closest('.treat-slot');
+        if (!targetSlot) return;
         
-        // Visual feedback - show where the treat will be inserted
-        if (this.draggedIndex !== null && draggedOverIndex !== this.draggedIndex) {
-            // Calculate if we're on the left or right half of the target
-            const rect = draggedOver.getBoundingClientRect();
-            const midpoint = rect.left + rect.width / 2;
-            
-            if (e.clientX < midpoint) {
-                draggedOver.classList.add('drag-over-left');
-                draggedOver.classList.remove('drag-over-right');
-            } else {
-                draggedOver.classList.add('drag-over-right');
-                draggedOver.classList.remove('drag-over-left');
-            }
+        const targetIndex = parseInt(targetSlot.dataset.index);
+        const currentIndex = parseInt(this.draggedTreat.dataset.index);
+        
+        if (currentIndex !== targetIndex) {
+            this.shiftItems(currentIndex, targetIndex);
         }
         
         return false;
+    }
+    
+    
+    shiftItems(fromIndex, toIndex) {
+        if (fromIndex === toIndex) return;
+        
+        // Move item in array
+        const [movedItem] = this.currentOrder.splice(fromIndex, 1);
+        this.currentOrder.splice(toIndex, 0, movedItem);
+        
+        // Update positions with animation
+        this.updateTreatPositions(true);
     }
     
     handleDrop(e) {
@@ -189,99 +247,88 @@ class Scene4 extends Scene {
             e.stopPropagation();
         }
         
-        const draggedOver = e.target.closest('.treat-item');
-        if (!draggedOver || draggedOver === this.draggedTreat) return false;
-        
-        // Remove visual feedback
-        draggedOver.classList.remove('drag-over-left', 'drag-over-right');
-        
-        const draggedOverIndex = parseInt(draggedOver.dataset.index);
-        
-        // Swap positions in the array
-        if (this.draggedIndex !== null && draggedOverIndex !== this.draggedIndex) {
-            // Update the current order array
-            const temp = this.currentOrder[this.draggedIndex];
-            
-            // Shift elements between the two positions
-            if (this.draggedIndex < draggedOverIndex) {
-                // Dragging right
-                for (let i = this.draggedIndex; i < draggedOverIndex; i++) {
-                    this.currentOrder[i] = this.currentOrder[i + 1];
-                }
-            } else {
-                // Dragging left
-                for (let i = this.draggedIndex; i > draggedOverIndex; i--) {
-                    this.currentOrder[i] = this.currentOrder[i - 1];
-                }
-            }
-            
-            this.currentOrder[draggedOverIndex] = temp;
-            
-            // Update visual positions
-            this.updateTreatPositions();
-        }
+        // Final position update
+        this.updateTreatPositions();
         
         return false;
     }
     
-    updateTreatPositions() {
-        // Update all treat positions based on current order
-        const spacing = 70 / 4; // Same spacing calculation as initial positioning
+    updateTreatPositions(animated = false) {
+        // Get all slots
+        const slots = this.slotsContainer.querySelectorAll('.treat-slot');
+        
+        // Update each slot with the correct treat
         this.currentOrder.forEach((treat, index) => {
-            const treatElement = this.treatsContainer.querySelector(`[data-treat-id="${treat.id}"]`);
-            if (treatElement) {
+            const slot = slots[index];
+            const treatElement = this.slotsContainer.querySelector(`[data-treat-id="${treat.id}"]`);
+            
+            if (treatElement && slot) {
+                // Update data attributes
                 treatElement.dataset.index = index;
-                treatElement.style.left = `${10 + index * spacing}%`;
+                slot.dataset.index = index;
+                
+                // Move treat to correct slot if needed
+                if (treatElement.parentElement !== slot) {
+                    // Remove treat from current slot
+                    const currentSlot = treatElement.parentElement;
+                    
+                    // Move treat to new slot
+                    slot.insertBefore(treatElement, slot.querySelector('.position-feedback'));
+                }
             }
         });
         
-        // Clear any previous validation lights
-        const lights = this.lightsContainer.querySelectorAll('.indicator-light');
-        lights.forEach(light => {
-            light.classList.remove('correct', 'incorrect');
-        });
+        // Check positions after update
+        this.checkPositions();
     }
     
-    checkOrder() {
-        let allCorrect = true;
-        const lights = this.lightsContainer.querySelectorAll('.indicator-light');
-        
-        // Check each position
+    checkPositions() {
+        // Check each position and update feedback dots
         this.currentOrder.forEach((treat, index) => {
             const isCorrect = treat.id === this.correctOrder[index];
-            const light = lights[index];
+            const feedbackDot = this.feedbackDots[index];
             
-            if (isCorrect) {
-                light.classList.add('correct');
-                light.classList.remove('incorrect');
-            } else {
-                light.classList.add('incorrect');
-                light.classList.remove('correct');
-                allCorrect = false;
+            if (feedbackDot) {
+                if (isCorrect) {
+                    feedbackDot.classList.add('correct');
+                    feedbackDot.classList.remove('incorrect');
+                } else {
+                    feedbackDot.classList.add('incorrect');
+                    feedbackDot.classList.remove('correct');
+                }
             }
         });
         
-        // If all correct, show success and advance
+        // Check if all are correct
+        const allCorrect = this.currentOrder.every((treat, index) => 
+            treat.id === this.correctOrder[index]
+        );
+        
         if (allCorrect) {
-            this.submitButton.disabled = true;
-            this.successMessage.classList.remove('hidden');
-            
-            // Disable dragging
-            const treats = this.treatsContainer.querySelectorAll('.treat-item');
-            treats.forEach(treat => {
-                treat.draggable = false;
-                treat.classList.add('success');
-            });
-            
-            // Auto advance after showing success
-            setTimeout(() => {
-                this.onComplete();
-                if (window.sceneManager) {
-                    window.sceneManager.nextScene();
-                }
-            }, 2500);
+            this.completeGame();
         }
     }
+    
+    completeGame() {
+        // Disable dragging
+        const treats = this.slotsContainer.querySelectorAll('.treat-item');
+        treats.forEach(treat => {
+            treat.draggable = false;
+            treat.classList.add('success');
+        });
+        
+        // Show success message
+        this.successMessage.classList.remove('hidden');
+        
+        // Auto advance after showing success
+        setTimeout(() => {
+            this.onComplete();
+            if (window.sceneManager) {
+                window.sceneManager.nextScene();
+            }
+        }, 2500);
+    }
+    
     
     cleanup() {
         // Remove drag event listeners

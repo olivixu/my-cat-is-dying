@@ -1,4 +1,12 @@
 // Main Application Entry Point
+
+// Global mouse position tracking
+window.mousePosition = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+document.addEventListener('mousemove', (e) => {
+    window.mousePosition.x = e.clientX;
+    window.mousePosition.y = e.clientY;
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     // Define scenes configuration - Story about my cat
     const scenes = [
@@ -85,26 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add some helpful keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        // Press Space or Enter to advance to next scene
-        if (e.key === ' ' || e.key === 'Enter') {
-            e.preventDefault();
-            if (window.sceneManager && !window.sceneManager.isTransitioning) {
-                window.sceneManager.nextScene();
-            }
-        }
-        
-        // Arrow keys for navigation
-        if (e.key === 'ArrowRight') {
-            if (window.sceneManager && !window.sceneManager.isTransitioning) {
-                window.sceneManager.nextScene();
-            }
-        }
-        if (e.key === 'ArrowLeft') {
-            if (window.sceneManager && !window.sceneManager.isTransitioning) {
-                window.sceneManager.previousScene();
-            }
-        }
-        
         // Press 'R' to reload current scene
         if (e.key === 'r' || e.key === 'R') {
             if (window.sceneManager && !window.sceneManager.isTransitioning) {
@@ -151,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
         helpModal.innerHTML = `
             <h3 style="margin-bottom: 20px; color: var(--primary-color);">Keyboard Shortcuts</h3>
             <div style="line-height: 1.8;">
-                <p><strong>Arrow Keys:</strong> Navigate between scenes</p>
+                <p><strong>Click dots on left:</strong> Navigate between scenes</p>
                 <p><strong>1-9:</strong> Jump to specific scene</p>
                 <p><strong>R:</strong> Reload current scene</p>
                 <p><strong>H:</strong> Toggle this help menu</p>

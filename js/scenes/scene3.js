@@ -39,31 +39,50 @@ class Scene3 extends Scene {
         const smokeyHead = document.createElement('div');
         smokeyHead.className = 'smokey-head';
         
-        // Create the cat face
-        const catFace = document.createElement('div');
-        catFace.className = 'cat-face';
-        catFace.innerHTML = '🐈‍⬛';
+        // Create head back image (bottom layer - inside of head)
+        const smokeyHeadBack = document.createElement('img');
+        smokeyHeadBack.className = 'smokey-head-back';
+        smokeyHeadBack.src = 'assets/images/smokey-head-back.png';
+        smokeyHeadBack.alt = 'Smokey head back';
         
-        // Create the head lid (top of head that opens)
-        const headLid = document.createElement('div');
+        // Create body image (middle layer)
+        const smokeyBody = document.createElement('img');
+        smokeyBody.className = 'smokey-body';
+        smokeyBody.src = 'assets/images/smokey-body.png';
+        smokeyBody.alt = 'Smokey body';
+        
+        // Create head lid image (top layer - lifts up)
+        const headLid = document.createElement('img');
         headLid.className = 'head-lid';
-        headLid.innerHTML = '<div class="lid-top"></div>';
+        headLid.src = 'assets/images/smokey-head.png';
+        headLid.alt = 'Smokey head';
+        headLid.style.pointerEvents = 'auto'; // Make head-lid clickable
+        headLid.style.cursor = 'pointer';
         
-        // Add click to open/close
-        smokeyHead.addEventListener('click', () => {
+        // Add click to head-lid instead of smokeyHead
+        headLid.addEventListener('click', () => {
             this.toggleHead(smokeyHead);
         });
         
-        smokeyHead.appendChild(catFace);
-        smokeyHead.appendChild(headLid);
+        // Only add head-back to the smokey head container
+        smokeyHead.appendChild(smokeyHeadBack);
         
-        // Create drop zone inside head
+        // Create drop zone inside head (invisible but functional)
         const dropZone = document.createElement('div');
         dropZone.className = 'drop-zone';
         smokeyHead.appendChild(dropZone);
         
         // Store dropZone reference - collision detection will be set up when head opens
         this.dropZone = dropZone;
+        
+        // Create overlay container for body and head-lid
+        const smokeyOverlay = document.createElement('div');
+        smokeyOverlay.className = 'smokey-overlay';
+        smokeyOverlay.appendChild(smokeyBody);
+        smokeyOverlay.appendChild(headLid);
+        
+        // Store headLid reference for animation
+        this.headLid = headLid;
         
         // Create speech bubble (hidden initially)
         const speechBubble = document.createElement('div');
@@ -74,12 +93,11 @@ class Scene3 extends Scene {
         gameContainer.appendChild(smokeyHead);
         gameContainer.appendChild(speechBubble);
         
-        // Add physics canvas to the scene (behind everything)
-        this.element.appendChild(physicsCanvas);
-        
-        // Assemble scene
+        // Assemble scene with proper layering
         this.element.appendChild(textContainer);
-        this.element.appendChild(gameContainer);
+        this.element.appendChild(gameContainer);  // Contains head-back
+        this.element.appendChild(physicsCanvas);  // Books in middle
+        this.element.appendChild(smokeyOverlay);  // Body and head-lid on top
         
         // Add to container
         this.container.appendChild(this.element);
@@ -102,8 +120,12 @@ class Scene3 extends Scene {
         // Open the head permanently
         headElement.classList.add('open');
         
-        // Disable pointer events on Smokey to avoid dragging conflicts
-        headElement.style.pointerEvents = 'none';
+        // Also add open class to head-lid for animation
+        if (this.headLid) {
+            this.headLid.classList.add('open');
+            // Disable pointer events on head-lid after opening to allow dragging
+            this.headLid.style.pointerEvents = 'none';
+        }
         
         // Create books when head is opened
         if (this.usePhysics && this.physicsBooks.length === 0) {
@@ -158,9 +180,9 @@ class Scene3 extends Scene {
             const dropRect = dropZone.getBoundingClientRect();
             const canvasRect = this.physicsCanvas.getBoundingClientRect();
             
-            // Create physics book at drop position
+            // Create physics book at drop position (50px lower)
             const x = dropRect.left + dropRect.width/2 - canvasRect.left;
-            const y = dropRect.top - canvasRect.top;
+            const y = dropRect.top - canvasRect.top + 50;
             
             this.createPhysicsBook(x, y);
             
@@ -177,16 +199,13 @@ class Scene3 extends Scene {
     }
     
     showSpeechBubble() {
-        this.speechBubble.classList.remove('hidden');
-        this.speechBubble.classList.add('show');
-        
-        // Auto advance after showing speech bubble
+        // Skip speech bubble, just auto advance
         setTimeout(() => {
             this.onComplete();
             if (window.sceneManager) {
                 window.sceneManager.nextScene();
             }
-        }, 2500);
+        }, 1000);
     }
     
     initPhysics(canvas) {
@@ -299,16 +318,16 @@ class Scene3 extends Scene {
         console.log('Head rect:', headRect);
         console.log('Canvas rect:', canvasRect);
         
-        // Calculate position relative to physics canvas
+        // Calculate position relative to physics canvas (150px lower)
         const dropZoneBounds = {
             x: headRect.left + headRect.width/2 - canvasRect.left,
-            y: headRect.top + headRect.height/2 - canvasRect.top,
+            y: headRect.top + headRect.height/2 - canvasRect.top + 150,
             width: headRect.width * 0.8,  // Make detection area larger
             height: headRect.height * 0.8
         };
         
-        // Create visual debug indicator (temporary - helps see detection zone)
-        // Remove old debug zone if it exists
+        // Debug zone commented out - no visual indicator needed
+        /*
         const oldDebug = document.querySelector('.collision-debug-zone');
         if (oldDebug) oldDebug.remove();
         
@@ -324,6 +343,7 @@ class Scene3 extends Scene {
         debugZone.style.zIndex = '10000';
         debugZone.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
         document.body.appendChild(debugZone);
+        */
         
         console.log('Collision detection zone:', dropZoneBounds);
         
@@ -368,7 +388,11 @@ class Scene3 extends Scene {
                                          bookPos.y <= bottomEdge && 
                                          bookVel.y > 0; // Moving downward
                 
-                if (inZoneX && isEnteringFromTop) {
+                // Check if book is currently being dragged
+                const isBeingDragged = this.physics.mouseConstraint && 
+                                      this.physics.mouseConstraint.body === book;
+                
+                if (inZoneX && isEnteringFromTop && !isBeingDragged) {
                     console.log('Book entering from top!', bookPos, 'Velocity:', bookVel);
                     // Book entered head from top - count it and bounce it out
                     this.handleBookInHead(book);
@@ -390,8 +414,8 @@ class Scene3 extends Scene {
             // First, reset the book's current velocity to stop its downward motion
             Matter.Body.setVelocity(book, { x: 0, y: 0 });
             
-            // Set strong upward velocity with random horizontal component
-            const velX = (Math.random() - 0.5) * 10; // Random horizontal velocity
+            // Set strong upward velocity with leftward horizontal component
+            const velX = -12 - Math.random() * 3; // Strong leftward velocity (negative = left)
             const velY = -15 - Math.random() * 5; // Strong upward velocity (negative = up)
             Matter.Body.setVelocity(book, { x: velX, y: velY });
             
@@ -402,6 +426,30 @@ class Scene3 extends Scene {
             if (book.render) {
                 book.render.fillStyle = '#FF6B6B'; // Reddish color
             }
+            
+            // Fade out and remove book after bounce animation
+            let opacity = 1.0;
+            const fadeInterval = setInterval(() => {
+                opacity -= 0.05; // Decrease opacity
+                
+                if (opacity <= 0) {
+                    // Fully faded - remove the book
+                    clearInterval(fadeInterval);
+                    if (this.physics && this.physics.world) {
+                        Matter.World.remove(this.physics.world, book);
+                        const index = this.physicsBooks.indexOf(book);
+                        if (index > -1) {
+                            this.physicsBooks.splice(index, 1);
+                        }
+                    }
+                } else {
+                    // Update book opacity
+                    if (book.render) {
+                        // Convert hex color to rgba with opacity
+                        book.render.fillStyle = `rgba(255, 107, 107, ${opacity})`;
+                    }
+                }
+            }, 25); // Update every 25ms for smooth fade
         }
         
         // Increment counter

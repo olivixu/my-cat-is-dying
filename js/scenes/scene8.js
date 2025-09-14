@@ -15,15 +15,18 @@ class Scene8 extends Scene {
         this.requiredRotations = 3;
         this.minSpeed = 2; // Minimum radians per second
         
-        // Visual state
-        this.vortexStrength = 0;
-        this.particles = [];
-        this.trail = [];
+        // Visual state - new minimal design
+        this.arcsLayers = []; // Multiple arc layers with different speeds
+        this.spiralDots = []; // Dots spiraling inward
+        this.trail = []; // Cursor trail
         this.maxTrailLength = 30;
+        this.explosionParticles = []; // Particles for rotation celebration
+        this.lastRotationCount = 0; // Track rotations for explosions
         
         // Animation
         this.animationId = null;
         this.isTransitioning = false;
+        this.spiralProgress = 0; // 0 to 1, controls spiral intensity
     }
     
     async init() {
@@ -38,46 +41,27 @@ class Scene8 extends Scene {
         
         // Create interactive container
         const interactiveContainer = document.createElement('div');
-        interactiveContainer.className = 'interactive-container vortex-container';
+        interactiveContainer.className = 'interactive-container spiral-container';
         
         // Create canvas for effects
         const canvas = document.createElement('canvas');
-        canvas.className = 'vortex-canvas';
-        canvas.width = 800;
-        canvas.height = 600;
+        canvas.className = 'spiral-canvas';
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         
-        // Create vortex center
-        const vortexCenter = document.createElement('div');
-        vortexCenter.className = 'vortex-center';
-        vortexCenter.innerHTML = '🌀';
-        
-        // Create instruction text
-        const instructions = document.createElement('div');
-        instructions.className = 'vortex-instructions';
-        instructions.innerHTML = `
-            <p>Spin your cursor in circles to open the portal</p>
-            <div class="rotation-indicator">
-                <span id="rotation-count">0</span> / ${this.requiredRotations} rotations
-            </div>
-        `;
-        
-        // Create speed indicator
-        const speedMeter = document.createElement('div');
-        speedMeter.className = 'speed-meter';
-        speedMeter.innerHTML = `
-            <div class="speed-bar">
-                <div class="speed-fill" id="speed-fill"></div>
-            </div>
-            <div class="speed-label">Speed</div>
-        `;
+        // Resize canvas to full viewport
+        const resizeCanvas = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            this.centerX = canvas.width / 2;
+            this.centerY = canvas.height / 2;
+            this.maxRadius = Math.max(canvas.width, canvas.height) / 2;
+        };
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
         
         // Assemble interactive container
         interactiveContainer.appendChild(canvas);
-        interactiveContainer.appendChild(vortexCenter);
-        interactiveContainer.appendChild(instructions);
-        interactiveContainer.appendChild(speedMeter);
         
         // Assemble scene
         this.element.appendChild(textContainer);
@@ -87,21 +71,14 @@ class Scene8 extends Scene {
         this.container.appendChild(this.element);
         
         // Store references
-        this.vortexCenter = vortexCenter;
-        this.rotationCount = this.element.querySelector('#rotation-count');
-        this.speedFill = this.element.querySelector('#speed-fill');
         this.interactiveContainer = interactiveContainer;
-        
-        // Calculate center position
-        const rect = canvas.getBoundingClientRect();
-        this.centerX = rect.width / 2;
-        this.centerY = rect.height / 2;
         
         // Setup event listeners
         this.setupEventListeners();
         
-        // Create initial particles
-        this.createParticles();
+        // Initialize visual elements
+        this.createArcsCanvas();
+        this.initializeSpiralDots();
         
         // Start animation loop
         this.animate();
@@ -182,88 +159,101 @@ class Scene8 extends Scene {
         
         this.lastAngle = angle;
         
-        // Update vortex strength based on speed
-        const targetStrength = Math.min(1, this.angularVelocity / this.minSpeed);
-        this.vortexStrength += (targetStrength - this.vortexStrength) * 0.1;
+        // Update spiral progress based on speed and rotation
+        const targetProgress = Math.min(1, Math.abs(this.totalRotation) / (2 * Math.PI * this.requiredRotations));
+        this.spiralProgress += (targetProgress - this.spiralProgress) * 0.1;
         
-        // Update displays
-        this.updateDisplays();
-        
-        // Check for completion
-        const rotations = Math.abs(this.totalRotation) / (2 * Math.PI);
-        if (rotations >= this.requiredRotations && this.angularVelocity >= this.minSpeed) {
-            this.triggerTransition();
+        // Check for rotation milestones for explosions
+        const currentRotationCount = Math.floor(Math.abs(this.totalRotation) / (2 * Math.PI));
+        if (currentRotationCount > this.lastRotationCount) {
+            this.createExplosion();
+            this.lastRotationCount = currentRotationCount;
+            
+            // If this is the third explosion, wait before transitioning
+            if (currentRotationCount === 3) {
+                setTimeout(() => {
+                    this.triggerTransition();
+                }, 2000); // 2 second delay after third burst
+            }
         }
     }
     
-    updateDisplays() {
-        // Update rotation count
-        const rotations = Math.floor(Math.abs(this.totalRotation) / (2 * Math.PI));
-        this.rotationCount.textContent = Math.min(rotations, this.requiredRotations);
+    createArcsCanvas() {
+        // Create many layers of arcs with random rotation speeds
+        const maxDimension = Math.max(window.innerWidth, window.innerHeight) * 1.5;
+        const maxRadius = maxDimension / 2;
         
-        // Update speed meter
-        const speedPercent = Math.min(100, (this.angularVelocity / this.minSpeed) * 100);
-        this.speedFill.style.width = `${speedPercent}%`;
-        
-        // Update vortex visual
-        const scale = 1 + this.vortexStrength * 2;
-        const rotation = this.totalRotation * 10;
-        this.vortexCenter.style.transform = `translate(-50%, -50%) scale(${scale}) rotate(${rotation}deg)`;
-        this.vortexCenter.style.opacity = 0.3 + this.vortexStrength * 0.7;
-    }
-    
-    createParticles() {
-        // Create floating particles around the vortex
-        for (let i = 0; i < 20; i++) {
-            this.particles.push({
-                x: Math.random() * this.canvas.width,
-                y: Math.random() * this.canvas.height,
-                vx: (Math.random() - 0.5) * 2,
-                vy: (Math.random() - 0.5) * 2,
-                size: Math.random() * 3 + 1,
-                life: 1
+        // Create a layer for every few radii - starting from 0 to fill entire screen
+        for (let r = 20; r <= maxRadius; r += 30) {
+            const canvas = document.createElement('canvas');
+            canvas.width = maxDimension;
+            canvas.height = maxDimension;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.strokeStyle = '#000000';
+            ctx.translate(maxDimension / 2, maxDimension / 2);
+            
+            // Draw arcs for this radius range
+            for (let radius = r; radius < Math.min(r + 30, maxRadius); radius += 6) {
+                // Calculate line thickness
+                const distanceFromCenter = radius;
+                const maxDistance = maxRadius;
+                const thicknessFactor = Math.max(0, 1 - (distanceFromCenter / maxDistance));
+                
+                // Inner arcs are much thicker - 15px at center
+                ctx.lineWidth = Math.max(1, 15 * thicknessFactor);
+                
+                const densityFactor = 1 - (distanceFromCenter / maxDistance) * 0.5;
+                const numArcs = Math.floor(12 * densityFactor + 8);
+                
+                for (let i = 0; i < numArcs; i++) {
+                    const arcLength = 0.15 + Math.random() * 0.7;
+                    const startAngle = Math.random() * Math.PI * 2;
+                    
+                    ctx.beginPath();
+                    ctx.arc(0, 0, radius, startAngle, startAngle + arcLength, false);
+                    ctx.stroke();
+                }
+            }
+            
+            // Random speed for each layer, some rotating backwards
+            this.arcsLayers.push({
+                canvas: canvas,
+                rotation: Math.random() * Math.PI * 2, // Random starting rotation
+                speed: (Math.random() - 0.5) * 0.01 // Random speed between -0.005 and 0.005
             });
         }
     }
     
-    animate() {
-        if (this.isTransitioning) return;
-        
-        // Clear canvas
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        // Draw trail
-        this.drawTrail();
-        
-        // Update and draw particles
-        this.updateParticles();
-        
-        // Decay values
-        this.angularVelocity *= 0.95;
-        this.vortexStrength *= 0.95;
-        
-        // Update trail life
-        this.trail.forEach(point => {
-            point.life *= 0.95;
-        });
-        this.trail = this.trail.filter(point => point.life > 0.01);
-        
-        this.animationId = requestAnimationFrame(() => this.animate());
+    initializeSpiralDots() {
+        // Create MORE dots that will spiral inward from viewport edges
+        this.maxRadius = Math.max(window.innerWidth, window.innerHeight) / 2;
+        for (let i = 0; i < 15; i++) {
+            const angle = (Math.PI * 2 / 15) * i;
+            this.spiralDots.push({
+                angle: angle,
+                radius: this.maxRadius + Math.random() * 200, // Start from viewport edge
+                speed: 0.003 + Math.random() * 0.007, // Varied speeds
+                size: 6 + Math.random() * 6 // 6-12px dots
+            });
+        }
     }
     
     drawTrail() {
         if (this.trail.length < 2) return;
         
-        this.ctx.strokeStyle = `rgba(139, 92, 246, 0.5)`;
+        // Neon yellow trail with glow
+        this.ctx.strokeStyle = '#ffff00';
         this.ctx.lineWidth = 3;
         this.ctx.lineCap = 'round';
+        this.ctx.shadowBlur = 10;
+        this.ctx.shadowColor = '#ffff00';
         
         for (let i = 1; i < this.trail.length; i++) {
             const prev = this.trail[i - 1];
             const curr = this.trail[i];
             
-            this.ctx.globalAlpha = curr.life * 0.5;
+            this.ctx.globalAlpha = curr.life * 0.6;
             this.ctx.beginPath();
             this.ctx.moveTo(prev.x, prev.y);
             this.ctx.lineTo(curr.x, curr.y);
@@ -271,63 +261,173 @@ class Scene8 extends Scene {
         }
         
         this.ctx.globalAlpha = 1;
+        this.ctx.shadowBlur = 0;
     }
     
-    updateParticles() {
-        this.particles.forEach(particle => {
-            // Pull toward center when vortex is active
-            if (this.vortexStrength > 0.1) {
-                const dx = this.centerX - particle.x;
-                const dy = this.centerY - particle.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance > 10) {
-                    const force = this.vortexStrength * 10 / distance;
-                    particle.vx += (dx / distance) * force;
-                    particle.vy += (dy / distance) * force;
-                }
-            }
-            
+    drawBlackCircle() {
+        // Draw larger solid black circle in center
+        this.ctx.fillStyle = '#000000';
+        this.ctx.beginPath();
+        this.ctx.arc(this.centerX, this.centerY, 90, 0, Math.PI * 2);
+        this.ctx.fill();
+    }
+    
+    createExplosion() {
+        // Create neon particle explosion from center - slower like Scene 1
+        for (let i = 0; i < 30; i++) {
+            const angle = (Math.PI * 2 / 30) * i + Math.random() * 0.2;
+            const speed = 1.5 + Math.random() * 1; // Slow but steady speed
+            this.explosionParticles.push({
+                x: this.centerX,
+                y: this.centerY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 1.0,
+                size: 8 + Math.random() * 4 // Start at 8-12px
+            });
+        }
+    }
+    
+    updateExplosionParticles() {
+        if (this.explosionParticles.length === 0) return;
+        
+        // Draw explosion particles
+        this.ctx.shadowBlur = 20;
+        this.ctx.shadowColor = '#ffff00';
+        this.ctx.fillStyle = '#ffff00';
+        
+        this.explosionParticles = this.explosionParticles.filter(particle => {
             // Update position
             particle.x += particle.vx;
             particle.y += particle.vy;
+            particle.vx *= 0.995; // Very minimal slowdown to travel further
+            particle.vy *= 0.995;
+            particle.life -= 0.005; // Even slower life decay
             
-            // Apply friction
-            particle.vx *= 0.98;
-            particle.vy *= 0.98;
+            // Calculate current size - shrink from initial size to 1px
+            const currentSize = Math.max(1, particle.size * particle.life);
             
-            // Wrap around edges
-            if (particle.x < 0) particle.x = this.canvas.width;
-            if (particle.x > this.canvas.width) particle.x = 0;
-            if (particle.y < 0) particle.y = this.canvas.height;
-            if (particle.y > this.canvas.height) particle.y = 0;
-            
-            // Draw particle
-            this.ctx.fillStyle = `rgba(139, 92, 246, ${particle.life})`;
-            this.ctx.beginPath();
-            this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-            this.ctx.fill();
+            if (currentSize >= 1) {
+                this.ctx.globalAlpha = 1; // Keep full opacity
+                this.ctx.beginPath();
+                this.ctx.arc(particle.x, particle.y, currentSize, 0, Math.PI * 2);
+                this.ctx.fill();
+                return true;
+            }
+            return false;
+        });
+        
+        this.ctx.globalAlpha = 1;
+        this.ctx.shadowBlur = 0;
+    }
+    
+    drawRotatingArcs() {
+        // Draw each arc layer with its own rotation
+        this.arcsLayers.forEach(layer => {
+            this.ctx.save();
+            this.ctx.translate(this.centerX, this.centerY);
+            this.ctx.rotate(layer.rotation);
+            this.ctx.drawImage(
+                layer.canvas,
+                -layer.canvas.width / 2,
+                -layer.canvas.height / 2
+            );
+            this.ctx.restore();
         });
     }
+    
+    updateAndDrawSpiralDots() {
+        // Draw all dots as bright neon yellow with glow
+        this.ctx.shadowBlur = 20;
+        this.ctx.shadowColor = '#ffff00';
+        this.ctx.fillStyle = '#ffff00';
+        
+        this.spiralDots.forEach(dot => {
+            // Update position
+            dot.angle += dot.speed * (1 + this.spiralProgress * 2);
+            dot.radius = Math.max(0, dot.radius - (0.5 + this.spiralProgress * 1));
+            
+            // Reset dot when it reaches center
+            if (dot.radius < 5) {
+                dot.radius = this.maxRadius + Math.random() * 200;
+            }
+            
+            const x = this.centerX + Math.cos(dot.angle) * dot.radius;
+            const y = this.centerY + Math.sin(dot.angle) * dot.radius;
+            
+            // Calculate size based on distance from center - smaller as it gets closer
+            const distanceRatio = dot.radius / this.maxRadius;
+            const currentSize = Math.max(1, dot.size * distanceRatio);
+            
+            // Draw glowing neon dot
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, currentSize, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
+        
+        // Reset shadow
+        this.ctx.shadowBlur = 0;
+    }
+    
+    animate() {
+        if (this.isTransitioning) return;
+        
+        // Clear canvas efficiently
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Fill background
+        this.ctx.fillStyle = '#2a2a2a';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Update each arc layer rotation at different speeds
+        this.arcsLayers.forEach(layer => {
+            layer.rotation += layer.speed;
+        });
+        
+        // Draw rotating arcs pattern
+        this.drawRotatingArcs();
+        
+        // Draw black circle in center
+        this.drawBlackCircle();
+        
+        // Draw spiraling dots
+        this.updateAndDrawSpiralDots();
+        
+        // Draw trail on top of everything
+        this.drawTrail();
+        
+        // Update and draw explosion particles
+        this.updateExplosionParticles();
+        
+        // Update trail life
+        this.trail.forEach(point => {
+            point.life *= 0.95;
+        });
+        this.trail = this.trail.filter(point => point.life > 0.01);
+        
+        // Decay values
+        this.angularVelocity *= 0.95;
+        
+        this.animationId = requestAnimationFrame(() => this.animate());
+    }
+    
     
     triggerTransition() {
         if (this.isTransitioning) return;
         this.isTransitioning = true;
         
-        // Add transition class for CSS animation
-        this.interactiveContainer.classList.add('vortex-transition');
+        // Simple fade out
+        this.element.style.transition = 'opacity 0.5s ease-out';
+        this.element.style.opacity = '0';
         
-        // Create sucking animation
-        this.element.style.animation = 'suckIntoVortex 1.5s ease-in forwards';
-        
-        // Transition to next scene after animation
+        // Transition to next scene after fade
         setTimeout(() => {
             this.cleanup();
             this.onComplete();
             if (window.sceneManager) {
                 window.sceneManager.nextScene();
             }
-        }, 1500);
+        }, 500);
     }
     
     cleanup() {

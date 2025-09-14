@@ -66,43 +66,26 @@ class SceneManager {
         this.currentScene = null;
         this.isTransitioning = false;
         
-        this.prevBtn = document.getElementById('prev-btn');
-        this.nextBtn = document.getElementById('next-btn');
-        this.progressDots = document.querySelector('.progress-dots');
-        this.sceneTitle = document.querySelector('.scene-title');
+        this.verticalNav = document.getElementById('vertical-nav');
         
         this.init();
     }
     
     init() {
-        // Create progress dots
-        this.createProgressDots();
-        
-        // Set up navigation event listeners
-        this.prevBtn.addEventListener('click', () => this.previousScene());
-        this.nextBtn.addEventListener('click', () => this.nextScene());
-        
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (this.isTransitioning) return;
-            
-            if (e.key === 'ArrowLeft') {
-                this.previousScene();
-            } else if (e.key === 'ArrowRight') {
-                this.nextScene();
-            }
-        });
+        // Create vertical navigation dots
+        this.createVerticalDots();
         
         // Load first scene
         this.loadScene(0);
     }
     
-    createProgressDots() {
-        this.progressDots.innerHTML = '';
+    createVerticalDots() {
+        this.verticalNav.innerHTML = '';
         this.scenes.forEach((scene, index) => {
             const dot = document.createElement('div');
-            dot.className = 'progress-dot';
+            dot.className = 'scene-dot';
             dot.dataset.sceneIndex = index;
+            dot.dataset.scene = scene.name;
             
             // Click to jump to scene
             dot.addEventListener('click', () => {
@@ -111,15 +94,15 @@ class SceneManager {
                 }
             });
             
-            this.progressDots.appendChild(dot);
+            this.verticalNav.appendChild(dot);
         });
     }
     
     updateProgressIndicator() {
         console.log('Updating progress indicator for scene:', this.currentSceneIndex);
         
-        // Update dots
-        const dots = this.progressDots.querySelectorAll('.progress-dot');
+        // Update vertical dots
+        const dots = this.verticalNav.querySelectorAll('.scene-dot');
         dots.forEach((dot, index) => {
             dot.classList.remove('active', 'completed');
             if (index === this.currentSceneIndex) {
@@ -129,16 +112,6 @@ class SceneManager {
                 dot.classList.add('completed');
             }
         });
-        
-        // Update title
-        if (this.sceneTitle && this.scenes[this.currentSceneIndex]) {
-            this.sceneTitle.textContent = this.scenes[this.currentSceneIndex].name;
-            console.log('Updated title to:', this.scenes[this.currentSceneIndex].name);
-        }
-        
-        // Update navigation buttons
-        this.prevBtn.disabled = this.currentSceneIndex === 0;
-        this.nextBtn.disabled = this.currentSceneIndex === this.scenes.length - 1;
     }
     
     async loadScene(index) {
@@ -150,7 +123,6 @@ class SceneManager {
             // Clean up current scene
             if (this.currentScene) {
                 this.currentScene.element?.classList.add('exiting');
-                await this.wait(500); // Wait for exit animation
                 this.currentScene.cleanup();
             }
             
@@ -164,8 +136,7 @@ class SceneManager {
             
             await this.currentScene.init();
             
-            // Add active class after a small delay to ensure DOM is ready
-            await this.wait(50);
+            // Add active class immediately
             this.currentScene.element?.classList.add('active');
             
             // Set up completion callback
@@ -198,20 +169,8 @@ class SceneManager {
     
     onSceneComplete() {
         // Mark current scene as completed
-        const dots = this.progressDots.querySelectorAll('.progress-dot');
+        const dots = this.verticalNav.querySelectorAll('.scene-dot');
         dots[this.currentSceneIndex].classList.add('completed');
-        
-        // Auto-advance after a delay (optional)
-        setTimeout(() => {
-            if (this.currentSceneIndex < this.scenes.length - 1) {
-                // Show a subtle indication that the scene is complete
-                const nextBtn = this.nextBtn;
-                nextBtn.style.animation = 'pulse 1s ease 2';
-                setTimeout(() => {
-                    nextBtn.style.animation = '';
-                }, 2000);
-            }
-        }, 500);
     }
     
     wait(ms) {

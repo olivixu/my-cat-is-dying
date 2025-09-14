@@ -33,31 +33,51 @@ class Scene2 extends Scene {
         const gameContainer = document.createElement('div');
         gameContainer.className = 'magnifying-game-container';
         
-        // Create magnifying glass element
-        const magnifyingGlass = document.createElement('img');
-        magnifyingGlass.src = 'assets/images/magnifying-glass.png';
-        magnifyingGlass.className = 'magnifying-glass';
+        // Removed magnifying glass image element
         
         // Create hidden objects container
         const objectsContainer = document.createElement('div');
         objectsContainer.className = 'hidden-objects';
         
+        // Helper function to generate random position
+        const getRandomPosition = () => {
+            return {
+                left: Math.floor(Math.random() * 60 + 20) + '%', // Between 20% and 80%
+                top: Math.floor(Math.random() * 50 + 30) + '%'   // Between 30% and 80%
+            };
+        };
+        
+        // Get random position for Smokey
+        const smokeyPosition = getRandomPosition();
+        
         // Add Smokey (the target to find)
-        const smokey = document.createElement('div');
+        const smokey = document.createElement('img');
         smokey.className = 'hidden-object smokey-cat';
-        smokey.innerHTML = '🐈‍⬛';
-        smokey.style.left = '60%';
-        smokey.style.top = '70%';
+        smokey.src = 'assets/images/find-smokey.png';
+        smokey.style.left = smokeyPosition.left;
+        smokey.style.top = smokeyPosition.top;
+        smokey.style.width = '150px';
+        smokey.style.height = 'auto';
         smokey.setAttribute('data-name', 'Smokey');
         
-        // Add other decorative objects
-        const objects = [
-            { emoji: '🪑', left: '20%', top: '40%', name: 'Chair' },
-            { emoji: '🪴', left: '80%', top: '30%', name: 'Plant' },
-            { emoji: '📚', left: '35%', top: '60%', name: 'Books' },
-            { emoji: '🕰️', left: '70%', top: '50%', name: 'Clock' },
-            { emoji: '🖼️', left: '15%', top: '70%', name: 'Picture' }
+        // Add other decorative objects with random positions
+        const objectEmojis = [
+            { emoji: '🪑', name: 'Chair' },
+            { emoji: '🪴', name: 'Plant' },
+            { emoji: '📚', name: 'Books' },
+            { emoji: '🕰️', name: 'Clock' },
+            { emoji: '🖼️', name: 'Picture' }
         ];
+        
+        const objects = objectEmojis.map(obj => {
+            const position = getRandomPosition();
+            return {
+                emoji: obj.emoji,
+                left: position.left,
+                top: position.top,
+                name: obj.name
+            };
+        });
         
         objects.forEach(obj => {
             const element = document.createElement('div');
@@ -79,10 +99,46 @@ class Scene2 extends Scene {
         this.element.appendChild(gameContainer); // Game objects
         this.element.appendChild(textContainer); // Text on top
         this.element.appendChild(blackOverlay); // Black overlay with spotlight
-        this.element.appendChild(magnifyingGlass); // Magnifying glass on top
         
         // Add to container
         this.container.appendChild(this.element);
+        
+        // Initialize spotlight position to current mouse position from global tracker
+        const sceneRect = this.element.getBoundingClientRect();
+        const currentMouseX = window.mousePosition.x - sceneRect.left;
+        const currentMouseY = window.mousePosition.y - sceneRect.top;
+        
+        // Set initial spotlight position
+        blackOverlay.style.setProperty('--spotlight-x', `${currentMouseX}px`);
+        blackOverlay.style.setProperty('--spotlight-y', `${currentMouseY}px`);
+        
+        // Animate spotlight growing in
+        let spotlightRadius = 0;
+        const targetRadius = 120;
+        const animationDuration = 1500; // 1.5 seconds
+        const animationDelay = 500; // 0.5 seconds delay
+        const startTime = Date.now() + animationDelay;
+        
+        const animateSpotlight = () => {
+            const now = Date.now();
+            const elapsed = Math.max(0, now - startTime);
+            const progress = Math.min(1, elapsed / animationDuration);
+            
+            if (progress > 0) {
+                // Ease-out animation
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                spotlightRadius = targetRadius * easeOut;
+                
+                // Update the CSS variable
+                blackOverlay.style.setProperty('--spotlight-radius', `${spotlightRadius}px`);
+            }
+            
+            if (progress < 1) {
+                requestAnimationFrame(animateSpotlight);
+            }
+        };
+        
+        requestAnimationFrame(animateSpotlight);
         
         // Set up magnifying glass movement
         const handleMouseMove = (e) => {
@@ -90,36 +146,13 @@ class Scene2 extends Scene {
             const x = e.clientX - sceneRect.left;
             const y = e.clientY - sceneRect.top;
             
-            // Move magnifying glass
-            magnifyingGlass.style.left = x + 'px';
-            magnifyingGlass.style.top = y + 'px';
-            
-            // Offset spotlight to align with rotated glass circle (up and left from handle)
-            const spotlightOffsetX = x - 15; // Adjust left for 45 degree rotation
-            const spotlightOffsetY = y - 15; // Adjust up for 45 degree rotation
+            // Update spotlight position to follow mouse
+            const spotlightOffsetX = x;
+            const spotlightOffsetY = y
             
             // Update CSS variables for radial gradient position
             blackOverlay.style.setProperty('--spotlight-x', `${spotlightOffsetX}px`);
             blackOverlay.style.setProperty('--spotlight-y', `${spotlightOffsetY}px`);
-            
-            // Check which objects are under the magnifying glass spotlight
-            const spotlightRadius = 140; // Slightly larger to ensure objects reveal with background
-            const objects = gameContainer.querySelectorAll('.hidden-object');
-            const gameRect = gameContainer.getBoundingClientRect();
-            
-            objects.forEach(obj => {
-                const objRect = obj.getBoundingClientRect();
-                const objX = objRect.left + objRect.width / 2 - sceneRect.left;
-                const objY = objRect.top + objRect.height / 2 - sceneRect.top;
-                // Use spotlight position for distance calculation
-                const distance = Math.sqrt(Math.pow(spotlightOffsetX - objX, 2) + Math.pow(spotlightOffsetY - objY, 2));
-                
-                if (distance < spotlightRadius) {
-                    obj.classList.add('revealed');
-                } else {
-                    obj.classList.remove('revealed');
-                }
-            });
         };
         
         // Handle clicking on objects
@@ -128,19 +161,42 @@ class Scene2 extends Scene {
                 this.smokeyFound = true;
                 e.target.classList.add('found');
                 
-                // Show success message
-                const successMsg = document.createElement('div');
-                successMsg.className = 'found-message';
-                successMsg.textContent = 'You found Smokey!';
-                gameContainer.appendChild(successMsg);
+                // Expand spotlight to reveal entire scene
+                const expandSpotlight = () => {
+                    const startTime = performance.now();
+                    const startRadius = 120;
+                    // Calculate radius to cover entire viewport diagonal
+                    const endRadius = Math.sqrt(window.innerWidth ** 2 + window.innerHeight ** 2);
+                    const duration = 1500; // 1.5 seconds for expansion
+                    
+                    const animate = (currentTime) => {
+                        const elapsed = currentTime - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        
+                        // Ease-out animation
+                        const easeOut = 1 - Math.pow(1 - progress, 3);
+                        const currentRadius = startRadius + (endRadius - startRadius) * easeOut;
+                        
+                        blackOverlay.style.setProperty('--spotlight-radius', `${currentRadius}px`);
+                        
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        }
+                    };
+                    
+                    requestAnimationFrame(animate);
+                };
                 
-                // Advance after a delay
+                // Start the spotlight expansion
+                expandSpotlight();
+                
+                // Advance after spotlight expansion completes
                 setTimeout(() => {
                     this.onComplete();
                     if (window.sceneManager) {
                         window.sceneManager.nextScene();
                     }
-                }, 2000);
+                }, 2500);
             } else if (e.target.classList.contains('hidden-object')) {
                 // Visual feedback for other objects
                 e.target.classList.add('wiggle');

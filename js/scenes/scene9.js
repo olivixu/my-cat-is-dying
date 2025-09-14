@@ -2,7 +2,7 @@
 class Scene9 extends Scene {
     constructor(container) {
         super(container);
-        this.text = "I don't know if she thinks of me as much as I think of her while I am away";
+        this.text = "I don't know if she thinks of me as much as I think of her";
         
         // Drawing state
         this.isDrawing = false;
@@ -33,10 +33,10 @@ class Scene9 extends Scene {
         
         // Create instructions
         const instructions = document.createElement('div');
-        instructions.className = 'drawing-instructions';
+        instructions.className = 'drawing-instructions sticky-note';
         instructions.innerHTML = `
-            <p>Try to draw Smokey from memory</p>
-            <p class="hint">Draw her silhouette - ears, body, and tail</p>
+            <p class="main-text">Draw Smokey from memory!</p>
+            <p class="hint">Try to capture her ears, body, and tail ✏️</p>
         `;
         
         // Create canvas container
@@ -51,8 +51,8 @@ class Scene9 extends Scene {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         
-        // Setup canvas style
-        this.ctx.strokeStyle = '#8b5cf6';
+        // Setup canvas style - dark stroke for light background
+        this.ctx.strokeStyle = '#333333';
         this.ctx.lineWidth = 3;
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
