@@ -203,17 +203,31 @@ export class SceneManager {
         this.isTransitioning = true;
         
         try {
-            // Clean up current scene
-            if (this.currentScene) {
-                this.currentScene.element?.classList.add('exiting');
-                // Pass the target scene index so cleanup knows where we're going
-                this.currentScene.cleanup(index);
-                
-                // Force cleanup of references
-                this.currentScene = null;
-                
-                // No delay needed - garbage collection happens automatically
-                // Removing delay prevents black flash between scenes
+            // Handle scene transition with animation
+            const previousScene = this.currentScene;
+            
+            if (previousScene) {
+                // Special case for Scene 2 to 3 - don't cleanup yet, let it fade over Scene 3
+                if (this.currentSceneIndex === 1 && index === 2) {
+                    // Store reference to clean up later
+                    const sceneToCleanup = previousScene;
+                    
+                    // Load Scene 3 first (it will appear behind Scene 2)
+                    // Then start Scene 2's fade out animation
+                    // This ensures Scene 3 is visible as Scene 2 fades
+                    
+                    // We'll add the fade class after Scene 3 loads below
+                    
+                    // Delay cleanup for fade animation
+                    setTimeout(() => {
+                        sceneToCleanup.cleanup(index);
+                    }, 900); // Slightly longer than fadeOut animation
+                } else {
+                    // All other transitions: immediate cleanup
+                    previousScene.element?.classList.add('exiting');
+                    previousScene.cleanup(index);
+                    this.currentScene = null;
+                }
             }
             
             // Load new scene
@@ -228,6 +242,18 @@ export class SceneManager {
             
             // Add active class immediately
             this.currentScene.element?.classList.add('active');
+            
+            // Now that Scene 3 is loaded, start Scene 2's fade out
+            if (previousScene && this.currentSceneIndex === 2) {
+                // Set container background to dark blue for smooth transition
+                this.container.style.backgroundColor = '#0a0a1f';
+                previousScene.element?.classList.add('scene2-slide-out');
+                
+                // Reset to black after transition completes
+                setTimeout(() => {
+                    this.container.style.backgroundColor = '#000000';
+                }, 1000);
+            }
             
             // Set up completion callback
             this.currentScene.onCompleteCallback = () => {

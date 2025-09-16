@@ -192,6 +192,21 @@
     z-index: 1;
 }
 
+.paper-texture-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('../assets/images/Paper_texture.png');
+    background-size: cover;
+    background-position: center;
+    mix-blend-mode: multiply;
+    opacity: 0.4;
+    z-index: 2;
+    pointer-events: none;
+}
+
 .black-overlay {
     position: absolute;
     top: 0;
@@ -222,6 +237,12 @@
     animation: fadeInUpScene2 1.5s ease forwards;
 }
 
+.scene2-text.fading-out {
+    animation: none; /* Stop the fade in animation */
+    opacity: 1; /* Start from visible */
+    animation: fadeOutText 1.2s ease-out forwards;
+}
+
 .scene2-text h2 {
     color: #ffffff;
     text-align: center;
@@ -244,7 +265,7 @@
     position: relative;
     width: 100%;
     height: 100vh;
-    z-index: 10;
+    z-index: 3;
 }
 
 .magnifying-glass {
@@ -375,11 +396,171 @@
     }
 }
 
+/* Hand Sweep and Split Page Transition */
+.hand-sweep {
+    position: fixed;
+    left: -200px;
+    top: 50%;
+    width: 200px;
+    height: 200px;
+    transform: translateY(-50%);
+    z-index: 900;
+    pointer-events: none;
+    /* Placeholder hand - using CSS for now */
+    background: radial-gradient(ellipse at center, rgba(255, 224, 189, 0.9) 30%, transparent 70%);
+    border-radius: 50% 40% 50% 40%;
+    animation: handSweep 2s ease-out forwards;
+}
+
+@keyframes handSweep {
+    0% {
+        left: -200px;
+        transform: translateY(-50%) rotate(-10deg);
+    }
+    100% {
+        left: 120%;
+        transform: translateY(-50%) rotate(10deg);
+    }
+}
+
+/* Simple Scene 2 to Scene 3 transition */
+/* Scene 2 fades out */
+.scene2-slide-out {
+    z-index: 10; /* Stay on top while fading */
+    animation: fadeOut 0.8s ease-out forwards;
+}
+
+/* Scene 3 fades in */
+.scene-3 {
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* Scene 3 text fades in two parts */
+.scene3-text {
+    /* Parent doesn't need opacity - children handle their own */
+}
+
+.scene3-text .text-part-1 {
+    opacity: 0;
+    animation: fadeIn 1s ease-out 1s forwards;
+}
+
+.scene3-text .text-part-2 {
+    display: block;
+    opacity: 0;
+    animation: fadeIn 1s ease-out 2.5s forwards; /* 1.5s gap */
+}
+
+/* Scene 3 Smokey fades in last */
+.scene-3 .smokey-head,
+.scene-3 .smokey-overlay {
+    opacity: 0;
+    animation: fadeIn 1s ease-out 4s forwards;
+}
+
+/* Hide head-back initially and show after fade completes */
+.scene-3 .smokey-head-back {
+    visibility: hidden;
+    animation: showHeadBack 0.1s ease-out 5s forwards;
+}
+
+@keyframes showHeadBack {
+    to {
+        visibility: visible;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes fadeOutText {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Removed slideFromRight and smokeyHeadSlide animations - not needed */
+
 /* Scene 3: Smokey Head Book Game */
 .scene-3 {
-    background: #2C1810 !important;
+    background: linear-gradient(180deg, #0a0a1f 0%, #050510 100%) !important;
     position: relative;
     overflow: hidden;
+}
+
+/* Physics book images */
+.physics-book-image {
+    position: absolute;
+    object-fit: cover;
+    pointer-events: none;
+}
+
+/* Instruction overlays */
+.instruction-overlay {
+    position: fixed;
+    right: -50px; /* Match Smokey's position */
+    top: 60%;
+    transform: translateY(-50%);
+    width: 700px;
+    height: 700px;
+    z-index: 4; /* Above smokey-overlay (3) */
+    opacity: 0;
+    animation: fadeIn 1s ease-out 5s forwards; /* Appear 1s after Smokey (4s) */
+    transition: opacity 0.5s ease-out;
+    pointer-events: none;
+    object-fit: contain;
+}
+
+.instruction-overlay.step2 {
+    animation: none; /* No auto-animation for step 2 */
+}
+
+/* Stars container and animation */
+.stars-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    opacity: 0;
+    animation: fadeIn 2s ease-out 1s forwards;
+}
+
+.star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 3s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
 }
 
 .scene3-text {
@@ -587,7 +768,14 @@
 
 /* Scene 4: Treat ranking game */
 .scene-4 {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-image: url('../assets/images/Ocean_background.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.scene-4 .story-text h2 {
+    color: #000000;
 }
 
 .treat-ranking-game {
@@ -2170,85 +2358,166 @@
 
 /* Success message removed - auto-advances now */
 
-/* Scene 11: Mirror of Scene 1 - "When she will leave" */
-.scene-11 {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+/* Scene 11: Photo Scrapbook */
+.scrapbook-scene {
+    background: radial-gradient(circle at center, #f5e6d3 0%, #d4b896 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     position: relative;
+    min-height: 100vh;
+    overflow: hidden;
 }
 
-.scene11-text {
-    margin-bottom: 80px;
+.scrapbook-title {
+    margin-bottom: 40px;
+    z-index: 10;
 }
 
-.scene11-text h2 {
-    color: rgba(255, 255, 255, 0.95);
-    font-size: 2.2rem;
-    font-weight: 300;
-    letter-spacing: -0.02em;
-    font-family: 'Inria Serif', serif;
+.scrapbook-title h2 {
+    color: #4a3728;
+    font-size: 1.8rem;
+    font-weight: 400;
+    font-family: 'Georgia', serif;
     text-align: center;
     max-width: 800px;
+    opacity: 0.9;
 }
 
-.continue-button-container {
+.book-container {
+    perspective: 2000px;
     position: relative;
-    display: inline-block;
 }
 
-.continue-button {
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
-    background: #000000;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+.book {
+    width: 700px;
+    height: 450px;
+    position: relative;
+    transform-style: preserve-3d;
     cursor: pointer;
-    transition: transform 0.3s ease;
-    position: relative;
+}
+
+.static-left-page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 350px;
+    height: 450px;
+    background: #faf8f3;
+    border-left: 1px solid #d4b896;
+    border-top: 1px solid #d4b896;
+    border-bottom: 1px solid #d4b896;
     z-index: 1;
-    will-change: transform;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    box-shadow: inset 2px 0 5px rgba(0,0,0,0.05);
+}
+
+.book-page {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 350px;
+    height: 450px;
+    transform-style: preserve-3d;
+    transform-origin: left center;
+    transition: transform 2.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+    cursor: pointer;
+}
+
+.book-page.flipped {
+    transform: rotateY(-180deg);
+}
+
+.page-content {
+    position: absolute;
+    width: 100%;
+    height: 100%;
     backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transform: translateZ(0);
-    box-shadow: 0 0 50px rgba(139, 92, 246, 0.3);
+    background: #faf8f3;
+    border: 1px solid #d4b896;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    box-shadow: 
+        0 2px 4px rgba(0,0,0,0.05),
+        inset 0 0 20px rgba(212, 184, 150, 0.05);
+}
+
+.page-content.front {
+    z-index: 2;
+}
+
+.page-content.back {
+    transform: rotateY(180deg);
+}
+
+.page-content h2 {
+    font-family: 'Georgia', serif;
+    font-size: 1.2rem;
+    color: #6b5244;
+    margin-bottom: 30px;
+    font-weight: normal;
+    letter-spacing: 0.5px;
+}
+
+.photo-frame {
+    width: 200px;
+    height: 200px;
+    padding: 10px;
+    background: white;
+    box-shadow: 
+        0 3px 10px rgba(0,0,0,0.15),
+        0 1px 2px rgba(0,0,0,0.1);
+    transform: rotate(-1deg);
+    position: relative;
+}
+
+.book-page:nth-child(even) .photo-frame {
+    transform: rotate(-2deg);
+}
+
+.book-page:nth-child(odd) .photo-frame {
+    transform: rotate(1deg);
+}
+
+.photo-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, #f0e8dc, #e8dcc8);
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #a08872;
+    font-family: 'Georgia', serif;
+    font-size: 0.9rem;
+    text-align: center;
+    font-style: italic;
 }
 
-.continue-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 70px rgba(139, 92, 246, 0.5);
+.binding-shadow {
+    position: absolute;
+    left: 347px;
+    top: 0;
+    width: 6px;
+    height: 450px;
+    background: linear-gradient(90deg, 
+        transparent 0%,
+        rgba(0,0,0,0.05) 20%,
+        rgba(0,0,0,0.08) 50%,
+        rgba(0,0,0,0.05) 80%,
+        transparent 100%);
+    z-index: 100;
+    pointer-events: none;
 }
 
-.continue-button:active {
-    transform: scale(0.98);
-}
-
-.button-icon {
-    font-size: 60px;
-    color: rgba(255, 255, 255, 0.8);
-    animation: gentle-rotate 8s infinite linear;
-}
-
-@keyframes gentle-rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* Expanding animation - reuse from Scene 1 */
-.continue-button-container.expanding .continue-button {
-    animation: expandToFullScreen 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    cursor: default;
-    will-change: transform;
-}
-
-.continue-button-container.expanding .button-icon {
-    animation: fadeOut 0.4s ease-out forwards;
-}
+/* Old Scene 11 button styles removed - now using scrapbook */
 
 /* Scene 12: Poetic Animation */
 .scene-12 {

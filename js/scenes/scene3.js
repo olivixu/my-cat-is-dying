@@ -12,7 +12,18 @@ export class Scene3 extends Scene {
         this.attemptCount = 0;
         this.maxAttempts = 3;
         this.physicsBooks = [];
+        this.bookImagePairs = []; // Track physics body + DOM image pairs
         this.usePhysics = false;
+        this.hasCompleted = false; // Prevent multiple completions
+        
+        // Book cover images
+        this.bookCovers = [
+            'assets/images/Book%20cover/Untitled_Artwork-1.png',
+            'assets/images/Book%20cover/Untitled_Artwork-2.png',
+            'assets/images/Book%20cover/Untitled_Artwork-2-1.png',
+            'assets/images/Book%20cover/Untitled_Artwork-3.png',
+            'assets/images/Book%20cover/Untitled_Artwork-4.png'
+        ];
     }
     
     async init() {
@@ -20,14 +31,49 @@ export class Scene3 extends Scene {
         this.element = document.createElement('div');
         this.element.className = 'scene story-scene scene-3';
         
+        // Create stars container
+        const starsContainer = document.createElement('div');
+        starsContainer.className = 'stars-container';
+        
+        // Create multiple stars with random positions
+        for (let i = 0; i < 40; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 100}%`;
+            star.style.animationDelay = `${Math.random() * 3}s`;
+            
+            // Vary star sizes slightly
+            const size = Math.random() * 2 + 1; // 1-3px
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            
+            starsContainer.appendChild(star);
+        }
+        
         // Create text display
         const textContainer = document.createElement('div');
         textContainer.className = 'story-text scene3-text';
-        textContainer.innerHTML = `<h2>${this.text}</h2>`;
+        textContainer.innerHTML = `
+            <h2>
+                <span class="text-part-1">There is a lot she doesn't know</span>
+                <span class="text-part-2">because she is a cat.</span>
+            </h2>
+        `;
         
         // Create game container
         const gameContainer = document.createElement('div');
         gameContainer.className = 'smokey-game-container';
+        
+        // Create books container with proper z-index layering
+        this.booksContainer = document.createElement('div');
+        this.booksContainer.style.position = 'absolute';
+        this.booksContainer.style.top = '0';
+        this.booksContainer.style.left = '0';
+        this.booksContainer.style.width = '100%';
+        this.booksContainer.style.height = '100%';
+        this.booksContainer.style.zIndex = '2';  // Between head-back (1) and smokey-overlay (3)
+        this.booksContainer.style.pointerEvents = 'none';
         
         // Create physics canvas
         const physicsCanvas = document.createElement('canvas');
@@ -38,6 +84,9 @@ export class Scene3 extends Scene {
         
         // Initialize physics
         this.initPhysics(physicsCanvas);
+        
+        // Start update loop for book images
+        this.startUpdateLoop();
         
         // Create Smokey's head
         const smokeyHead = document.createElement('div');
@@ -60,8 +109,15 @@ export class Scene3 extends Scene {
         headLid.className = 'head-lid';
         headLid.src = 'assets/images/smokey-head.png';
         headLid.alt = 'Smokey head';
-        headLid.style.pointerEvents = 'auto'; // Make head-lid clickable
-        headLid.style.cursor = 'pointer';
+        // Initially disable clicking during animation
+        headLid.style.pointerEvents = 'none';
+        headLid.style.cursor = 'default';
+        
+        // Enable clicking after animations complete (4s delay)
+        setTimeout(() => {
+            headLid.style.pointerEvents = 'auto';
+            headLid.style.cursor = 'pointer';
+        }, 4000);
         
         // Add click to head-lid instead of smokeyHead
         headLid.addEventListener('click', () => {
@@ -88,6 +144,22 @@ export class Scene3 extends Scene {
         // Store headLid reference for animation
         this.headLid = headLid;
         
+        // Create instruction overlays
+        const instructionStep1 = document.createElement('img');
+        instructionStep1.src = 'assets/images/Scene-3-instructions/headArrowstep1.png';
+        instructionStep1.className = 'instruction-overlay step1';
+        instructionStep1.style.opacity = '0'; // Start invisible for fade-in
+        
+        const instructionStep2 = document.createElement('img');
+        instructionStep2.src = 'assets/images/Scene-3-instructions/headArrowstep2.png';
+        instructionStep2.className = 'instruction-overlay step2';
+        instructionStep2.style.display = 'none'; // Hidden initially
+        instructionStep2.style.opacity = '0';
+        
+        // Store references for later use
+        this.instructionStep1 = instructionStep1;
+        this.instructionStep2 = instructionStep2;
+        
         // Create speech bubble (hidden initially)
         const speechBubble = document.createElement('div');
         speechBubble.className = 'speech-bubble hidden';
@@ -98,10 +170,14 @@ export class Scene3 extends Scene {
         gameContainer.appendChild(speechBubble);
         
         // Assemble scene with proper layering
+        this.element.appendChild(starsContainer);  // Stars in background
         this.element.appendChild(textContainer);
         this.element.appendChild(gameContainer);  // Contains head-back
-        this.element.appendChild(physicsCanvas);  // Books in middle
+        this.element.appendChild(physicsCanvas);  // Physics canvas
+        this.element.appendChild(this.booksContainer);  // Books container with z-index 2
         this.element.appendChild(smokeyOverlay);  // Body and head-lid on top
+        this.element.appendChild(instructionStep1);  // Instruction overlay on top
+        this.element.appendChild(instructionStep2);  // Step 2 overlay (hidden)
         
         // Add to container
         this.container.appendChild(this.element);
@@ -110,12 +186,47 @@ export class Scene3 extends Scene {
         this.speechBubble = speechBubble;
         this.physicsCanvas = physicsCanvas;
         
+        // Immediately create the split pages that cover the scene
+        // These pages have the purple paper texture and will open to reveal Scene 3
+        const topPage = document.createElement('div');
+        topPage.className = 'paper-page-top';
+        
+        const bottomPage = document.createElement('div');
+        bottomPage.className = 'paper-page-bottom';
+        
+        this.container.appendChild(topPage);
+        this.container.appendChild(bottomPage);
+        
+        // After a brief pause, trigger the page opening animation
+        setTimeout(() => {
+            topPage.classList.add('turning');
+            bottomPage.classList.add('turning');
+            
+            // Remove pages after animation completes
+            setTimeout(() => {
+                topPage.remove();
+                bottomPage.remove();
+            }, 2000); // After page turn completes
+        }, 600); // Brief pause before pages start turning
+        
         // Physics animation is handled by PhysicsWrapper automatically
     }
     
     toggleHead(headElement) {
         // Only allow opening once
         if (this.headOpenedOnce) return;
+        
+        // Transition instruction overlays
+        if (this.instructionStep1 && this.instructionStep2) {
+            this.instructionStep1.style.opacity = '0';
+            setTimeout(() => {
+                this.instructionStep1.style.display = 'none';
+                this.instructionStep2.style.display = 'block';
+                setTimeout(() => {
+                    this.instructionStep2.style.opacity = '1';
+                }, 50); // Small delay to ensure display change takes effect
+            }, 500);
+        }
         
         this.headOpen = true;
         this.headOpenedOnce = true;
@@ -194,15 +305,19 @@ export class Scene3 extends Scene {
             
             // Check if we've reached max attempts
             if (this.attemptCount >= this.maxAttempts) {
-                this.showSpeechBubble();
+                this.completeScene();
             }
         }
         
         return false;
     }
     
-    showSpeechBubble() {
-        // Skip speech bubble, just auto advance
+    completeScene() {
+        // Prevent multiple completions
+        if (this.hasCompleted) return;
+        this.hasCompleted = true;
+        
+        // Auto advance after delay
         setTimeout(() => {
             this.onComplete();
             if (window.sceneManager) {
@@ -253,6 +368,9 @@ export class Scene3 extends Scene {
             this.usePhysics = true;
             console.log('Physics initialized successfully');
             
+            // Hide the physics canvas since we're using DOM images for visuals
+            this.physics.render.canvas.style.opacity = '0';
+            
             // Don't create books initially - wait for head to be opened
             
         } catch (error) {
@@ -265,27 +383,93 @@ export class Scene3 extends Scene {
     createInitialBooks(canvas) {
         if (!this.physics) return;
         
-        // Create 5 books at the bottom of the screen
-        const bookWidth = 40;
-        const bookHeight = 60;
-        const spacing = 80;
-        const startX = canvas.width / 2 - (4 * spacing) / 2;
-        const y = canvas.height - 150;
+        // Create 5 books falling from above the screen
+        const bookWidth = 160;
+        const bookHeight = 240;
+        const spacing = 180;
+        const startX = canvas.width / 2 - (4 * spacing) / 2 - 300; // Shift left by 300px to avoid Smokey
+        const y = -200; // Start above the screen
         
         for (let i = 0; i < 5; i++) {
-            const x = startX + (i * spacing);
-            const book = this.physics.createRectangle(x, y, bookWidth, bookHeight, {
+            // Stagger book creation for a cascade effect
+            setTimeout(() => {
+                const x = startX + (i * spacing) + (Math.random() * 40 - 20); // Add slight X randomness
+                const bookY = y + (Math.random() * 100); // Vary starting height slightly
+                const book = this.physics.createRectangle(x, bookY, bookWidth, bookHeight, {
                 restitution: 0.9,  // Higher bounce
                 friction: 0.1,     // Lower friction
                 density: 0.001,
                 render: {
-                    fillStyle: '#8B4513'
+                    visible: false  // Hide physics body since we're using DOM images
                 },
                 label: 'book'  // Add label for identification
             });
             
-            this.physicsBooks.push(book);
+            // Create DOM image for this book - use index to ensure unique covers
+            const bookCover = this.bookCovers[i % this.bookCovers.length];  // Use index for unique covers
+            const bookImage = document.createElement('img');
+            bookImage.src = bookCover;
+            bookImage.className = 'physics-book-image';
+            bookImage.style.position = 'absolute';
+            bookImage.style.width = bookWidth + 'px';
+            bookImage.style.height = bookHeight + 'px';
+            bookImage.style.objectFit = 'cover';
+            bookImage.style.pointerEvents = 'none';
+            
+                // Add to books container
+                this.booksContainer.appendChild(bookImage);
+                
+                // No upward force - let books fall naturally from above
+                
+                // Store references
+                this.physicsBooks.push(book);
+                this.bookImagePairs.push({ body: book, image: bookImage });
+            }, i * 200); // Stagger each book by 200ms
         }
+    }
+    
+    respawnBook(canvas) {
+        if (!this.physics || !canvas) return;
+        
+        const bookWidth = 160;
+        const bookHeight = 240;
+        const spacing = 180;
+        const startX = canvas.width / 2 - (4 * spacing) / 2 - 300; // Same left shift as original
+        const y = -200; // Start above screen
+        
+        // Random position within the book range
+        const i = Math.floor(Math.random() * 5);
+        const x = startX + (i * spacing) + (Math.random() * 40 - 20);
+        const bookY = y + (Math.random() * 100);
+        
+        // Create new physics book
+        const book = this.physics.createRectangle(x, bookY, bookWidth, bookHeight, {
+            restitution: 0.9,
+            friction: 0.1,
+            density: 0.001,
+            render: {
+                visible: false
+            },
+            label: 'book'
+        });
+        
+        // Create DOM image with random cover
+        const bookCover = this.bookCovers[Math.floor(Math.random() * this.bookCovers.length)];
+        const bookImage = document.createElement('img');
+        bookImage.src = bookCover;
+        bookImage.className = 'physics-book-image';
+        bookImage.style.position = 'absolute';
+        bookImage.style.width = bookWidth + 'px';
+        bookImage.style.height = bookHeight + 'px';
+        bookImage.style.objectFit = 'cover';
+        bookImage.style.pointerEvents = 'none';
+        
+        // Add to containers
+        this.booksContainer.appendChild(bookImage);
+        this.physicsBooks.push(book);
+        this.bookImagePairs.push({ body: book, image: bookImage });
+        
+        console.log('Book respawned at position:', x, bookY);
     }
     
     setupCollisionDetection() {
@@ -400,11 +584,15 @@ export class Scene3 extends Scene {
                                 book.render.fillStyle = '#FF6B6B'; // Reddish color
                             }
                             
+                            // Find corresponding image
+                            const pairIndex = this.bookImagePairs.findIndex(pair => pair.body === book);
+                            const bookImage = pairIndex > -1 ? this.bookImagePairs[pairIndex].image : null;
+                            
                             // Start fade out after a short delay
                             setTimeout(() => {
                                 let opacity = 1.0;
                                 const fadeInterval = setInterval(() => {
-                                    opacity -= 0.05; // Decrease opacity gradually
+                                    opacity -= 0.15; // Decrease opacity faster
                                     
                                     if (opacity <= 0) {
                                         // Fully faded - remove the book
@@ -418,19 +606,36 @@ export class Scene3 extends Scene {
                                         if (this.physics && this.physics.world) {
                                             Matter.World.remove(this.physics.world, book);
                                         }
+                                        // Remove DOM image
+                                        if (bookImage && bookImage.parentNode) {
+                                            bookImage.remove();
+                                        }
+                                        // Remove from pairs
+                                        if (pairIndex > -1) {
+                                            this.bookImagePairs.splice(pairIndex, 1);
+                                        }
+                                        
+                                        // Respawn a new book after a delay
+                                        setTimeout(() => {
+                                            this.respawnBook(this.physicsCanvas);
+                                        }, 1000); // Respawn 1 second after removal
                                     } else {
-                                        // Update book opacity
+                                        // Update book and image opacity
                                         if (book.render) {
                                             // Convert to rgba with current opacity
                                             book.render.fillStyle = `rgba(255, 107, 107, ${opacity})`;
                                         }
+                                        // Update image opacity
+                                        if (bookImage) {
+                                            bookImage.style.opacity = opacity;
+                                        }
                                     }
-                                }, 50); // Update every 50ms for smooth fade (1.5 seconds total)
-                            }, 1500); // Start fade after 1.5 seconds of bouncing
+                                }, 30); // Update every 30ms for smooth fade (about 0.2 seconds total)
+                            }, 500); // Start fade after 0.5 seconds of bouncing
                             
-                            // Check if reached max attempts
-                            if (this.attemptCount >= this.maxAttempts) {
-                                this.showSpeechBubble();
+                            // Check if we've hit max attempts
+                            if (this.attemptCount >= this.maxAttempts && !this.hasCompleted) {
+                                this.completeScene();
                             }
                         }
                     }
@@ -453,10 +658,9 @@ export class Scene3 extends Scene {
             // Add some angular velocity for spinning effect
             Matter.Body.setAngularVelocity(book, (Math.random() - 0.5) * 0.5);
             
-            // Change book color to indicate it was processed
-            if (book.render) {
-                book.render.fillStyle = '#FF6B6B'; // Reddish color
-            }
+            // Find corresponding image
+            const pairIndex = this.bookImagePairs.findIndex(pair => pair.body === book);
+            const bookImage = pairIndex > -1 ? this.bookImagePairs[pairIndex].image : null;
             
             // Fade out and remove book after bounce animation
             let opacity = 1.0;
@@ -464,7 +668,7 @@ export class Scene3 extends Scene {
                 opacity -= 0.05; // Decrease opacity
                 
                 if (opacity <= 0) {
-                    // Fully faded - remove the book
+                    // Fully faded - remove the book and image
                     clearInterval(fadeInterval);
                     if (this.physics && this.physics.world) {
                         Matter.World.remove(this.physics.world, book);
@@ -473,11 +677,18 @@ export class Scene3 extends Scene {
                             this.physicsBooks.splice(index, 1);
                         }
                     }
+                    // Remove image
+                    if (bookImage && bookImage.parentNode) {
+                        bookImage.remove();
+                    }
+                    // Remove from pairs
+                    if (pairIndex > -1) {
+                        this.bookImagePairs.splice(pairIndex, 1);
+                    }
                 } else {
-                    // Update book opacity
-                    if (book.render) {
-                        // Convert hex color to rgba with opacity
-                        book.render.fillStyle = `rgba(255, 107, 107, ${opacity})`;
+                    // Update image opacity
+                    if (bookImage) {
+                        bookImage.style.opacity = opacity;
                     }
                 }
             }, 25); // Update every 25ms for smooth fade
@@ -495,16 +706,44 @@ export class Scene3 extends Scene {
     
     createPhysicsBook(x, y) {
         if (this.usePhysics && this.physics) {
-            // Create a physics book with random size and velocity
-            const size = 30 + Math.random() * 20;
+            // Create a physics book with random size and velocity - doubled size again
+            const size = 160 + Math.random() * 40;  // Doubled size again
             const book = this.physics.createRectangle(x, y, size, size * 0.7, {
                 restitution: 0.7,  // Bounciness
                 friction: 0.3,
                 density: 0.001,
                 render: {
-                    fillStyle: '#8B4513'  // Brown color for books
+                    visible: false  // Hide physics body as we'll use DOM image
                 }
             });
+            
+            // Create DOM image that follows the physics body
+            const bookImage = document.createElement('img');
+            const randomCover = this.bookCovers[Math.floor(Math.random() * this.bookCovers.length)];
+            
+            console.log('Creating book image:', randomCover, 'at position:', x, y);
+            
+            // Add error and load handlers
+            bookImage.onerror = () => {
+                console.error('Failed to load book image:', randomCover);
+                // Fallback to emoji
+                bookImage.style.display = 'none';
+            };
+            
+            bookImage.onload = () => {
+                console.log('Book image loaded successfully:', randomCover);
+            };
+            
+            bookImage.src = randomCover;
+            bookImage.className = 'physics-book-image';
+            bookImage.style.position = 'absolute';
+            bookImage.style.width = size + 'px';
+            bookImage.style.height = 'auto';
+            bookImage.style.pointerEvents = 'none';
+            
+            // Add to books container
+            this.booksContainer.appendChild(bookImage);
+            console.log('Book image added to books container');
             
             // Apply upward and random horizontal force
             const forceX = (Math.random() - 0.5) * 0.01;
@@ -513,17 +752,7 @@ export class Scene3 extends Scene {
             
             // Store reference
             this.physicsBooks.push(book);
-            
-            // Remove book after 5 seconds
-            setTimeout(() => {
-                if (this.physics && this.physics.world) {
-                    Matter.World.remove(this.physics.world, book);
-                    const index = this.physicsBooks.indexOf(book);
-                    if (index > -1) {
-                        this.physicsBooks.splice(index, 1);
-                    }
-                }
-            }, 5000);
+            this.bookImagePairs.push({ body: book, image: bookImage });
         } else {
             // Fallback to CSS animation
             this.createCSSBook(x, y);
@@ -532,14 +761,21 @@ export class Scene3 extends Scene {
     
     createCSSBook(x, y) {
         // Create animated book element for fallback
-        const book = document.createElement('div');
-        book.innerHTML = '📚';
+        const book = document.createElement('img');
+        // Select random book cover
+        const randomCover = this.bookCovers[Math.floor(Math.random() * this.bookCovers.length)];
+        book.src = randomCover;
         book.className = 'bouncing-book';
         book.style.position = 'absolute';
         book.style.left = x + 'px';
         book.style.top = y + 'px';
-        book.style.fontSize = '40px';
+        book.style.width = '50px';
+        book.style.height = 'auto';
         book.style.zIndex = '100';
+        
+        // Add random initial rotation
+        const initialRotation = Math.random() * 30 - 15; // -15 to +15 degrees
+        book.style.transform = `rotate(${initialRotation}deg)`;
         
         this.element.appendChild(book);
         
@@ -554,12 +790,64 @@ export class Scene3 extends Scene {
         }, 1000);
     }
     
+    startUpdateLoop() {
+        const updateImages = () => {
+            this.update();
+            if (!this.isCleanedUp) {
+                requestAnimationFrame(updateImages);
+            }
+        };
+        updateImages();
+    }
+    
     update() {
+        // Update book image positions to match physics bodies
+        if (this.bookImagePairs.length > 0) {
+            console.log('Updating', this.bookImagePairs.length, 'book images');
+        }
+        
+        this.bookImagePairs.forEach((pair, index) => {
+            if (pair.body && pair.image && pair.image.parentNode) {
+                const canvasRect = this.element.querySelector('.physics-canvas').getBoundingClientRect();
+                const elRect = this.element.getBoundingClientRect();
+                
+                // Position image at physics body location
+                const x = pair.body.position.x + canvasRect.left - elRect.left;
+                const y = pair.body.position.y + canvasRect.top - elRect.top;
+                
+                // Log first book position occasionally
+                if (index === 0 && Math.random() < 0.02) {
+                    console.log('Book 0 position:', x, y, 'body pos:', pair.body.position);
+                }
+                
+                // Center the image on the body position
+                const width = parseFloat(pair.image.style.width);
+                const height = pair.image.offsetHeight;
+                
+                pair.image.style.left = (x - width/2) + 'px';
+                pair.image.style.top = (y - height/2) + 'px';
+                
+                // Match rotation
+                pair.image.style.transform = `rotate(${pair.body.angle}rad)`;
+            }
+        });
+        
         // Physics engine runs automatically via Matter.Runner
         // No manual update needed for PhysicsWrapper
     }
     
     cleanup() {
+        // Mark as cleaned up to stop update loop
+        this.isCleanedUp = true;
+        
+        // Remove all book images
+        this.bookImagePairs.forEach(pair => {
+            if (pair.image && pair.image.parentNode) {
+                pair.image.remove();
+            }
+        });
+        this.bookImagePairs = [];
+        
         // Remove debug zone
         const debugZone = document.querySelector('.collision-debug-zone');
         if (debugZone) {

@@ -17,6 +17,10 @@ export class Scene2 extends Scene {
         const backgroundLayer = document.createElement('div');
         backgroundLayer.className = 'scene2-background';
         
+        // Create paper texture overlay (between background and game objects)
+        const paperTexture = document.createElement('div');
+        paperTexture.className = 'paper-texture-overlay';
+        
         // Create full-screen black overlay with spotlight hole
         const blackOverlay = document.createElement('div');
         blackOverlay.className = 'black-overlay';
@@ -114,8 +118,8 @@ export class Scene2 extends Scene {
             element.src = `assets/images/Find smokey images/${imgData.filename}`;
             // Make Smokey slightly larger to be findable but still challenging
             const imageWidth = imgData.isSmokey ? 
-                140 + Math.random() * 60 : // Smokey: 140-200px
-                100 + Math.random() * 80;   // Others: 100-180px
+                200 + Math.random() * 80 : // Smokey: 200-280px
+                160 + Math.random() * 100;   // Others: 160-260px
             element.style.width = `${imageWidth}px`;
             element.style.height = 'auto';
             element.setAttribute('data-name', imgData.name);
@@ -143,6 +147,7 @@ export class Scene2 extends Scene {
         
         // Assemble scene (layered properly)
         this.element.appendChild(backgroundLayer); // Purple background
+        this.element.appendChild(paperTexture); // Paper texture overlay
         this.element.appendChild(gameContainer); // Game objects
         this.element.appendChild(textContainer); // Text on top
         this.element.appendChild(blackOverlay); // Black overlay with spotlight
@@ -237,13 +242,42 @@ export class Scene2 extends Scene {
                 // Start the spotlight expansion
                 expandSpotlight();
                 
-                // Advance after spotlight expansion completes
+                // After spotlight expansion, trigger transition sequence
                 setTimeout(() => {
-                    this.onComplete();
-                    if (window.sceneManager) {
-                        window.sceneManager.nextScene();
+                    // Fade out text
+                    const textContainer = this.element.querySelector('.scene2-text');
+                    if (textContainer) {
+                        // Add class for fade out animation
+                        textContainer.classList.add('fading-out');
                     }
-                }, 2500);
+                    
+                    // Create and animate hand sweep
+                    const handSweep = document.createElement('div');
+                    handSweep.className = 'hand-sweep';
+                    this.element.appendChild(handSweep);
+                    
+                    // Sweep away objects and their tooltips
+                    const wrappers = this.element.querySelectorAll('.image-wrapper');
+                    wrappers.forEach((wrapper, index) => {
+                        setTimeout(() => {
+                            wrapper.style.transition = 'transform 0.8s ease-out, opacity 0.6s ease-out';
+                            wrapper.style.transform = `translateX(${150 + Math.random() * 100}vw) translateY(${-20 + Math.random() * 40}px) rotate(${Math.random() * 360}deg)`;
+                            wrapper.style.opacity = '0';
+                        }, index * 50);
+                    });
+                    
+                    // After sweep completes, add slide animation and transition
+                    setTimeout(() => {
+                        // Add slide-out class to entire scene (purple background and all)
+                        this.element.classList.add('scene2-slide-out');
+                        
+                        // Trigger Scene 3 immediately to slide in from right
+                        this.onComplete();
+                        if (window.sceneManager) {
+                            window.sceneManager.nextScene();
+                        }
+                    }, 1500); // Wait for sweep to complete
+                }, 1500); // Start after spotlight expansion
             } else if (e.target.classList.contains('hidden-object')) {
                 // No visual feedback for wrong items
             }
@@ -262,6 +296,9 @@ export class Scene2 extends Scene {
             this.element.removeEventListener('mousemove', this.mouseMoveHandler);
             this.element.removeEventListener('click', this.clickHandler);
         }
+        // Remove transition elements if they exist
+        const handSweep = this.element?.querySelector('.hand-sweep');
+        if (handSweep) handSweep.remove();
         super.cleanup();
     }
 }
