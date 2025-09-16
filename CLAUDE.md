@@ -2,23 +2,20 @@
 
 ## Critical Issues Fixed (2025-09-16)
 
-### 1. Scene 5 (Breathing Game) Auto-Skipping
+### 1. Scene 5 (Breathing Game) Auto-Skipping ✅
 **Problem:** After completing Scene 4 (treat sorting), Scene 5 appears briefly but immediately skips to Scene 6 without allowing gameplay.
 
-**Fixed:**
-1. **Added safeguards to prevent auto-completion:**
-   - `hasInteracted` flag - tracks if user clicked
-   - `hasMeaningfulInteraction` flag - tracks if user actually held during a bar
-   - `minimumPlayTime = 5000` - requires 5 seconds before allowing completion
-   - `gameStartTime` tracking
-   - `isProcessingBreath` flag to prevent double-processing
+**Root Cause:** Scene 4's `completeGame()` was being called multiple times due to drag events on narrow viewports, causing race conditions.
 
-2. **Fixed event listener mismatch (CRITICAL BUG):**
-   - **Root cause:** Event listeners were added to `gameContainer` but removed from `this.element`
-   - This caused memory leaks and accumulating event handlers
-   - **Fix:** Store `this.gameContainer` as instance property in `setupEventListeners()`
-   - Store bound event handler functions (`this.boundStartHolding`, etc.)
-   - Remove listeners from same element (`this.gameContainer`) in cleanup
+**Fixed:**
+1. **Scene 4 completion guard:**
+   - Added `gameCompleted` flag to prevent multiple `completeGame()` calls
+   - Prevents duplicate scene transitions
+
+2. **SceneManager improvements:**
+   - Added transition queue system to handle overlapping transitions
+   - Implemented `isTransitioning` guard to prevent race conditions
+   - Added proper timer management in base Scene class
 
 ### 2. Scene 6 (Pill Catching) - Cat Appearing Twice
 **Problem:** The pixel smokey cat avatar appears at scene start, then moves in from bottom again, causing visual glitch.
@@ -36,40 +33,55 @@
 - Changed to store animation ID directly to `this.staticAnimationId` within the animation loop
 - This ensures proper cleanup and prevents memory leak that was causing black screen
 
-### 4. Navigation Broken
+### 4. Navigation Broken ✅
 **Problem:** Clicking navigation dots shows black screen instead of loading scenes.
 
-**Root cause:** Event listener memory leaks and animation cleanup issues
-- Scene 5: Event listeners weren't properly removed, they accumulated
-- Scene 7: Animation frame IDs weren't stored correctly for cleanup
+**Root cause:** Scene transitions were breaking due to multiple issues:
+- Scene 4 multiple completion calls
+- SceneManager lacking transition guards
 
 **Fixed:** 
-- Scene 5: Event listener fix (see #1 above)
-- Scene 7: Animation ID scoping fix (see #3 above)
-- These fixes together should resolve navigation issues
+- Added transition queue and guards in SceneManager
+- Fixed Scene 4 completion logic
+- Navigation now works reliably
+
+### 5. Scene 5 to 6 Transition - Dot Jump and Black Flash ✅
+**Problem:** 
+1. Black flash between Scene 5 and Scene 6 despite both having sky backgrounds
+2. Middle dot jumping left during expansion animation
+
+**Fixed:**
+1. **Black flash:** Removed 50ms delay in SceneManager, kept sky overlay during transition
+2. **Dot jump:** Replaced complex dot expansion with overlay approach:
+   - Creates separate blue circle overlay at middle dot position
+   - Overlay expands while dots remain in flexbox (no layout shifts)
+   - Reduced scale from 300 to 200 for better performance
 
 ## Code Locations
 
-### Scene 5 (/Users/oliviaxu/my-cat-is-dying/js/scenes/scene5.js)
-Key changes at lines:
-- 135-163: `setupEventListeners()` - Store gameContainer and bound functions
-- 684-690: `cleanup()` - Remove listeners from gameContainer using bound functions
+### SceneManager (/Users/oliviaxu/my-cat-is-dying/js/sceneManager.js)
+- Added transition queue system
+- Removed 50ms delay that caused black flash
+- Added `targetSceneIndex` parameter to cleanup()
 
-### Scene 6 (/Users/oliviaxu/my-cat-is-dying/js/scenes/scene6.js)
-Key change:
-- Around line where fireworks complete - removed `this.cleanup()` before `onComplete()`
+### Scene 4 (/Users/oliviaxu/my-cat-is-dying/js/scenes/scene4.js)
+- Added `gameCompleted` flag to prevent multiple completion calls
+
+### Scene 5 (/Users/oliviaxu/my-cat-is-dying/js/scenes/scene5.js)
+- Lines 672-705: New overlay approach for dot expansion
+- Lines 767-771: Cleanup for expand overlay
+
+### CSS (/Users/oliviaxu/my-cat-is-dying/css/scenes.css)
+- Lines 1068-1082: New expand overlay animation (scale 200 instead of 300)
 
 ## Testing Checklist
 After restart, verify:
-- [ ] Scene 5 breathing game is playable (not auto-skipping)
-- [ ] Scene 6 cat doesn't appear twice at start
-- [ ] Scene 8 matching card game loads properly (no black screen)
-- [ ] Navigation dots work without showing black screens
-- [ ] No memory leaks from accumulating event listeners
+- [x] Scene 5 breathing game is playable (not auto-skipping) ✅
+- [x] Scene 6 cat doesn't appear twice at start ✅
+- [x] Scene 7 matching card game loads properly (no black screen) ✅
+- [x] Navigation dots work without showing black screens ✅
+- [x] No black flash between Scene 5 and 6 ✅
+- [x] No dot jumping during Scene 5 to 6 transition ✅
 
-## If Issues Persist
-1. Check if event listeners are being added/removed from the same element
-2. Verify SceneManager cleanup order
-3. Check for any remaining `this.cleanup()` calls before `onComplete()`
-4. Use browser DevTools to check for accumulated event listeners
-5. Check console for any error messages during scene transitions
+## Remaining Issues to Investigate
+- Scene 8 (Spiral Drawing) - May need investigation if issues arise
