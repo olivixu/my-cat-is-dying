@@ -669,29 +669,39 @@ export class Scene5 extends Scene {
             this.lines.forEach(line => line.element.remove());
             this.lines = [];
             
-            // Trigger dot expansion animation - only expand the middle dot
+            // Create an overlay that expands from the middle dot position
             const dots = this.progressDots.querySelectorAll('.progress-dot');
             if (dots.length >= 2) {
                 const middleDot = dots[1]; // Get the middle dot (index 1)
-                
-                // Create a placeholder to maintain the gap
-                const placeholder = document.createElement('div');
-                placeholder.style.width = '12px';
-                placeholder.style.height = '12px';
-                placeholder.style.display = 'inline-block';
-                
-                // Insert placeholder before setting position
-                middleDot.parentNode.insertBefore(placeholder, middleDot.nextSibling);
-                
-                // Get the dot's position to maintain it during expansion
                 const rect = middleDot.getBoundingClientRect();
-                middleDot.style.position = 'fixed';
-                middleDot.style.left = `${rect.left + rect.width / 2}px`;
-                middleDot.style.top = `${rect.top + rect.height / 2}px`;
-                middleDot.style.transform = 'translate(-50%, -50%)';
                 
-                // Add expanding class to trigger animation
-                middleDot.classList.add('expanding');
+                // Create overlay element
+                const expandOverlay = document.createElement('div');
+                expandOverlay.className = 'expand-overlay';
+                expandOverlay.style.cssText = `
+                    position: fixed;
+                    width: 12px;
+                    height: 12px;
+                    background: #5B8DEE;
+                    border-radius: 50%;
+                    left: ${rect.left + rect.width / 2}px;
+                    top: ${rect.top + rect.height / 2}px;
+                    transform: translate(-50%, -50%);
+                    z-index: 1000;
+                `;
+                
+                // Add to body (or container)
+                document.body.appendChild(expandOverlay);
+                
+                // Trigger animation after a frame to ensure initial styles are applied
+                requestAnimationFrame(() => {
+                    expandOverlay.classList.add('expanding');
+                });
+                
+                // Hide the dots after a short delay
+                this.addTimer(() => {
+                    this.progressDots.style.opacity = '0';
+                }, 200);
             }
             
             // Create and fade in Windows XP sky overlay during dot expansion
@@ -752,6 +762,12 @@ export class Scene5 extends Scene {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
+        }
+        
+        // Clean up expand overlay if it exists
+        const expandOverlay = document.querySelector('.expand-overlay');
+        if (expandOverlay) {
+            expandOverlay.remove();
         }
         
         // Clean up XP sky overlay if it exists (for navigation or scene end)
