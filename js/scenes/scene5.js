@@ -735,7 +735,7 @@ export class Scene5 extends Scene {
         }, 1500); // 1.5 second delay for fade and pause
     }
     
-    cleanup() {
+    cleanup(targetSceneIndex = null) {
         // Cancel setup timer if it's still pending
         if (this.setupTimerId) {
             clearTimeout(this.setupTimerId);
@@ -755,8 +755,18 @@ export class Scene5 extends Scene {
         }
         
         // Clean up XP sky overlay if it exists (for navigation or scene end)
+        // SPECIAL CASE: Keep overlay when transitioning to Scene 6 for seamless transition
         if (this.xpSkyOverlay) {
-            this.xpSkyOverlay.remove();
+            // Use the passed targetSceneIndex to check if going to Scene 6
+            const goingToScene6 = targetSceneIndex === 5; // Scene 6 is at index 5
+            
+            if (!goingToScene6) {
+                // Remove overlay if NOT going to Scene 6
+                this.xpSkyOverlay.remove();
+            } else {
+                // Mark overlay as coming from Scene 5 so Scene 6 knows to handle it
+                this.xpSkyOverlay.dataset.fromScene5 = 'true';
+            }
             this.xpSkyOverlay = null;
         }
         
@@ -769,6 +779,7 @@ export class Scene5 extends Scene {
             this.gameContainer.removeEventListener('touchend', this.boundTouchEnd);
         }
         
-        super.cleanup();
+        // Call parent cleanup with the target index
+        super.cleanup(targetSceneIndex);
     }
 }

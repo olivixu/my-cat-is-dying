@@ -23,7 +23,10 @@ export class Scene {
         // Override in subclasses for animation updates
     }
     
-    cleanup() {
+    cleanup(targetSceneIndex = null) {
+        // targetSceneIndex: Optional parameter indicating which scene we're transitioning to
+        // This allows scenes to handle cleanup differently based on the next scene
+        
         // CRITICAL: Clear all timers first to prevent them from firing after cleanup
         // This prevents errors from trying to access cleaned-up elements
         this.clearAllTimers();
@@ -203,13 +206,14 @@ export class SceneManager {
             // Clean up current scene
             if (this.currentScene) {
                 this.currentScene.element?.classList.add('exiting');
-                this.currentScene.cleanup();
+                // Pass the target scene index so cleanup knows where we're going
+                this.currentScene.cleanup(index);
                 
                 // Force cleanup of references
                 this.currentScene = null;
                 
-                // Small delay to allow garbage collection
-                await new Promise(resolve => setTimeout(resolve, 50));
+                // No delay needed - garbage collection happens automatically
+                // Removing delay prevents black flash between scenes
             }
             
             // Load new scene

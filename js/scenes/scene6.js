@@ -52,6 +52,10 @@ export class Scene6 extends Scene {
         this.element = document.createElement('div');
         this.element.className = 'scene story-scene scene-6';
         
+        // Set immediate sky background and visibility to prevent black flash during transition
+        this.element.style.backgroundColor = '#87CEEB'; // Sky blue color
+        this.element.style.opacity = '1'; // Override default opacity: 0 to be immediately visible
+        
         // Create Windows XP background elements
         const xpSky = document.createElement('img');
         xpSky.className = 'xp-sky';
@@ -154,15 +158,20 @@ export class Scene6 extends Scene {
         // Add to container
         this.container.appendChild(this.element);
         
-        // Clean up any lingering XP sky overlay from Scene 5
-        setTimeout(() => {
-            const existingOverlay = document.querySelector('.xp-sky-transition');
-            if (existingOverlay) {
-                existingOverlay.style.transition = 'opacity 0.5s ease-out';
+        // Handle the XP sky overlay from Scene 5 for seamless transition
+        const existingOverlay = document.querySelector('.xp-sky-transition');
+        if (existingOverlay && existingOverlay.dataset.fromScene5 === 'true') {
+            // Keep overlay visible while our scene loads
+            // Fade it out after our sky background is visible
+            setTimeout(() => {
+                existingOverlay.style.transition = 'opacity 0.3s ease-out';
                 existingOverlay.style.opacity = '0';
-                setTimeout(() => existingOverlay.remove(), 500);
-            }
-        }, 100); // Small delay to ensure Scene 6 is fully visible first
+                setTimeout(() => existingOverlay.remove(), 300);
+            }, 300); // Wait a bit for Scene 6 elements to be fully visible
+        } else if (existingOverlay) {
+            // Remove any other overlays immediately
+            existingOverlay.remove();
+        }
         
         // Store references
         this.gameArea = gameArea;
