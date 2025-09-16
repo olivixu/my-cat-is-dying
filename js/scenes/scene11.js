@@ -1,5 +1,7 @@
 // Scene 11: "I don't know when she will leave me"
-class Scene11 extends Scene {
+import { Scene } from '../sceneManager.js';
+
+export class Scene11 extends Scene {
     constructor(container) {
         super(container);
         this.text = "I wonder how I will live without her.";

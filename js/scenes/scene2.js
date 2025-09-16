@@ -1,5 +1,7 @@
 // Scene 2: "My cat was old when I found her."
-class Scene2 extends Scene {
+import { Scene } from '../sceneManager.js';
+
+export class Scene2 extends Scene {
     constructor(container) {
         super(container);
         this.text = "My cat was old when I found her.";
@@ -39,57 +41,102 @@ class Scene2 extends Scene {
         const objectsContainer = document.createElement('div');
         objectsContainer.className = 'hidden-objects';
         
-        // Helper function to generate random position
-        const getRandomPosition = () => {
-            return {
-                left: Math.floor(Math.random() * 60 + 20) + '%', // Between 20% and 80%
-                top: Math.floor(Math.random() * 50 + 30) + '%'   // Between 30% and 80%
-            };
+        // Helper function to generate grid-based positions to prevent overlap
+        const generateNonOverlappingPositions = (count) => {
+            const positions = [];
+            const cols = 4; // 4 columns for better spacing
+            const rows = 4; // Fixed 4 rows to ensure full screen coverage
+            const cellWidth = 85 / cols; // Use 85% of width
+            const cellHeight = 75 / rows; // Use 75% of height to leave room for tooltips at top
+            
+            let imageIndex = 0;
+            // Fill grid evenly, distributing images across all cells
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    if (imageIndex >= count) break;
+                    
+                    // Spread across screen with top margin for tooltips
+                    const baseLeft = 7.5 + col * cellWidth; // Start at 7.5% for centering
+                    const baseTop = 15 + row * cellHeight; // Start at 15% to leave room for tooltips
+                    
+                    positions.push({
+                        left: (baseLeft + Math.random() * cellWidth * 0.7) + '%',
+                        top: (baseTop + Math.random() * cellHeight * 0.7) + '%'
+                    });
+                    imageIndex++;
+                }
+            }
+            
+            // Shuffle positions so images don't appear in predictable order
+            return positions.sort(() => Math.random() - 0.5);
         };
         
-        // Get random position for Smokey
-        const smokeyPosition = getRandomPosition();
+        // Helper function to format image names
+        const formatImageName = (filename) => {
+            // Remove extension and format camelCase to readable text
+            const name = filename.replace('.png', '');
+            // Split on capital letters and add spaces
+            const formatted = name.replace(/([a-z])([A-Z])/g, '$1 $2')
+                                 .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2');
+            // Capitalize first letter
+            return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+        };
         
-        // Add Smokey (the target to find)
-        const smokey = document.createElement('img');
-        smokey.className = 'hidden-object smokey-cat';
-        smokey.src = 'assets/images/find-smokey.png';
-        smokey.style.left = smokeyPosition.left;
-        smokey.style.top = smokeyPosition.top;
-        smokey.style.width = '150px';
-        smokey.style.height = 'auto';
-        smokey.setAttribute('data-name', 'Smokey');
-        
-        // Add other decorative objects with random positions
-        const objectEmojis = [
-            { emoji: '🪑', name: 'Chair' },
-            { emoji: '🪴', name: 'Plant' },
-            { emoji: '📚', name: 'Books' },
-            { emoji: '🕰️', name: 'Clock' },
-            { emoji: '🖼️', name: 'Picture' }
+        // Define all images from the Find smokey images folder
+        const allImages = [
+            { filename: 'smokey.png', name: 'Smokey', isSmokey: true },
+            { filename: 'acatimetonthestreet.png', name: 'A cat I met on the street' },
+            { filename: 'acheaptoysheignores.png', name: 'A cheap toy she ignores' },
+            { filename: 'afriendscatthatimet.png', name: "A friend's cat that I met" },
+            { filename: 'afriendsdog.png', name: "A friend's dog" },
+            { filename: 'afunnytoythatshelikes.png', name: 'A funny toy that she likes' },
+            { filename: 'almostsmokey.png', name: 'Almost Smokey' },
+            { filename: 'asuitablesittingspot.png', name: 'A suitable sitting spot' },
+            { filename: 'cheaptoythatsheloves.png', name: 'Cheap toy that she loves' },
+            { filename: 'mybeautifulgrandmother.png', name: 'My beautiful grandmother' },
+            { filename: 'officedog.png', name: 'Office dog' },
+            { filename: 'ourbountifulsummerharvest.png', name: 'Our bountiful summer harvest' },
+            { filename: 'twocatsthatarentsmokey.png', name: "Two cats that aren't Smokey" },
+            { filename: 'welllovednapspot.png', name: 'Well-loved nap spot' }
         ];
         
-        const objects = objectEmojis.map(obj => {
-            const position = getRandomPosition();
-            return {
-                emoji: obj.emoji,
-                left: position.left,
-                top: position.top,
-                name: obj.name
-            };
-        });
+        // Shuffle all images for random placement
+        const selectedImages = [...allImages].sort(() => Math.random() - 0.5);
         
-        objects.forEach(obj => {
-            const element = document.createElement('div');
-            element.className = 'hidden-object';
-            element.innerHTML = obj.emoji;
-            element.style.left = obj.left;
-            element.style.top = obj.top;
-            element.setAttribute('data-name', obj.name);
-            objectsContainer.appendChild(element);
-        });
+        // Generate non-overlapping positions
+        const positions = generateNonOverlappingPositions(selectedImages.length);
         
-        objectsContainer.appendChild(smokey);
+        // Create image elements
+        selectedImages.forEach((imgData, index) => {
+            const position = positions[index];
+            const element = document.createElement('img');
+            element.className = imgData.isSmokey ? 'hidden-object smokey-cat' : 'hidden-object';
+            element.src = `assets/images/Find smokey images/${imgData.filename}`;
+            // Make Smokey slightly larger to be findable but still challenging
+            const imageWidth = imgData.isSmokey ? 
+                140 + Math.random() * 60 : // Smokey: 140-200px
+                100 + Math.random() * 80;   // Others: 100-180px
+            element.style.width = `${imageWidth}px`;
+            element.style.height = 'auto';
+            element.setAttribute('data-name', imgData.name);
+            
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'image-tooltip';
+            tooltip.textContent = imgData.name;
+            
+            // Wrapper for image and tooltip
+            const wrapper = document.createElement('div');
+            wrapper.className = 'image-wrapper';
+            wrapper.style.position = 'absolute';
+            wrapper.style.left = position.left;
+            wrapper.style.top = position.top;
+            wrapper.style.width = `${imageWidth}px`; // Set wrapper width to match image
+            wrapper.appendChild(element);
+            wrapper.appendChild(tooltip);
+            
+            objectsContainer.appendChild(wrapper);
+        });
         
         // Assemble game container
         gameContainer.appendChild(objectsContainer);
@@ -198,11 +245,7 @@ class Scene2 extends Scene {
                     }
                 }, 2500);
             } else if (e.target.classList.contains('hidden-object')) {
-                // Visual feedback for other objects
-                e.target.classList.add('wiggle');
-                setTimeout(() => {
-                    e.target.classList.remove('wiggle');
-                }, 500);
+                // No visual feedback for wrong items
             }
         };
         

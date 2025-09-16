@@ -1,32 +1,52 @@
-// Scene 8: "There is a lot I don't know because I am a human"
-class Scene8 extends Scene {
+// Scene 8: "There is a lot I don't know because I am a human" - SPIRAL VERSION
+import { Scene } from '../sceneManager.js';
+
+export class Scene8 extends Scene {
     constructor(container) {
         super(container);
         this.text = "There is a lot I don't know because I am a human";
         
         // Spiral detection state
         this.mousePositions = [];
-        this.maxPositions = 20; // Keep last 20 positions
+        this.maxPositions = 20;
         this.centerX = 0;
         this.centerY = 0;
         this.totalRotation = 0;
         this.lastAngle = null;
         this.angularVelocity = 0;
         this.requiredRotations = 3;
-        this.minSpeed = 2; // Minimum radians per second
         
-        // Visual state - new minimal design
-        this.arcsLayers = []; // Multiple arc layers with different speeds
-        this.spiralDots = []; // Dots spiraling inward
-        this.trail = []; // Cursor trail
-        this.maxTrailLength = 30;
-        this.explosionParticles = []; // Particles for rotation celebration
-        this.lastRotationCount = 0; // Track rotations for explosions
+        // Visual state - MATHEMATICAL SPIRAL
+        this.spiralRotation = 0;
+        this.spiralSegments = [];
+        this.trail = [];
+        this.maxTrailLength = 40;
         
-        // Animation
+        // Particle system
+        this.particles = [];
+        this.lastRotationCount = 0;
+        
+        // Animation state
         this.animationId = null;
         this.isTransitioning = false;
-        this.spiralProgress = 0; // 0 to 1, controls spiral intensity
+        this.spiralProgress = 0;
+        
+        // Performance
+        this.lastFrameTime = 0;
+        this.lastInteractionTime = Date.now();
+        this.isIdle = false;
+        
+        // Glow layers
+        this.glowIntensity = 0;
+        
+        // Store dot properties for consistent movement
+        this.floatingDots = [];
+        
+        // Store event handlers for cleanup
+        this.resizeHandler = null;
+        this.mouseMoveHandler = null;
+        this.touchMoveHandler = null;
+        this.mouseLeaveHandler = null;
     }
     
     async init() {
@@ -43,85 +63,157 @@ class Scene8 extends Scene {
         const interactiveContainer = document.createElement('div');
         interactiveContainer.className = 'interactive-container spiral-container';
         
-        // Create canvas for effects
+        // Create main canvas
         const canvas = document.createElement('canvas');
         canvas.className = 'spiral-canvas';
         this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
+        this.ctx = canvas.getContext('2d', {
+            alpha: false,
+            desynchronized: true
+        });
         
-        // Resize canvas to full viewport
+        // Resize canvas
         const resizeCanvas = () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             this.centerX = canvas.width / 2;
             this.centerY = canvas.height / 2;
-            this.maxRadius = Math.max(canvas.width, canvas.height) / 2;
+            // Use diagonal distance to ensure spiral covers entire screen
+            this.maxRadius = Math.sqrt(canvas.width * canvas.width + canvas.height * canvas.height) / 2;
+            this.generateSpiralPath();
         };
         resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
         
-        // Assemble interactive container
+        // Store resize handler for cleanup
+        let resizeTimer;
+        this.resizeHandler = () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeCanvas, 250);
+        };
+        window.addEventListener('resize', this.resizeHandler);
+        
+        // Assemble
         interactiveContainer.appendChild(canvas);
-        
-        // Assemble scene
         this.element.appendChild(textContainer);
         this.element.appendChild(interactiveContainer);
-        
-        // Add to container
         this.container.appendChild(this.element);
         
-        // Store references
-        this.interactiveContainer = interactiveContainer;
-        
-        // Setup event listeners
+        // Setup
         this.setupEventListeners();
-        
-        // Initialize visual elements
-        this.createArcsCanvas();
-        this.initializeSpiralDots();
-        
-        // Start animation loop
+        this.generateSpiralPath();
+        this.initializeFloatingDots();
         this.animate();
     }
     
-    setupEventListeners() {
-        this.mouseMoveHandler = (e) => this.handleMouseMove(e);
-        this.touchMoveHandler = (e) => this.handleTouchMove(e);
+    initializeFloatingDots() {
+        // Initialize dots with fixed properties
+        this.floatingDots = [];
+        const dotCount = 60; // Increased from 36
+        for (let i = 0; i < dotCount; i++) {
+            this.floatingDots.push({
+                startOffset: i / dotCount, // Distribute along spiral
+                speed: 0.02 + Math.random() * 0.01, // Even slower speed (was 0.08-0.12, now 0.02-0.03)
+                position: 0,
+                rotation: Math.random() * Math.PI * 2 // Random initial rotation for stars
+            });
+        }
+    }
+    
+    draw4PointStar(ctx, x, y, size, rotation) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rotation);
+        ctx.beginPath();
+        // Draw 4-pointed star (diamond/cross shape)
+        ctx.moveTo(0, -size);  // top point
+        ctx.lineTo(size * 0.4, 0);  // right point
+        ctx.lineTo(0, size);  // bottom point
+        ctx.lineTo(-size * 0.4, 0);  // left point
+        ctx.closePath();
+        ctx.restore();
+    }
+    
+    generateSpiralPath() {
+        // Generate spiral with non-linear density (denser in center)
+        this.spiralSegments = [];
+        const turns = 20; // More turns to cover full screen
+        const basePointsPerTurn = 150; // High base density
         
+        let totalPoints = 0;
+        
+        // Calculate points with variable density based on radius
+        for (let turn = 0; turn < turns; turn++) {
+            // More points in inner turns, fewer in outer turns
+            const densityFactor = Math.pow(1 - (turn / turns), 2); // Quadratic falloff
+            const pointsThisTurn = Math.floor(basePointsPerTurn * (0.3 + 0.7 * densityFactor));
+            
+            for (let p = 0; p < pointsThisTurn; p++) {
+                const turnProgress = p / pointsThisTurn;
+                const t = (turn + turnProgress) * Math.PI * 2;
+                
+                // Non-linear radius growth (exponential) - denser in center
+                const normalizedT = (turn + turnProgress) / turns;
+                const r = this.maxRadius * Math.pow(normalizedT, 1.8); // Power of 1.8 for tighter center
+                
+                // Calculate thickness - much thicker in center
+                const thickness = Math.max(1, 30 * Math.pow(1 - r / this.maxRadius, 2));
+                
+                this.spiralSegments.push({
+                    angle: t,
+                    radius: r,
+                    thickness: thickness,
+                    opacity: 1 - (r / this.maxRadius) * 0.5
+                });
+                
+                totalPoints++;
+            }
+        }
+    }
+    
+    setupEventListeners() {
+        const handleMove = (x, y) => {
+            this.lastInteractionTime = Date.now();
+            this.isIdle = false;
+            this.processMovement(x, y);
+        };
+        
+        // Store handlers for cleanup
+        this.mouseMoveHandler = (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            handleMove(e.clientX - rect.left, e.clientY - rect.top);
+        };
+        
+        this.touchMoveHandler = (e) => {
+            e.preventDefault();
+            const rect = this.canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            handleMove(touch.clientX - rect.left, touch.clientY - rect.top);
+        };
+        
+        this.mouseLeaveHandler = () => {
+            this.isIdle = true;
+        };
+        
+        // Add event listeners
         this.canvas.addEventListener('mousemove', this.mouseMoveHandler);
         this.canvas.addEventListener('touchmove', this.touchMoveHandler);
-    }
-    
-    handleMouseMove(e) {
-        if (this.isTransitioning) return;
-        
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        this.processMovement(x, y);
-    }
-    
-    handleTouchMove(e) {
-        if (this.isTransitioning) return;
-        e.preventDefault();
-        
-        const rect = this.canvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        
-        this.processMovement(x, y);
+        this.canvas.addEventListener('mouseleave', this.mouseLeaveHandler);
     }
     
     processMovement(x, y) {
-        // Add to trail
-        this.trail.push({ x, y, life: 1.0 });
+        // Add to trail with glow
+        this.trail.push({ 
+            x, 
+            y, 
+            life: 1.0,
+            glow: 1.0
+        });
+        
         if (this.trail.length > this.maxTrailLength) {
             this.trail.shift();
         }
         
-        // Add to position history
+        // Track rotation
         this.mousePositions.push({ x, y, time: Date.now() });
         if (this.mousePositions.length > this.maxPositions) {
             this.mousePositions.shift();
@@ -136,291 +228,334 @@ class Scene8 extends Scene {
         if (this.lastAngle !== null) {
             let deltaAngle = angle - this.lastAngle;
             
-            // Handle angle wrap-around
             if (deltaAngle > Math.PI) {
                 deltaAngle -= 2 * Math.PI;
             } else if (deltaAngle < -Math.PI) {
                 deltaAngle += 2 * Math.PI;
             }
             
-            // Only count if moving in consistent direction and not too fast (avoid jumps)
             if (Math.abs(deltaAngle) < Math.PI / 4) {
                 this.totalRotation += deltaAngle;
+                this.angularVelocity = deltaAngle * 60; // Approximate per second
                 
-                // Calculate angular velocity
-                if (this.mousePositions.length >= 2) {
-                    const timeDelta = (Date.now() - this.mousePositions[0].time) / 1000;
-                    if (timeDelta > 0) {
-                        this.angularVelocity = Math.abs(deltaAngle) / timeDelta * this.mousePositions.length;
-                    }
-                }
+                // Increase glow based on speed - smoother transitions
+                const targetGlow = Math.min(0.4, Math.abs(this.angularVelocity) / 8); // Lower max, higher divisor
+                this.glowIntensity += (targetGlow - this.glowIntensity) * 0.02; // Much smoother interpolation
             }
         }
         
         this.lastAngle = angle;
         
-        // Update spiral progress based on speed and rotation
+        // Update spiral progress
         const targetProgress = Math.min(1, Math.abs(this.totalRotation) / (2 * Math.PI * this.requiredRotations));
         this.spiralProgress += (targetProgress - this.spiralProgress) * 0.1;
         
-        // Check for rotation milestones for explosions
+        // Check for rotation milestones
         const currentRotationCount = Math.floor(Math.abs(this.totalRotation) / (2 * Math.PI));
         if (currentRotationCount > this.lastRotationCount) {
             this.createExplosion();
             this.lastRotationCount = currentRotationCount;
             
-            // If this is the third explosion, wait before transitioning
             if (currentRotationCount === 3) {
-                setTimeout(() => {
-                    this.triggerTransition();
-                }, 2000); // 2 second delay after third burst
+                setTimeout(() => this.triggerTransition(), 2000);
             }
         }
     }
     
-    createArcsCanvas() {
-        // Create many layers of arcs with random rotation speeds
-        const maxDimension = Math.max(window.innerWidth, window.innerHeight) * 1.5;
-        const maxRadius = maxDimension / 2;
+    createExplosion() {
+        // Create more randomly distributed, smaller particles
+        const particleCount = 25; // Fewer particles
+        for (let i = 0; i < particleCount; i++) {
+            // More random angle distribution
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 0.5 + Math.random() * 1.5; // Much slower speeds
+            
+            // Random spawn position around center (not exactly at center)
+            const spawnRadius = Math.random() * 30;
+            const spawnAngle = Math.random() * Math.PI * 2;
+            
+            this.particles.push({
+                x: this.centerX + Math.cos(spawnAngle) * spawnRadius,
+                y: this.centerY + Math.sin(spawnAngle) * spawnRadius,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 1.0,
+                size: 3 + Math.random() * 5, // Smaller particles (3-8px instead of 10-15px)
+                hue: 55 + Math.random() * 5, // Lighter yellow range
+                rotation: Math.random() * Math.PI * 2, // Initial rotation for star
+                rotationSpeed: (Math.random() - 0.5) * 0.1 // Spin speed
+            });
+        }
+    }
+    
+    drawSpiral() {
+        const ctx = this.ctx;
         
-        // Create a layer for every few radii - starting from 0 to fill entire screen
-        for (let r = 20; r <= maxRadius; r += 30) {
-            const canvas = document.createElement('canvas');
-            canvas.width = maxDimension;
-            canvas.height = maxDimension;
-            const ctx = canvas.getContext('2d');
+        // Draw multiple interleaved spirals - INCREASED TO 7 for maximum density
+        for (let spiral = 0; spiral < 7; spiral++) {
+            ctx.save();
+            ctx.translate(this.centerX, this.centerY);
             
-            ctx.strokeStyle = '#000000';
-            ctx.translate(maxDimension / 2, maxDimension / 2);
+            // Rotate this spiral - adjusted spacing for 7 spirals
+            const rotation = this.spiralRotation + (spiral * Math.PI * 2 / 7);
+            ctx.rotate(rotation);
             
-            // Draw arcs for this radius range
-            for (let radius = r; radius < Math.min(r + 30, maxRadius); radius += 6) {
-                // Calculate line thickness
-                const distanceFromCenter = radius;
-                const maxDistance = maxRadius;
-                const thicknessFactor = Math.max(0, 1 - (distanceFromCenter / maxDistance));
+            // Draw spiral segments with varying line width
+            let lastRadius = 0;
+            this.spiralSegments.forEach((segment, i) => {
+                const x = Math.cos(segment.angle) * segment.radius;
+                const y = Math.sin(segment.angle) * segment.radius;
                 
-                // Inner arcs are much thicker - 15px at center
-                ctx.lineWidth = Math.max(1, 15 * thicknessFactor);
+                // Skip if radius hasn't changed enough (optimization for outer segments)
+                if (i > 0 && segment.radius - lastRadius < 1 && segment.radius > this.maxRadius * 0.5) {
+                    return;
+                }
                 
-                const densityFactor = 1 - (distanceFromCenter / maxDistance) * 0.5;
-                const numArcs = Math.floor(12 * densityFactor + 8);
-                
-                for (let i = 0; i < numArcs; i++) {
-                    const arcLength = 0.15 + Math.random() * 0.7;
-                    const startAngle = Math.random() * Math.PI * 2;
+                ctx.beginPath();
+                if (i > 0) {
+                    const prevSegment = this.spiralSegments[i - 1];
+                    const prevX = Math.cos(prevSegment.angle) * prevSegment.radius;
+                    const prevY = Math.sin(prevSegment.angle) * prevSegment.radius;
+                    ctx.moveTo(prevX, prevY);
+                    ctx.lineTo(x, y);
                     
-                    ctx.beginPath();
-                    ctx.arc(0, 0, radius, startAngle, startAngle + arcLength, false);
+                    // Variable line width - thicker in center, thinner outside
+                    const radiusRatio = segment.radius / this.maxRadius;
+                    const lineWidth = Math.max(1, 8 * Math.pow(1 - radiusRatio, 1.5)); // Exponential thinning
+                    
+                    // Apply gradient stroke
+                    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.maxRadius);
+                    gradient.addColorStop(0, '#000000');
+                    gradient.addColorStop(0.5, '#111111');
+                    gradient.addColorStop(1, '#000000');
+                    
+                    ctx.strokeStyle = gradient;
+                    ctx.lineWidth = lineWidth;
                     ctx.stroke();
                 }
+                
+                lastRadius = segment.radius;
+            });
+            
+            // Add glow layer when active with variable width - smoother threshold
+            if (this.glowIntensity > 0.05) { // Lower threshold for earlier activation
+                ctx.globalAlpha = this.glowIntensity;
+                
+                // Re-draw with glow, also with variable width
+                this.spiralSegments.forEach((segment, i) => {
+                    if (i > 0) {
+                        const prevSegment = this.spiralSegments[i - 1];
+                        const x = Math.cos(segment.angle) * segment.radius;
+                        const y = Math.sin(segment.angle) * segment.radius;
+                        const prevX = Math.cos(prevSegment.angle) * prevSegment.radius;
+                        const prevY = Math.sin(prevSegment.angle) * prevSegment.radius;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(prevX, prevY);
+                        ctx.lineTo(x, y);
+                        
+                        const radiusRatio = segment.radius / this.maxRadius;
+                        const glowWidth = Math.max(2, 12 * Math.pow(1 - radiusRatio, 1.5));
+                        
+                        ctx.strokeStyle = '#fff5b3'; // Light yellow instead of neon
+                        ctx.lineWidth = glowWidth;
+                        ctx.stroke();
+                    }
+                });
+                
+                ctx.globalAlpha = 1;
             }
             
-            // Random speed for each layer, some rotating backwards
-            this.arcsLayers.push({
-                canvas: canvas,
-                rotation: Math.random() * Math.PI * 2, // Random starting rotation
-                speed: (Math.random() - 0.5) * 0.01 // Random speed between -0.005 and 0.005
-            });
-        }
-    }
-    
-    initializeSpiralDots() {
-        // Create MORE dots that will spiral inward from viewport edges
-        this.maxRadius = Math.max(window.innerWidth, window.innerHeight) / 2;
-        for (let i = 0; i < 15; i++) {
-            const angle = (Math.PI * 2 / 15) * i;
-            this.spiralDots.push({
-                angle: angle,
-                radius: this.maxRadius + Math.random() * 200, // Start from viewport edge
-                speed: 0.003 + Math.random() * 0.007, // Varied speeds
-                size: 6 + Math.random() * 6 // 6-12px dots
-            });
+            ctx.restore();
         }
     }
     
     drawTrail() {
         if (this.trail.length < 2) return;
         
-        // Neon yellow trail with glow
-        this.ctx.strokeStyle = '#ffff00';
-        this.ctx.lineWidth = 3;
-        this.ctx.lineCap = 'round';
-        this.ctx.shadowBlur = 10;
-        this.ctx.shadowColor = '#ffff00';
+        const ctx = this.ctx;
         
-        for (let i = 1; i < this.trail.length; i++) {
-            const prev = this.trail[i - 1];
-            const curr = this.trail[i];
+        // Draw glowing trail
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        // Multiple passes for glow effect
+        for (let pass = 0; pass < 3; pass++) {
+            ctx.beginPath();
             
-            this.ctx.globalAlpha = curr.life * 0.6;
-            this.ctx.beginPath();
-            this.ctx.moveTo(prev.x, prev.y);
-            this.ctx.lineTo(curr.x, curr.y);
-            this.ctx.stroke();
+            this.trail.forEach((point, i) => {
+                if (i === 0) {
+                    ctx.moveTo(point.x, point.y);
+                } else {
+                    ctx.lineTo(point.x, point.y);
+                }
+            });
+            
+            if (pass === 0) {
+                // Outer glow
+                ctx.globalAlpha = 0.2;
+                ctx.strokeStyle = '#fff5b3'; // Light yellow instead of neon
+                ctx.lineWidth = 15;
+            } else if (pass === 1) {
+                // Middle glow
+                ctx.globalAlpha = 0.4;
+                ctx.strokeStyle = '#fff5b3'; // Light yellow instead of neon
+                ctx.lineWidth = 8;
+            } else {
+                // Core
+                ctx.globalAlpha = 0.8;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+            }
+            
+            ctx.stroke();
         }
         
-        this.ctx.globalAlpha = 1;
-        this.ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
     }
     
     drawBlackCircle() {
-        // Draw larger solid black circle in center
-        this.ctx.fillStyle = '#000000';
+        // Smaller central black circle to show more of the dense spiral center
+        const gradient = this.ctx.createRadialGradient(
+            this.centerX, this.centerY, 0,
+            this.centerX, this.centerY, 40  // Reduced from 100 to 40
+        );
+        gradient.addColorStop(0, '#000000');
+        gradient.addColorStop(1, 'rgba(10, 10, 10, 0.8)'); // Slight transparency at edge
+        
+        this.ctx.fillStyle = gradient;
         this.ctx.beginPath();
-        this.ctx.arc(this.centerX, this.centerY, 90, 0, Math.PI * 2);
+        this.ctx.arc(this.centerX, this.centerY, 40, 0, Math.PI * 2); // Reduced from 100 to 40
         this.ctx.fill();
     }
     
-    createExplosion() {
-        // Create neon particle explosion from center - slower like Scene 1
-        for (let i = 0; i < 30; i++) {
-            const angle = (Math.PI * 2 / 30) * i + Math.random() * 0.2;
-            const speed = 1.5 + Math.random() * 1; // Slow but steady speed
-            this.explosionParticles.push({
-                x: this.centerX,
-                y: this.centerY,
-                vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed,
-                life: 1.0,
-                size: 8 + Math.random() * 4 // Start at 8-12px
-            });
-        }
-    }
-    
-    updateExplosionParticles() {
-        if (this.explosionParticles.length === 0) return;
+    drawFloatingDots() {
+        // Draw dots along spiral path - SLOWER
+        const time = Date.now() * 0.0003; // Much slower animation
         
-        // Draw explosion particles
-        this.ctx.shadowBlur = 20;
-        this.ctx.shadowColor = '#ffff00';
-        this.ctx.fillStyle = '#ffff00';
-        
-        this.explosionParticles = this.explosionParticles.filter(particle => {
-            // Update position
-            particle.x += particle.vx;
-            particle.y += particle.vy;
-            particle.vx *= 0.995; // Very minimal slowdown to travel further
-            particle.vy *= 0.995;
-            particle.life -= 0.005; // Even slower life decay
+        this.floatingDots.forEach((dot, i) => {
+            // Update position smoothly
+            dot.position = (dot.startOffset + time * dot.speed) % 1;
             
-            // Calculate current size - shrink from initial size to 1px
-            const currentSize = Math.max(1, particle.size * particle.life);
+            // Non-linear radius matching spiral growth
+            const r = this.maxRadius * Math.pow(dot.position, 1.8);
             
-            if (currentSize >= 1) {
-                this.ctx.globalAlpha = 1; // Keep full opacity
-                this.ctx.beginPath();
-                this.ctx.arc(particle.x, particle.y, currentSize, 0, Math.PI * 2);
-                this.ctx.fill();
-                return true;
-            }
-            return false;
-        });
-        
-        this.ctx.globalAlpha = 1;
-        this.ctx.shadowBlur = 0;
-    }
-    
-    drawRotatingArcs() {
-        // Draw each arc layer with its own rotation
-        this.arcsLayers.forEach(layer => {
-            this.ctx.save();
-            this.ctx.translate(this.centerX, this.centerY);
-            this.ctx.rotate(layer.rotation);
-            this.ctx.drawImage(
-                layer.canvas,
-                -layer.canvas.width / 2,
-                -layer.canvas.height / 2
-            );
-            this.ctx.restore();
-        });
-    }
-    
-    updateAndDrawSpiralDots() {
-        // Draw all dots as bright neon yellow with glow
-        this.ctx.shadowBlur = 20;
-        this.ctx.shadowColor = '#ffff00';
-        this.ctx.fillStyle = '#ffff00';
-        
-        this.spiralDots.forEach(dot => {
-            // Update position
-            dot.angle += dot.speed * (1 + this.spiralProgress * 2);
-            dot.radius = Math.max(0, dot.radius - (0.5 + this.spiralProgress * 1));
+            const t = dot.position * Math.PI * 2 * 20; // Full spiral angle
             
-            // Reset dot when it reaches center
-            if (dot.radius < 5) {
-                dot.radius = this.maxRadius + Math.random() * 200;
-            }
+            const x = this.centerX + Math.cos(t + this.spiralRotation) * r;
+            const y = this.centerY + Math.sin(t + this.spiralRotation) * r;
             
-            const x = this.centerX + Math.cos(dot.angle) * dot.radius;
-            const y = this.centerY + Math.sin(dot.angle) * dot.radius;
+            // Update rotation for twinkling effect
+            dot.rotation += 0.02; // Slow rotation
             
-            // Calculate size based on distance from center - smaller as it gets closer
-            const distanceRatio = dot.radius / this.maxRadius;
-            const currentSize = Math.max(1, dot.size * distanceRatio);
+            // Subtle glow for tiny stars
+            const glow = this.ctx.createRadialGradient(x, y, 0, x, y, 6);
+            glow.addColorStop(0, 'rgba(255, 245, 179, 0.3)'); // Light yellow glow
+            glow.addColorStop(1, 'rgba(255, 245, 179, 0)');
             
-            // Draw glowing neon dot
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, currentSize, 0, Math.PI * 2);
+            this.ctx.fillStyle = glow;
+            this.ctx.fillRect(x - 6, y - 6, 12, 12);
+            
+            // Draw tiny star - 3px size
+            this.ctx.fillStyle = '#fff5b3'; // Light yellow
+            this.draw4PointStar(this.ctx, x, y, 3, dot.rotation);
             this.ctx.fill();
         });
-        
-        // Reset shadow
-        this.ctx.shadowBlur = 0;
     }
     
-    animate() {
+    updateParticles() {
+        this.particles = this.particles.filter(particle => {
+            // Update physics - slower movement and decay
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.vx *= 0.99; // Less velocity decay (was 0.98)
+            particle.vy *= 0.99;
+            particle.life -= 0.005; // Slower life decay (was 0.01)
+            particle.rotation += particle.rotationSpeed; // Spin the star
+            
+            if (particle.life <= 0) return false;
+            
+            // Draw particle star with glow
+            const alpha = particle.life;
+            const size = particle.size * particle.life;
+            
+            // Glow layer
+            const glow = this.ctx.createRadialGradient(
+                particle.x, particle.y, 0,
+                particle.x, particle.y, size * 3
+            );
+            glow.addColorStop(0, `hsla(${particle.hue}, 70%, 80%, ${alpha * 0.6})`);
+            glow.addColorStop(1, `hsla(${particle.hue}, 70%, 80%, 0)`);
+            
+            this.ctx.fillStyle = glow;
+            this.ctx.fillRect(
+                particle.x - size * 3, 
+                particle.y - size * 3, 
+                size * 6, 
+                size * 6
+            );
+            
+            // Draw star shape
+            this.ctx.fillStyle = `hsla(${particle.hue}, 70%, 90%, ${alpha})`;
+            this.draw4PointStar(this.ctx, particle.x, particle.y, size, particle.rotation);
+            this.ctx.fill();
+            
+            return true;
+        });
+    }
+    
+    animate(currentTime) {
         if (this.isTransitioning) return;
         
-        // Clear canvas efficiently
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Check idle state
+        const now = Date.now();
+        if (now - this.lastInteractionTime > 2000) {
+            this.isIdle = true;
+        }
         
-        // Fill background
-        this.ctx.fillStyle = '#2a2a2a';
+        // Clear and fill background - match Scene 7's beige fade
+        this.ctx.fillStyle = '#f5e6d3';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Update each arc layer rotation at different speeds
-        this.arcsLayers.forEach(layer => {
-            layer.rotation += layer.speed;
-        });
+        // Update rotation speed based on interaction - SLOWER
+        const targetSpeed = this.isIdle ? 0.001 : 0.002 + Math.abs(this.angularVelocity) * 0.005;
+        this.spiralRotation += targetSpeed;
         
-        // Draw rotating arcs pattern
-        this.drawRotatingArcs();
+        // Draw layers with variable stroke width
+        this.drawSpiral();
+        // this.drawBlackCircle(); // Removed center black circle
+        this.drawFloatingDots();
         
-        // Draw black circle in center
-        this.drawBlackCircle();
+        if (this.trail.length > 0) {
+            this.drawTrail();
+        }
         
-        // Draw spiraling dots
-        this.updateAndDrawSpiralDots();
+        if (this.particles.length > 0) {
+            this.updateParticles();
+        }
         
-        // Draw trail on top of everything
-        this.drawTrail();
-        
-        // Update and draw explosion particles
-        this.updateExplosionParticles();
-        
-        // Update trail life
+        // Update trail
         this.trail.forEach(point => {
             point.life *= 0.95;
+            point.glow *= 0.9;
         });
         this.trail = this.trail.filter(point => point.life > 0.01);
         
-        // Decay values
-        this.angularVelocity *= 0.95;
+        // Decay values - slower decay for smoother transitions
+        this.angularVelocity *= 0.98;
+        this.glowIntensity *= 0.95; // Much slower glow decay
         
-        this.animationId = requestAnimationFrame(() => this.animate());
+        // Continue animation
+        this.animationId = requestAnimationFrame((time) => this.animate(time));
     }
-    
     
     triggerTransition() {
         if (this.isTransitioning) return;
         this.isTransitioning = true;
         
-        // Simple fade out
         this.element.style.transition = 'opacity 0.5s ease-out';
         this.element.style.opacity = '0';
         
-        // Transition to next scene after fade
         setTimeout(() => {
             this.cleanup();
             this.onComplete();
@@ -431,15 +566,46 @@ class Scene8 extends Scene {
     }
     
     cleanup() {
-        // Stop animation
+        // Cancel animation frame
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
+            this.animationId = null;
         }
         
         // Remove event listeners
+        if (this.resizeHandler) {
+            window.removeEventListener('resize', this.resizeHandler);
+            this.resizeHandler = null;
+        }
+        
         if (this.canvas) {
-            this.canvas.removeEventListener('mousemove', this.mouseMoveHandler);
-            this.canvas.removeEventListener('touchmove', this.touchMoveHandler);
+            if (this.mouseMoveHandler) {
+                this.canvas.removeEventListener('mousemove', this.mouseMoveHandler);
+                this.mouseMoveHandler = null;
+            }
+            if (this.touchMoveHandler) {
+                this.canvas.removeEventListener('touchmove', this.touchMoveHandler);
+                this.touchMoveHandler = null;
+            }
+            if (this.mouseLeaveHandler) {
+                this.canvas.removeEventListener('mouseleave', this.mouseLeaveHandler);
+                this.mouseLeaveHandler = null;
+            }
+        }
+        
+        // Clear heavy data structures
+        this.spiralSegments = [];
+        this.particles = [];
+        this.trail = [];
+        this.floatingDots = [];
+        this.mousePositions = [];
+        
+        // Clear canvas context
+        if (this.ctx) {
+            this.ctx = null;
+        }
+        if (this.canvas) {
+            this.canvas = null;
         }
         
         super.cleanup();

@@ -1,5 +1,7 @@
 // Scene 13: "I love you forever, little bean"
-class Scene13 extends Scene {
+import { Scene } from '../sceneManager.js';
+
+export class Scene13 extends Scene {
     constructor(container) {
         super(container);
         this.text = "I love you forever, little bean";

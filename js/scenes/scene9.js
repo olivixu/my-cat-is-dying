@@ -1,8 +1,11 @@
 // Scene 9: "I don't know if she thinks of me as much as I think of her while I am away"
-class Scene9 extends Scene {
+import { Scene } from '../sceneManager.js';
+
+export class Scene9 extends Scene {
     constructor(container) {
         super(container);
-        this.text = "I don't know if she thinks of me as much as I think of her";
+        this.textPart1 = "I don't know if she thinks of me";
+        this.textPart2 = "as much as I think of her";
         
         // Drawing state
         this.isDrawing = false;
@@ -22,26 +25,23 @@ class Scene9 extends Scene {
         this.element = document.createElement('div');
         this.element.className = 'scene story-scene scene-9';
         
-        // Create text display
-        const textContainer = document.createElement('div');
-        textContainer.className = 'story-text';
-        textContainer.innerHTML = `<h2>${this.text}</h2>`;
+        // Create first part of text display
+        const textContainer1 = document.createElement('div');
+        textContainer1.className = 'story-text story-text-part1';
+        textContainer1.innerHTML = `<h2>${this.textPart1}</h2>`;
+        
+        // Create second part of text display (will go after interactive content)
+        const textContainer2 = document.createElement('div');
+        textContainer2.className = 'story-text story-text-part2';
+        textContainer2.innerHTML = `<h2>${this.textPart2}</h2>`;
         
         // Create interactive container
         const interactiveContainer = document.createElement('div');
         interactiveContainer.className = 'interactive-container drawing-game';
         
-        // Create instructions
-        const instructions = document.createElement('div');
-        instructions.className = 'drawing-instructions sticky-note';
-        instructions.innerHTML = `
-            <p class="main-text">Draw Smokey from memory!</p>
-            <p class="hint">Try to capture her ears, body, and tail ✏️</p>
-        `;
-        
-        // Create canvas container
-        const canvasContainer = document.createElement('div');
-        canvasContainer.className = 'canvas-container';
+        // Create Post-it container (no instructions text)
+        const postItContainer = document.createElement('div');
+        postItContainer.className = 'postit-container';
         
         // Create canvas
         const canvas = document.createElement('canvas');
@@ -51,28 +51,25 @@ class Scene9 extends Scene {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         
-        // Setup canvas style - dark stroke for light background
+        // Setup canvas style - dark stroke for Post-it background
         this.ctx.strokeStyle = '#333333';
-        this.ctx.lineWidth = 3;
+        this.ctx.lineWidth = 2;
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
         
-        // Create reference image (hidden by default)
-        const referenceImg = document.createElement('div');
-        referenceImg.className = 'reference-image hidden';
-        referenceImg.innerHTML = `
-            <div class="reference-silhouette">🐱</div>
-            <p>Reference</p>
-        `;
+        // Create reference image overlay (visible by default with low opacity)
+        const referenceImg = document.createElement('img');
+        referenceImg.className = 'reference-overlay';
+        referenceImg.src = '/assets/images/happy smokey.png';
+        referenceImg.alt = 'Trace Smokey';
         
-        // Create controls
+        // Create single submit button (invisible initially but takes up space)
         const controls = document.createElement('div');
         controls.className = 'drawing-controls';
         controls.innerHTML = `
-            <button class="btn-clear">Clear</button>
-            <button class="btn-reference">Show Reference</button>
-            <button class="btn-grade">Grade My Drawing</button>
+            <button class="btn-submit invisible">Submit Drawing</button>
         `;
+        this.submitBtn = null;
         
         // Create grade display (hidden initially)
         const gradeDisplay = document.createElement('div');
@@ -85,19 +82,19 @@ class Scene9 extends Scene {
             <button class="continue-btn">Continue</button>
         `;
         
-        // Assemble canvas container
-        canvasContainer.appendChild(canvas);
-        canvasContainer.appendChild(referenceImg);
+        // Assemble Post-it container
+        postItContainer.appendChild(referenceImg);
+        postItContainer.appendChild(canvas);
         
         // Assemble interactive container
-        interactiveContainer.appendChild(instructions);
-        interactiveContainer.appendChild(canvasContainer);
+        interactiveContainer.appendChild(postItContainer);
         interactiveContainer.appendChild(controls);
         interactiveContainer.appendChild(gradeDisplay);
         
         // Assemble scene
-        this.element.appendChild(textContainer);
+        this.element.appendChild(textContainer1);
         this.element.appendChild(interactiveContainer);
+        this.element.appendChild(textContainer2);
         
         // Add to container
         this.container.appendChild(this.element);
@@ -111,6 +108,9 @@ class Scene9 extends Scene {
         // Setup event listeners
         this.setupDrawingEvents();
         this.setupControlEvents();
+        
+        // Store button reference
+        this.submitBtn = this.element.querySelector('.btn-submit');
         
         // Add continue button handler
         const continueBtn = gradeDisplay.querySelector('.continue-btn');
@@ -159,23 +159,9 @@ class Scene9 extends Scene {
     }
     
     setupControlEvents() {
-        // Clear button
-        const clearBtn = this.element.querySelector('.btn-clear');
-        clearBtn?.addEventListener('click', () => {
-            this.clearCanvas();
-        });
-        
-        // Reference button
-        const refBtn = this.element.querySelector('.btn-reference');
-        refBtn?.addEventListener('click', () => {
-            this.referenceImg.classList.toggle('hidden');
-            refBtn.textContent = this.referenceImg.classList.contains('hidden') ? 
-                'Show Reference' : 'Hide Reference';
-        });
-        
-        // Grade button
-        const gradeBtn = this.element.querySelector('.btn-grade');
-        gradeBtn?.addEventListener('click', () => {
+        // Submit button
+        const submitBtn = this.element.querySelector('.btn-submit');
+        submitBtn?.addEventListener('click', () => {
             if (this.hasDrawn && !this.hasBeenGraded) {
                 this.gradeDrawing();
             }
@@ -203,7 +189,14 @@ class Scene9 extends Scene {
         
         this.lastX = x;
         this.lastY = y;
-        this.hasDrawn = true;
+        
+        // Show submit button when user starts drawing
+        if (!this.hasDrawn) {
+            this.hasDrawn = true;
+            if (this.submitBtn) {
+                this.submitBtn.classList.remove('invisible');
+            }
+        }
     }
     
     stopDrawing() {
@@ -511,7 +504,21 @@ class Scene9 extends Scene {
     }
     
     cleanup() {
-        // Clean up if needed
+        // Clean up canvas and context
+        if (this.ctx) {
+            this.ctx = null;
+        }
+        if (this.canvas) {
+            this.canvas = null;
+        }
+        
+        // Clean up references
+        this.submitBtn = null;
+        this.gradeDisplay = null;
+        this.scoreElement = null;
+        this.messageElement = null;
+        this.referenceImg = null;
+        
         super.cleanup();
     }
 }

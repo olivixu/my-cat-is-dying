@@ -1,5 +1,7 @@
 // Scene 6: "She doesn't know what the pills are for"
-class Scene6 extends Scene {
+import { Scene } from '../sceneManager.js';
+
+export class Scene6 extends Scene {
     constructor(container) {
         super(container);
         this.text = "She doesn't know what the pills are for";
@@ -63,7 +65,7 @@ class Scene6 extends Scene {
         
         // Create text display
         const textContainer = document.createElement('div');
-        textContainer.className = 'story-text';
+        textContainer.className = 'story-text scene-6-text';
         textContainer.innerHTML = `<h2>${this.text}</h2>`;
         
         // Create game container
@@ -72,7 +74,33 @@ class Scene6 extends Scene {
         
         // Create pill indicators display
         const scoreDisplay = document.createElement('div');
-        scoreDisplay.className = 'pill-score';
+        scoreDisplay.className = 'pill-score scene-6-indicators';
+        
+        // Add control instructions
+        const controlsDiv = document.createElement('div');
+        controlsDiv.className = 'controls-instruction';
+        
+        const arrowsImg = document.createElement('img');
+        arrowsImg.src = 'assets/images/leftrightarrows.png';
+        arrowsImg.alt = 'Arrow keys';
+        arrowsImg.className = 'control-instruction-img';
+        
+        const orText = document.createElement('span');
+        orText.textContent = 'OR';
+        orText.className = 'control-or-text';
+        
+        const adImg = document.createElement('img');
+        adImg.src = 'assets/images/AD.png';
+        adImg.alt = 'AD keys';
+        adImg.className = 'control-instruction-img';
+        
+        // Add instructions to controls div
+        controlsDiv.appendChild(arrowsImg);
+        controlsDiv.appendChild(orText);
+        controlsDiv.appendChild(adImg);
+        
+        // Add controls to scoreDisplay
+        scoreDisplay.appendChild(controlsDiv);
         
         // Create pill indicators
         const indicatorsContainer = document.createElement('div');
@@ -100,7 +128,7 @@ class Scene6 extends Scene {
         
         // Create Smokey (the cat)
         const smokey = document.createElement('div');
-        smokey.className = 'smokey-cat';
+        smokey.className = 'smokey-cat scene-6-smokey';
         
         // Add cat image
         const catImg = document.createElement('img');
@@ -126,6 +154,16 @@ class Scene6 extends Scene {
         // Add to container
         this.container.appendChild(this.element);
         
+        // Clean up any lingering XP sky overlay from Scene 5
+        setTimeout(() => {
+            const existingOverlay = document.querySelector('.xp-sky-transition');
+            if (existingOverlay) {
+                existingOverlay.style.transition = 'opacity 0.5s ease-out';
+                existingOverlay.style.opacity = '0';
+                setTimeout(() => existingOverlay.remove(), 500);
+            }
+        }, 100); // Small delay to ensure Scene 6 is fully visible first
+        
         // Store references
         this.gameArea = gameArea;
         this.smokey = smokey;
@@ -134,8 +172,10 @@ class Scene6 extends Scene {
         // Setup event listeners
         this.setupControls();
         
-        // Start game
-        this.startGame();
+        // Start game after animations complete (wait for all transitions)
+        setTimeout(() => {
+            this.startGame();
+        }, 3300); // Wait for land slide (2s) + text fade (0.8s) + smokey/indicators slide (0.8s)
     }
     
     async preloadPillImages() {
@@ -457,14 +497,75 @@ class Scene6 extends Scene {
         // Add celebration effect to Smokey
         this.smokey.classList.add('celebrating');
         
-        // Auto-advance to next scene after a short delay
+        // Create fireworks display
+        this.createFireworks();
+        
+        // Auto-advance to next scene after fireworks complete
         setTimeout(() => {
-            this.cleanup();
+            // Don't call cleanup here - let SceneManager handle it
             this.onComplete();
             if (window.sceneManager) {
                 window.sceneManager.nextScene();
             }
-        }, 1500);
+        }, 3500); // Extended delay for fireworks
+    }
+    
+    createFireworks() {
+        const colors = ['#FFD700', '#FF69B4', '#00CED1', '#FFF', '#FF6347', '#98FB98'];
+        const fireworkCount = 5;
+        
+        for (let i = 0; i < fireworkCount; i++) {
+            setTimeout(() => {
+                const x = 20 + Math.random() * 60; // Random position 20% to 80% across screen
+                const y = 20 + Math.random() * 30; // Random height 20% to 50% from top
+                this.launchFirework(x, y, colors);
+            }, i * 400); // Stagger launches
+        }
+    }
+    
+    launchFirework(x, y, colors) {
+        const firework = document.createElement('div');
+        firework.className = 'pixel-firework';
+        firework.style.left = `${x}%`;
+        firework.style.top = `${y}%`;
+        
+        // Create launch trail
+        const trail = document.createElement('div');
+        trail.className = 'firework-trail';
+        firework.appendChild(trail);
+        
+        this.gameArea.appendChild(firework);
+        
+        // After trail animation, create explosion
+        setTimeout(() => {
+            trail.style.display = 'none';
+            
+            // Create explosion particles
+            const particleCount = 30;
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'firework-particle';
+                
+                // Random color from palette
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.backgroundColor = color;
+                particle.style.boxShadow = `0 0 6px ${color}`;
+                
+                // Calculate explosion angle and distance
+                const angle = (i / particleCount) * Math.PI * 2;
+                const distance = 50 + Math.random() * 80; // Random explosion radius
+                const randomOffset = (Math.random() - 0.5) * 20; // Add some randomness
+                
+                particle.style.setProperty('--end-x', `${Math.cos(angle) * distance + randomOffset}px`);
+                particle.style.setProperty('--end-y', `${Math.sin(angle) * distance + randomOffset}px`);
+                particle.style.setProperty('--fall-distance', `${100 + Math.random() * 50}px`);
+                
+                firework.appendChild(particle);
+            }
+            
+            // Remove firework after animation
+            setTimeout(() => firework.remove(), 2000);
+        }, 500); // Wait for trail to reach top
     }
     
     cleanup() {
@@ -472,6 +573,11 @@ class Scene6 extends Scene {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
         }
+        
+        // Clear game state
+        this.pills = [];
+        this.fireworks = [];
+        this.preloadedImages.clear();
         
         // Remove event listeners
         document.removeEventListener('keydown', this.keydownHandler);

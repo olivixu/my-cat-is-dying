@@ -1,10 +1,18 @@
-class Scene {
+export class Scene {
     constructor(container) {
         this.container = container;
         this.element = null;
         this.physics = null;
         this.isComplete = false;
         this.animationFrame = null;
+        
+        // TRANSITION SAFETY: Track completion state to prevent double transitions
+        this.hasCompleted = false;  // Prevents calling onComplete() multiple times
+        
+        // TIMER MANAGEMENT: Track all timers for proper cleanup
+        // Junior devs: Always store timer IDs here to prevent memory leaks
+        this.transitionTimers = [];  // Array of setTimeout IDs
+        this.intervals = [];         // Array of setInterval IDs
     }
     
     async init() {
@@ -16,6 +24,10 @@ class Scene {
     }
     
     cleanup() {
+        // CRITICAL: Clear all timers first to prevent them from firing after cleanup
+        // This prevents errors from trying to access cleaned-up elements
+        this.clearAllTimers();
+        
         // Cancel animation frame if running
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
@@ -35,8 +47,58 @@ class Scene {
         }
     }
     
+    /**
+     * Clear all timers to prevent memory leaks and errors
+     * Call this in cleanup() or when transitioning scenes
+     */
+    clearAllTimers() {
+        // Clear all setTimeout timers
+        this.transitionTimers.forEach(timerId => {
+            clearTimeout(timerId);
+        });
+        this.transitionTimers = [];
+        
+        // Clear all setInterval timers
+        this.intervals.forEach(intervalId => {
+            clearInterval(intervalId);
+        });
+        this.intervals = [];
+    }
+    
+    /**
+     * Helper method to safely add a timer that will be auto-cleaned
+     * Use this instead of raw setTimeout to prevent memory leaks
+     * @param {Function} callback - Function to execute
+     * @param {number} delay - Delay in milliseconds
+     * @returns {number} Timer ID
+     */
+    addTimer(callback, delay) {
+        const timerId = setTimeout(() => {
+            // Remove this timer from our tracking array once it fires
+            const index = this.transitionTimers.indexOf(timerId);
+            if (index > -1) {
+                this.transitionTimers.splice(index, 1);
+            }
+            // Execute the callback
+            callback();
+        }, delay);
+        
+        // Track this timer for cleanup
+        this.transitionTimers.push(timerId);
+        return timerId;
+    }
+    
     onComplete() {
+        // GUARD: Prevent multiple completion calls
+        // This is critical to prevent double scene transitions
+        if (this.hasCompleted) {
+            console.warn('[Scene] onComplete called multiple times - ignoring');
+            return;
+        }
+        
+        this.hasCompleted = true;
         this.isComplete = true;
+        
         if (this.onCompleteCallback) {
             this.onCompleteCallback();
         }
@@ -58,13 +120,16 @@ class Scene {
     }
 }
 
-class SceneManager {
+export class SceneManager {
     constructor(container, scenes) {
         this.container = container;
         this.scenes = scenes;
         this.currentSceneIndex = 0;
         this.currentScene = null;
         this.isTransitioning = false;
+        
+        // Queue for pending transitions to prevent race conditions
+        this.transitionQueue = [];
         
         this.verticalNav = document.getElementById('vertical-nav');
         
@@ -115,7 +180,22 @@ class SceneManager {
     }
     
     async loadScene(index) {
-        if (this.isTransitioning) return;
+        // GUARD: Prevent multiple simultaneous transitions
+        // This prevents race conditions when multiple transitions are triggered
+        if (this.isTransitioning) {
+            console.warn(`[SceneManager] Transition already in progress. Queueing scene ${index}`);
+            // Queue this transition to run after current one completes
+            if (!this.transitionQueue.includes(index)) {
+                this.transitionQueue.push(index);
+            }
+            return;
+        }
+        
+        // VALIDATION: Ensure scene index is valid
+        if (index < 0 || index >= this.scenes.length) {
+            console.error(`[SceneManager] Invalid scene index: ${index}`);
+            return;
+        }
         
         this.isTransitioning = true;
         
@@ -124,6 +204,12 @@ class SceneManager {
             if (this.currentScene) {
                 this.currentScene.element?.classList.add('exiting');
                 this.currentScene.cleanup();
+                
+                // Force cleanup of references
+                this.currentScene = null;
+                
+                // Small delay to allow garbage collection
+                await new Promise(resolve => setTimeout(resolve, 50));
             }
             
             // Load new scene
@@ -153,15 +239,47 @@ class SceneManager {
         
         this.updateProgressIndicator();
         this.isTransitioning = false;
+        
+        // Process any queued transitions after current one completes
+        this.processTransitionQueue();
+    }
+    
+    /**
+     * Process any pending transitions that were queued during a transition
+     * This prevents lost transitions while maintaining order
+     */
+    processTransitionQueue() {
+        if (this.transitionQueue.length > 0 && !this.isTransitioning) {
+            const nextIndex = this.transitionQueue.shift();
+            console.log(`[SceneManager] Processing queued transition to scene ${nextIndex}`);
+            this.loadScene(nextIndex);
+        }
     }
     
     async nextScene() {
+        // GUARD: Don't allow advancing during a transition
+        if (this.isTransitioning) {
+            console.warn('[SceneManager] Cannot advance to next scene - transition in progress');
+            // Queue the next scene instead
+            const nextIndex = this.currentSceneIndex + 1;
+            if (nextIndex < this.scenes.length && !this.transitionQueue.includes(nextIndex)) {
+                this.transitionQueue.push(nextIndex);
+            }
+            return;
+        }
+        
         if (this.currentSceneIndex < this.scenes.length - 1) {
             await this.loadScene(this.currentSceneIndex + 1);
         }
     }
     
     async previousScene() {
+        // GUARD: Don't allow going back during a transition
+        if (this.isTransitioning) {
+            console.warn('[SceneManager] Cannot go to previous scene - transition in progress');
+            return;
+        }
+        
         if (this.currentSceneIndex > 0) {
             await this.loadScene(this.currentSceneIndex - 1);
         }

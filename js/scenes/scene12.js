@@ -1,5 +1,7 @@
 // Scene 12: "In between the unknowable and the loose trap of existence, we met."
-class Scene12 extends Scene {
+import { Scene } from '../sceneManager.js';
+
+export class Scene12 extends Scene {
     constructor(container) {
         super(container);
         this.text1 = "In between the unknowable";

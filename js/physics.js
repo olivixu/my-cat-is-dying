@@ -1,4 +1,6 @@
-class PhysicsWrapper {
+import * as Matter from 'matter-js';
+
+export class PhysicsWrapper {
     constructor(canvas, options = {}) {
         this.canvas = canvas;
         this.engine = null;

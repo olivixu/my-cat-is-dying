@@ -1,5 +1,9 @@
 // Scene 3: "There is a lot she doesn't know because she is a cat."
-class Scene3 extends Scene {
+import { Scene } from '../sceneManager.js';
+import { PhysicsWrapper } from '../physics.js';
+import * as Matter from 'matter-js';
+
+export class Scene3 extends Scene {
     constructor(container) {
         super(container);
         this.text = "There is a lot she doesn't know because she is a cat.";
@@ -106,8 +110,7 @@ class Scene3 extends Scene {
         this.speechBubble = speechBubble;
         this.physicsCanvas = physicsCanvas;
         
-        // Start physics animation
-        this.startAnimation();
+        // Physics animation is handled by PhysicsWrapper automatically
     }
     
     toggleHead(headElement) {
@@ -211,20 +214,6 @@ class Scene3 extends Scene {
     initPhysics(canvas) {
         console.log('Initializing physics for Scene 3');
         
-        // Check if Matter.js is available
-        if (typeof Matter === 'undefined') {
-            console.warn('Matter.js not loaded, using CSS fallback');
-            this.usePhysics = false;
-            return;
-        }
-        
-        // Check if PhysicsWrapper exists
-        if (typeof PhysicsWrapper === 'undefined') {
-            console.warn('PhysicsWrapper not found, using CSS fallback');
-            this.usePhysics = false;
-            return;
-        }
-        
         try {
             // Create physics engine with mouse control, no auto boundaries
             this.physics = new PhysicsWrapper(canvas, {
@@ -286,12 +275,13 @@ class Scene3 extends Scene {
         for (let i = 0; i < 5; i++) {
             const x = startX + (i * spacing);
             const book = this.physics.createRectangle(x, y, bookWidth, bookHeight, {
-                restitution: 0.6,
-                friction: 0.4,
+                restitution: 0.9,  // Higher bounce
+                friction: 0.1,     // Lower friction
                 density: 0.001,
                 render: {
                     fillStyle: '#8B4513'
-                }
+                },
+                label: 'book'  // Add label for identification
             });
             
             this.physicsBooks.push(book);
@@ -318,7 +308,32 @@ class Scene3 extends Scene {
         console.log('Head rect:', headRect);
         console.log('Canvas rect:', canvasRect);
         
-        // Calculate position relative to physics canvas (150px lower)
+        // ADD INVISIBLE BOUNCE PLATFORM INSIDE HEAD
+        const platformX = headRect.left + headRect.width/2 - canvasRect.left;
+        const platformY = headRect.top + headRect.height/2 - canvasRect.top + 100; // Inside head
+        
+        // Create bouncy platform that books will bounce off
+        if (this.physics) {
+            const bouncePlatform = this.physics.createRectangle(
+                platformX,
+                platformY,
+                headRect.width * 0.5,  // Platform width (smaller than head)
+                20,                     // Thicker platform for better collision
+                {
+                    isStatic: true,
+                    restitution: 2.5,   // SUPER bouncy! (>1 adds energy)
+                    friction: 0.01,     // Almost no friction
+                    render: { 
+                        visible: false,   // Invisible
+                        fillStyle: 'transparent'
+                    },
+                    label: 'bouncePlatform'
+                }
+            );
+            console.log('Created bounce platform at:', platformX, platformY);
+        }
+        
+        // Calculate position relative to physics canvas (150px lower) for detection zone
         const dropZoneBounds = {
             x: headRect.left + headRect.width/2 - canvasRect.left,
             y: headRect.top + headRect.height/2 - canvasRect.top + 150,
@@ -350,62 +365,78 @@ class Scene3 extends Scene {
         // Store bounds for collision checking
         this.dropZoneBounds = dropZoneBounds;
         
-        // Check collision every frame
-        let frameCount = 0;
-        const checkCollisions = () => {
-            if (!this.physics || !this.headOpen || !this.usePhysics || !this.dropZoneBounds) return;
-            
-            // Create a copy of the array to avoid modification during iteration
-            const booksToCheck = [...this.physicsBooks];
-            
-            // Log every 60 frames (roughly once per second)
-            if (frameCount++ % 60 === 0 && booksToCheck.length > 0) {
-                console.log('Checking collisions:', {
-                    numBooks: booksToCheck.length,
-                    dropZone: this.dropZoneBounds,
-                    firstBookPos: booksToCheck[0]?.position
+        // Listen for collision events on the bounce platform
+        if (this.physics && this.physics.engine) {
+            Matter.Events.on(this.physics.engine, 'collisionStart', (event) => {
+                const pairs = event.pairs;
+                
+                pairs.forEach(pair => {
+                    // Check if one body is the bounce platform and the other is a book
+                    const isPlatformA = pair.bodyA.label === 'bouncePlatform';
+                    const isPlatformB = pair.bodyB.label === 'bouncePlatform';
+                    
+                    if (isPlatformA || isPlatformB) {
+                        const book = isPlatformA ? pair.bodyB : pair.bodyA;
+                        
+                        // Check if this is one of our books
+                        if (this.physicsBooks.includes(book)) {
+                            console.log('Book hit bounce platform!');
+                            
+                            // Apply strong bounce velocity - left and up
+                            Matter.Body.setVelocity(book, { 
+                                x: -15 - Math.random() * 5,  // Strong leftward velocity
+                                y: -20 - Math.random() * 5   // Strong upward velocity
+                            });
+                            
+                            // Add spin for visual effect
+                            Matter.Body.setAngularVelocity(book, (Math.random() - 0.5) * 0.5);
+                            
+                            // Count the attempt
+                            this.attemptCount++;
+                            console.log('Book bounced! Count:', this.attemptCount);
+                            
+                            // Change book color to indicate it bounced
+                            if (book.render) {
+                                book.render.fillStyle = '#FF6B6B'; // Reddish color
+                            }
+                            
+                            // Start fade out after a short delay
+                            setTimeout(() => {
+                                let opacity = 1.0;
+                                const fadeInterval = setInterval(() => {
+                                    opacity -= 0.05; // Decrease opacity gradually
+                                    
+                                    if (opacity <= 0) {
+                                        // Fully faded - remove the book
+                                        clearInterval(fadeInterval);
+                                        
+                                        const index = this.physicsBooks.indexOf(book);
+                                        if (index > -1) {
+                                            this.physicsBooks.splice(index, 1);
+                                        }
+                                        // Remove from world after fully faded
+                                        if (this.physics && this.physics.world) {
+                                            Matter.World.remove(this.physics.world, book);
+                                        }
+                                    } else {
+                                        // Update book opacity
+                                        if (book.render) {
+                                            // Convert to rgba with current opacity
+                                            book.render.fillStyle = `rgba(255, 107, 107, ${opacity})`;
+                                        }
+                                    }
+                                }, 50); // Update every 50ms for smooth fade (1.5 seconds total)
+                            }, 1500); // Start fade after 1.5 seconds of bouncing
+                            
+                            // Check if reached max attempts
+                            if (this.attemptCount >= this.maxAttempts) {
+                                this.showSpeechBubble();
+                            }
+                        }
+                    }
                 });
-            }
-            
-            booksToCheck.forEach(book => {
-                if (!book || !book.position) return;
-                
-                // Skip if book was recently processed (cooldown)
-                if (book.lastProcessed && Date.now() - book.lastProcessed < 1000) {
-                    return;
-                }
-                
-                const bookPos = book.position;
-                const bookVel = book.velocity;
-                
-                // Check if book is in drop zone horizontally
-                const inZoneX = Math.abs(bookPos.x - this.dropZoneBounds.x) < this.dropZoneBounds.width/2;
-                
-                // Check if book is entering from top (above the zone and moving down)
-                const topEdge = this.dropZoneBounds.y - this.dropZoneBounds.height/2;
-                const bottomEdge = this.dropZoneBounds.y + this.dropZoneBounds.height/2;
-                const isEnteringFromTop = bookPos.y >= topEdge && 
-                                         bookPos.y <= bottomEdge && 
-                                         bookVel.y > 0; // Moving downward
-                
-                // Check if book is currently being dragged
-                const isBeingDragged = this.physics.mouseConstraint && 
-                                      this.physics.mouseConstraint.body === book;
-                
-                if (inZoneX && isEnteringFromTop && !isBeingDragged) {
-                    console.log('Book entering from top!', bookPos, 'Velocity:', bookVel);
-                    // Book entered head from top - count it and bounce it out
-                    this.handleBookInHead(book);
-                    book.lastProcessed = Date.now(); // Mark as processed
-                }
             });
-            
-            if (this.usePhysics) {
-                requestAnimationFrame(checkCollisions);
-            }
-        };
-        
-        requestAnimationFrame(checkCollisions);
+        }
     }
     
     handleBookInHead(book) {

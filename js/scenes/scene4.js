@@ -1,8 +1,15 @@
 // Scene 4: "She doesn't know why I feed her so many treats these days."
-class Scene4 extends Scene {
+import { Scene } from '../sceneManager.js';
+
+export class Scene4 extends Scene {
     constructor(container) {
         super(container);
         this.text = "She doesn't know why I feed her so many treats these days.";
+        
+        // TRANSITION SAFETY: Track completion state
+        // This prevents completeGame() from being called multiple times
+        this.gameCompleted = false;
+        this.completionTimer = null;
         
         // Define treats and their correct order (least to most tasty)
         this.treats = [
@@ -310,6 +317,17 @@ class Scene4 extends Scene {
     }
     
     completeGame() {
+        // CRITICAL GUARD: Prevent multiple completions
+        // This fixes the bug where drag events could trigger multiple completions
+        // causing Scene 5 to load then immediately skip
+        if (this.gameCompleted) {
+            console.log('[Scene4] Game already completed - ignoring duplicate call');
+            return;
+        }
+        
+        // Mark as completed immediately to prevent race conditions
+        this.gameCompleted = true;
+        
         // Disable dragging
         const treats = this.slotsContainer.querySelectorAll('.treat-item');
         treats.forEach(treat => {
@@ -321,16 +339,27 @@ class Scene4 extends Scene {
         this.successMessage.classList.remove('hidden');
         
         // Auto advance after showing success
-        setTimeout(() => {
+        // Store timer ID for cleanup to prevent memory leaks
+        this.completionTimer = setTimeout(() => {
             this.onComplete();
             if (window.sceneManager) {
                 window.sceneManager.nextScene();
             }
         }, 2500);
+        
+        // Track this timer in parent class for automatic cleanup
+        this.transitionTimers.push(this.completionTimer);
     }
     
     
     cleanup() {
+        // IMPORTANT: Clear completion timer if it hasn't fired yet
+        // This prevents the timer from firing after scene is cleaned up
+        if (this.completionTimer) {
+            clearTimeout(this.completionTimer);
+            this.completionTimer = null;
+        }
+        
         // Remove drag event listeners
         const treats = this.element?.querySelectorAll('.treat-item');
         treats?.forEach(treat => {
@@ -340,6 +369,7 @@ class Scene4 extends Scene {
             treat.removeEventListener('drop', this.handleDrop);
         });
         
+        // Call parent cleanup which will clear all tracked timers
         super.cleanup();
     }
 }

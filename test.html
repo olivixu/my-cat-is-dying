@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: monospace; }
+        #errors { color: red; }
+        #log { color: green; }
+    </style>
+</head>
+<body>
+    <h2>Testing Scene Loading</h2>
+    <div id="errors"></div>
+    <div id="log"></div>
+    <div id="scene-container"></div>
+
+    <script>
+        window.onerror = function(msg, url, line, col, error) {
+            document.getElementById('errors').innerHTML += 
+                `<p>Error: ${msg}<br>File: ${url}<br>Line: ${line}</p>`;
+            return false;
+        };
+        
+        console.log = function(msg) {
+            document.getElementById('log').innerHTML += `<p>${msg}</p>`;
+        };
+    </script>
+    
+    <!-- Load Matter.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    
+    <!-- Load dependencies -->
+    <script src="js/physics.js"></script>
+    <script src="js/sceneManager.js"></script>
+    
+    <!-- Load a simple scene to test -->
+    <script src="js/scenes/scene1.js"></script>
+    
+    <script>
+        // Try to initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            console.log('Matter available: ' + (typeof Matter !== 'undefined'));
+            console.log('Scene1 available: ' + (typeof Scene1 !== 'undefined'));
+            
+            // Check if sceneManager exists
+            if (window.sceneManager) {
+                console.log('SceneManager initialized');
+            } else {
+                console.log('SceneManager NOT initialized');
+            }
+        });
+    </script>
+</body>
+</html>

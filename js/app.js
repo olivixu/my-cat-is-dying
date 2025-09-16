@@ -1,4 +1,20 @@
 // Main Application Entry Point
+import { SceneManager } from './sceneManager.js';
+
+// Import all scene classes
+import { Scene1 } from './scenes/scene1.js';
+import { Scene2 } from './scenes/scene2.js';
+import { Scene3 } from './scenes/scene3.js';
+import { Scene4 } from './scenes/scene4.js';
+import { Scene5 } from './scenes/scene5.js';
+import { Scene6 } from './scenes/scene6.js';
+import { Scene7 } from './scenes/scene7.js';
+import { Scene8 } from './scenes/scene8.js';
+import { Scene9 } from './scenes/scene9.js';
+import { Scene10 } from './scenes/scene10.js';
+import { Scene11 } from './scenes/scene11.js';
+import { Scene12 } from './scenes/scene12.js';
+import { Scene13 } from './scenes/scene13.js';
 
 // Global mouse position tracking
 window.mousePosition = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
@@ -73,11 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     
-    // Check if Matter.js is loaded
-    if (typeof Matter === 'undefined') {
-        console.error('Matter.js not loaded. Please check CDN connection.');
-        // Continue anyway as not all scenes require physics
-    }
+    // Matter.js is now imported as a module in physics.js
     
     // Initialize the scene manager
     try {

@@ -1,16 +1,18 @@
 // Scene 5: "She doesn't know why it's so hard to breathe"
-class Scene5 extends Scene {
+import { Scene } from '../sceneManager.js';
+
+export class Scene5 extends Scene {
     constructor(container) {
         super(container);
         this.text = "She doesn't know why it's so hard to breathe";
         
-        // Game state
+        // Game state - RESET ALL VALUES
         this.isHolding = false;
         this.perfectBreaths = 0;
         this.requiredPerfectBreaths = 3;
         this.lines = [];
         this.currentLine = null;
-        this.gameActive = true;
+        this.gameActive = false; // Start with game inactive until properly initialized
         
         // Timing windows (in pixels from target end)
         this.timingWindows = {
@@ -34,6 +36,25 @@ class Scene5 extends Scene {
         this.targetZoneBaseScale = 1;
         this.targetZoneMaxScale = 1.3;
         this.pulseTime = 0;
+        
+        // Safeguards to prevent auto-completion - RESET ALL VALUES
+        this.hasInteracted = false;
+        this.hasMeaningfulInteraction = false; // Requires actual breath hold during bar
+        this.gameStartTime = 0;
+        this.lastPerfectTime = 0; // Prevent rapid-fire perfect breaths
+        this.isProcessingBreath = false; // Prevent double-processing
+        this.minimumPlayTime = 5000; // Require 5 seconds minimum before allowing completion
+        this.holdStartTime = 0; // Track when user started holding
+        this.minimumHoldTime = 300; // Require 300ms minimum hold for valid breath
+        this.processedLines = new Set(); // Track which lines have already given perfect breaths
+        
+        // Event cooldown to prevent lingering events from previous scene
+        this.eventCooldownTime = 1000; // Ignore events for first 1 second
+        this.sceneLoadTime = Date.now();
+        
+        // Timer tracking for cleanup
+        this.setupTimerId = null;
+        this.completionTimers = []
     }
     
     async init() {
@@ -115,32 +136,68 @@ class Scene5 extends Scene {
         this.successMessage = successMessage;
         this.targetZone = targetZone;
         
-        // Add event listeners
-        this.setupEventListeners();
-        
-        // Start game
+        // Start game (will set up event listeners after delay)
         this.startGame();
     }
     
     setupEventListeners() {
-        // Mouse events
-        this.element.addEventListener('mousedown', (e) => this.startHolding(e));
-        this.element.addEventListener('mouseup', (e) => this.stopHolding(e));
-        this.element.addEventListener('mouseleave', (e) => this.stopHolding(e));
+        // Guard: Check if element still exists (might be cleaned up during setTimeout)
+        if (!this.element) {
+            console.warn('Scene 5: element was cleaned up before setupEventListeners could run');
+            return;
+        }
         
-        // Touch events
-        this.element.addEventListener('touchstart', (e) => {
+        // Get the game container specifically, not the entire scene
+        this.gameContainer = this.element.querySelector('.breathing-game');
+        if (!this.gameContainer) {
+            console.error('Game container not found for event listeners');
+            return;
+        }
+        
+        // Store bound event handlers so we can remove them later
+        this.boundStartHolding = (e) => this.startHolding(e);
+        this.boundStopHolding = (e) => this.stopHolding(e);
+        this.boundTouchStart = (e) => {
             e.preventDefault();
             this.startHolding(e);
-        });
-        this.element.addEventListener('touchend', (e) => {
+        };
+        this.boundTouchEnd = (e) => {
             e.preventDefault();
             this.stopHolding(e);
-        });
+        };
+        
+        // Mouse events - only on game area
+        this.gameContainer.addEventListener('mousedown', this.boundStartHolding);
+        this.gameContainer.addEventListener('mouseup', this.boundStopHolding);
+        // REMOVED mouseleave - was causing spurious stopHolding on scene load
+        
+        // Touch events - only on game area
+        this.gameContainer.addEventListener('touchstart', this.boundTouchStart);
+        this.gameContainer.addEventListener('touchend', this.boundTouchEnd);
     }
     
     startHolding(e) {
         if (!this.gameActive || this.isHolding) return;
+        
+        // Ignore events from before game started or if gameStartTime is invalid
+        const now = Date.now();
+        if (!this.gameStartTime || now - this.gameStartTime < 100) {
+            return; // Ignore events if game hasn't properly started
+        }
+        
+        // Event cooldown: Ignore all events for first second after scene loads
+        if (now - this.sceneLoadTime < this.eventCooldownTime) {
+            return;
+        }
+        
+        // Event source validation: Only accept trusted user events
+        if (e && !e.isTrusted) {
+            return; // Ignore synthetic/programmatic events
+        }
+        
+        // Mark that player has interacted
+        this.hasInteracted = true;
+        this.holdStartTime = now; // Track when hold started
         
         this.isHolding = true;
         this.breathingCircle.classList.add('inhaling');
@@ -152,6 +209,8 @@ class Scene5 extends Scene {
         if (line) {
             line.element.classList.add('active');
             this.currentLine = line;
+            // Mark meaningful interaction when actually holding during a bar
+            this.hasMeaningfulInteraction = true;
             
             // Check if bar start is currently in zone using real coordinates
             const containerRect = this.linesContainer.getBoundingClientRect();
@@ -165,53 +224,129 @@ class Scene5 extends Scene {
             const startInZone = (lineStart >= zoneLeft && lineStart <= zoneRight);
             line.startWasInZone = startInZone; // Actually set the property!
             
-            console.log('=== STARTED HOLDING ===');
-            console.log('Bar start visual position:', lineStart);
-            console.log('Zone bounds:', zoneLeft, 'to', zoneRight);
-            console.log('Start in zone:', startInZone);
-            console.log('Setting line.startWasInZone to:', line.startWasInZone);
         }
     }
     
     stopHolding(e) {
-        if (!this.isHolding) return;
+        // Guard: Don't process if game not active
+        if (!this.gameActive) {
+            this.isHolding = false;
+            return;
+        }
+        
+        // Guard: Ignore events from before game properly started
+        const now = Date.now();
+        if (!this.gameStartTime || now - this.gameStartTime < 100) {
+            this.isHolding = false;
+            return;
+        }
+        
+        // Event cooldown: Ignore all events for first second after scene loads
+        if (now - this.sceneLoadTime < this.eventCooldownTime) {
+            this.isHolding = false;
+            return;
+        }
+        
+        // Event source validation: Only accept trusted user events
+        if (e && !e.isTrusted) {
+            this.isHolding = false;
+            return; // Ignore synthetic/programmatic events
+        }
+        
+        // Guard: Don't process if not holding or already processing
+        if (!this.isHolding || this.isProcessingBreath) return;
+        
+        // Guard: Don't process breath if user hasn't meaningfully interacted
+        if (!this.hasInteracted) {
+            this.isHolding = false;
+            return;
+        }
+        
+        // Guard: Require minimum hold time for valid breath
+        const holdDuration = Date.now() - this.holdStartTime;
+        if (holdDuration < this.minimumHoldTime) {
+            this.isHolding = false;
+            this.breathingCircle.classList.remove('inhaling');
+            return;
+        }
         
         this.isHolding = false;
+        this.isProcessingBreath = true; // Prevent double-processing
         this.breathingCircle.classList.remove('inhaling');
         // Remove the instant class change
         // this.targetZone.classList.remove('holding');
         
         // Check if we're ending on the same line
         if (this.currentLine) {
-            console.log('=== STOP HOLDING DEBUG ===');
-            console.log('Current line startWasInZone before calculateStartAccuracy:', this.currentLine.startWasInZone);
             
             const startAccuracy = this.calculateStartAccuracy(this.currentLine);
             const endAccuracy = this.calculateEndAccuracy(this.currentLine);
             const timing = this.combineTiming(startAccuracy, endAccuracy);
             
-            console.log('=== TIMING CALCULATION RESULTS ===');
-            console.log('Start accuracy:', startAccuracy);
-            console.log('End accuracy:', endAccuracy);
-            console.log('Combined timing:', timing);
             
             this.showFeedback(timing);
             
             if (timing === 'perfect') {
+                // Check if this line has already given a perfect breath
+                if (this.processedLines.has(this.currentLine)) {
+                    // This line already gave a perfect breath, skip it
+                    this.currentLine.element.classList.add('completed');
+                    this.currentLine = null;
+                    // Don't reset isProcessingBreath here - let the timeout do it
+                    return;
+                }
+                
+                // Prevent rapid-fire perfect breaths
+                const now = Date.now();
+                const timeSinceLastPerfect = now - this.lastPerfectTime;
+                
+                if (timeSinceLastPerfect < 500) {
+                    // Don't reset isProcessingBreath here - let the timeout do it
+                    // Clear currentLine to prevent reprocessing the same line
+                    if (this.currentLine) {
+                        this.currentLine.element.classList.add('completed');
+                        this.currentLine = null;
+                    }
+                    return;
+                }
+                
+                // Mark this line as processed
+                this.processedLines.add(this.currentLine);
+                
                 // Turn the bar green for success
                 this.currentLine.element.classList.add('success');
                 
                 // Trigger success pulse on the target zone
                 this.targetZone.classList.add('success-pulse');
-                setTimeout(() => {
-                    this.targetZone.classList.remove('success-pulse');
+                // Use parent class timer tracking for automatic cleanup
+                this.addTimer(() => {
+                    if (this.targetZone) {
+                        this.targetZone.classList.remove('success-pulse');
+                    }
                 }, 1000);
                 
                 this.perfectBreaths++;
+                this.lastPerfectTime = now;
                 this.updateScore();
                 
-                if (this.perfectBreaths >= this.requiredPerfectBreaths) {
+                
+                // Only allow completion if:
+                // 1. Player has meaningfully interacted (held during a bar)
+                // 2. Minimum play time has passed
+                // 3. Required breaths achieved
+                
+                // Guard: Don't complete if gameStartTime is invalid
+                if (!this.gameStartTime || this.gameStartTime === 0) {
+                    return;
+                }
+                
+                const timeSinceStart = now - this.gameStartTime;
+                
+                if (this.hasMeaningfulInteraction && 
+                    timeSinceStart > this.minimumPlayTime && 
+                    this.perfectBreaths >= this.requiredPerfectBreaths) {
                     this.completeGame();
+                } else {
                 }
             } else if (timing === 'good') {
                 // Optional: different color for good timing
@@ -221,20 +356,37 @@ class Scene5 extends Scene {
             this.currentLine.element.classList.add('completed');
             this.currentLine = null;
         }
+        
+        // Reset processing flag after a longer delay to prevent rapid-fire
+        this.addTimer(() => {
+            this.isProcessingBreath = false;
+        }, 500);
     }
     
     startGame() {
-        this.gameActive = true;
-        this.lastSpawnTime = Date.now();
+        // Clear any pending mouse/touch events from previous scene
+        if (window.getSelection) {
+            window.getSelection().removeAllRanges();
+        }
         
-        // Measure coordinate system offset
-        this.measureCoordinateOffset();
-        
-        // Create initial lines
-        this.spawnLine();
-        
-        // Start animation loop
-        this.animate();
+        // Delay game activation to prevent spurious events during scene load
+        this.setupTimerId = setTimeout(() => {
+            // Set up event listeners AFTER delay to avoid spurious events
+            this.setupEventListeners();
+            
+            this.gameActive = true;
+            this.lastSpawnTime = Date.now();
+            this.gameStartTime = Date.now(); // Track when game started
+            
+            // Measure coordinate system offset
+            this.measureCoordinateOffset();
+            
+            // Create initial lines
+            this.spawnLine();
+            
+            // Start animation loop
+            this.animate();
+        }, 500); // 500ms delay to let scene settle
     }
     
     measureCoordinateOffset() {
@@ -246,11 +398,6 @@ class Scene5 extends Scene {
             const zoneRect = zone.getBoundingClientRect();
             this.coordinateOffset = zoneRect.left - containerRect.left;
             
-            console.log('=== COORDINATE SYSTEM DEBUG ===');
-            console.log('Container left:', containerRect.left);
-            console.log('Zone left:', zoneRect.left);
-            console.log('Coordinate offset (zone - container):', this.coordinateOffset);
-            console.log('Zone should appear at:', this.coordinateOffset, 'to', this.coordinateOffset + zoneRect.width);
         }
     }
     
@@ -308,8 +455,12 @@ class Scene5 extends Scene {
         // Get viewport width to start bars off-screen
         const viewportWidth = window.innerWidth;
         
-        // Start from right side of viewport
-        lineElement.style.left = `${viewportWidth}px`;
+        // Ensure lines spawn well past the target zone (which ends at 470px)
+        // This prevents lines from spawning inside the zone on narrow viewports
+        const spawnPosition = Math.max(viewportWidth, 600);
+        
+        // Start from right side, but never in the target zone
+        lineElement.style.left = `${spawnPosition}px`;
         
         // Add to container
         this.linesContainer.appendChild(lineElement);
@@ -347,9 +498,6 @@ class Scene5 extends Scene {
                 
                 if (lineStart >= zoneLeft && lineStart <= zoneRight) {
                     line.startWasInZone = true;
-                    console.log('=== START ENTERED ZONE ===');
-                    console.log('Bar start visual position:', lineStart);
-                    console.log('Zone bounds:', zoneLeft, 'to', zoneRight);
                 }
             }
             
@@ -413,8 +561,6 @@ class Scene5 extends Scene {
     
     calculateStartAccuracy(line) {
         // Check if bar start was ever in zone while holding
-        console.log('=== CALCULATE START ACCURACY ===');
-        console.log('line.startWasInZone:', line.startWasInZone);
         return line.startWasInZone;
     }
     
@@ -430,10 +576,6 @@ class Scene5 extends Scene {
         
         const endInZone = lineEnd >= zoneLeft && lineEnd <= zoneRight;
         
-        console.log('=== END ACCURACY CHECK ===');
-        console.log('Line visual end:', lineEnd);
-        console.log('Zone bounds:', zoneLeft, 'to', zoneRight);
-        console.log('End in zone:', endInZone);
         
         return endInZone;
     }
@@ -468,10 +610,7 @@ class Scene5 extends Scene {
         const overlaps = lineStart < targetEnd && lineEnd > targetStart;
         
         if (!overlaps) {
-            console.log('Release timing: MISS - no overlap', {
-                lineStart, lineEnd, targetStart, targetEnd
-            });
-            return 'miss';
+            return 'miss'; // No overlap
         }
         
         // Calculate how much of the bar is in the zone
@@ -482,31 +621,16 @@ class Scene5 extends Scene {
         // Calculate how centered the bar is in the zone
         const centerDistance = Math.abs(lineCenter - targetCenter);
         
-        // Debug logging
-        console.log('Release timing check:', {
-            lineStart: lineStart,
-            lineEnd: lineEnd,
-            lineCenter: lineCenter,
-            targetCenter: targetCenter,
-            centerDistance: centerDistance,
-            overlapAmount: overlapAmount,
-            targetWidth: targetWidth
-        });
-        
         // Perfect = bar END is in the zone (bar is exiting/about to exit)
         // Good = bar overlaps significantly with zone
         // Miss = minimal overlap
         if (lineEnd >= targetStart && lineEnd <= targetEnd) {
-            console.log('Result: PERFECT - bar end is in zone');
             return 'perfect';
         } else if (overlapAmount > 50) {
-            console.log('Result: GOOD - significant overlap');
             return 'good';
         } else if (overlapAmount > 0) {
-            console.log('Result: MISS - minimal overlap');
             return 'miss';
         } else {
-            console.log('Result: MISS - no overlap');
             return 'miss';
         }
     }
@@ -524,6 +648,12 @@ class Scene5 extends Scene {
     }
     
     completeGame() {
+        // GUARD: Prevent multiple completions
+        if (this.hasCompleted) {
+            console.log('[Scene5] Game already completed - ignoring');
+            return;
+        }
+        
         this.gameActive = false;
         
         // Fade out remaining lines
@@ -533,7 +663,8 @@ class Scene5 extends Scene {
         });
         
         // After fade, remove lines and trigger dot expansion
-        setTimeout(() => {
+        // Use parent class timer tracking for automatic cleanup
+        const fadeTimer = this.addTimer(() => {
             // Clear remaining lines
             this.lines.forEach(line => line.element.remove());
             this.lines = [];
@@ -564,7 +695,7 @@ class Scene5 extends Scene {
             }
             
             // Create and fade in Windows XP sky overlay during dot expansion
-            setTimeout(() => {
+            const skyTimer = this.addTimer(() => {
                 const xpSkyOverlay = document.createElement('img');
                 xpSkyOverlay.className = 'xp-sky-transition';
                 xpSkyOverlay.src = 'assets/images/windowsxp-sky.png';
@@ -576,7 +707,7 @@ class Scene5 extends Scene {
                     width: 100vw;
                     height: 100vh;
                     object-fit: cover;
-                    z-index: 9998;
+                    z-index: 100000;
                     opacity: 0;
                     transition: opacity 1.5s ease-in;
                     pointer-events: none;
@@ -593,11 +724,9 @@ class Scene5 extends Scene {
             }, 500); // Start fading in sky 0.5 seconds after dot expansion starts
             
             // Auto advance after expansion animation completes
-            setTimeout(() => {
-                // Clean up the sky overlay as scene transitions
-                if (this.xpSkyOverlay) {
-                    this.xpSkyOverlay.remove();
-                }
+            const advanceTimer = this.addTimer(() => {
+                // DON'T remove the sky overlay - keep it visible for Scene 6
+                // Scene 6 starts with XP sky, so this prevents black flash
                 this.onComplete();
                 if (window.sceneManager) {
                     window.sceneManager.nextScene();
@@ -607,22 +736,38 @@ class Scene5 extends Scene {
     }
     
     cleanup() {
+        // Cancel setup timer if it's still pending
+        if (this.setupTimerId) {
+            clearTimeout(this.setupTimerId);
+            this.setupTimerId = null;
+        }
+        
+        // Cancel all completion timers (legacy - keeping for safety)
+        if (this.completionTimers) {
+            this.completionTimers.forEach(timer => clearTimeout(timer));
+            this.completionTimers = [];
+        }
+        
         // Stop animation
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
+            this.animationId = null;
         }
         
-        // Clean up XP sky overlay if it exists
+        // Clean up XP sky overlay if it exists (for navigation or scene end)
         if (this.xpSkyOverlay) {
             this.xpSkyOverlay.remove();
+            this.xpSkyOverlay = null;
         }
         
-        // Remove event listeners
-        this.element?.removeEventListener('mousedown', this.startHolding);
-        this.element?.removeEventListener('mouseup', this.stopHolding);
-        this.element?.removeEventListener('mouseleave', this.stopHolding);
-        this.element?.removeEventListener('touchstart', this.startHolding);
-        this.element?.removeEventListener('touchend', this.stopHolding);
+        // Remove event listeners from the game container using stored bound functions
+        if (this.gameContainer) {
+            this.gameContainer.removeEventListener('mousedown', this.boundStartHolding);
+            this.gameContainer.removeEventListener('mouseup', this.boundStopHolding);
+            // mouseleave was removed from setupEventListeners
+            this.gameContainer.removeEventListener('touchstart', this.boundTouchStart);
+            this.gameContainer.removeEventListener('touchend', this.boundTouchEnd);
+        }
         
         super.cleanup();
     }

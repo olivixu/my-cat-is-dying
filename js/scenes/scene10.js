@@ -1,5 +1,7 @@
 // Scene 10: "I don't know how much pain she is in" - Bullet Hell Game
-class Scene10 extends Scene {
+import { Scene } from '../sceneManager.js';
+
+export class Scene10 extends Scene {
     constructor(container) {
         super(container);
         this.text = "I don't know how much pain she holds";

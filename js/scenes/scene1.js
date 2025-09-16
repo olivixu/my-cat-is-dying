@@ -1,5 +1,7 @@
 // Scene 1: "My cat is dying."
-class Scene1 extends Scene {
+import { Scene } from '../sceneManager.js';
+
+export class Scene1 extends Scene {
     constructor(container) {
         super(container);
         this.text = "My cat is dying.";

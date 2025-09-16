@@ -1,5 +1,7 @@
 // Scene 7: "I wonder if our ideas of death are the same."
-class Scene7 extends Scene {
+import { Scene } from '../sceneManager.js';
+
+export class Scene7 extends Scene {
     constructor(container) {
         super(container);
         this.text = "I wonder if our ideas of death are the same.";
@@ -165,7 +167,6 @@ class Scene7 extends Scene {
         window.addEventListener('resize', resizeCanvas);
         
         // Animate TV static
-        let animationId;
         const animateStatic = () => {
             const imageData = ctx.createImageData(staticCanvas.width, staticCanvas.height);
             const data = imageData.data;
@@ -179,12 +180,9 @@ class Scene7 extends Scene {
             }
             
             ctx.putImageData(imageData, 0, 0);
-            animationId = requestAnimationFrame(animateStatic);
+            this.staticAnimationId = requestAnimationFrame(animateStatic);
         };
         animateStatic();
-        
-        // Store animation ID for cleanup
-        this.staticAnimationId = animationId;
         
         // Create text display
         const textContainer = document.createElement('div');
@@ -437,11 +435,25 @@ class Scene7 extends Scene {
         // Stop fluid animation
         if (this.fluidAnimationId) {
             cancelAnimationFrame(this.fluidAnimationId);
+            this.fluidAnimationId = null;
         }
         // Stop static animation
         if (this.staticAnimationId) {
             cancelAnimationFrame(this.staticAnimationId);
+            this.staticAnimationId = null;
         }
+        
+        // Clear canvas contexts
+        if (this.fluidCtx) {
+            this.fluidCtx = null;
+        }
+        if (this.staticCtx) {
+            this.staticCtx = null;
+        }
+        
+        // Clear cards array
+        this.cards = [];
+        
         // Remove event listeners if needed
         super.cleanup();
     }
