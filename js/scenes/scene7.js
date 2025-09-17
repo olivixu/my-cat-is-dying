@@ -13,6 +13,11 @@ export class Scene7 extends Scene {
         this.totalPairs = 3;
         this.canFlip = true;
         
+        // Animation state
+        this.isTransitioning = false;
+        this.fluidAnimationId = null;
+        this.staticAnimationId = null;
+        
         // Card types (each appears twice for pairs)
         this.cardTypes = [
             { id: 'me', image: 'assets/images/Card_Olivia.PNG', name: 'Me' },
@@ -69,8 +74,16 @@ export class Scene7 extends Scene {
         this.element.addEventListener('mousemove', handleMouseMove);
         
         // Animate fluid background
-        let fluidAnimationId;
         const animateFluid = () => {
+            // Stop if transitioning
+            if (this.isTransitioning) {
+                if (this.fluidAnimationId) {
+                    cancelAnimationFrame(this.fluidAnimationId);
+                    this.fluidAnimationId = null;
+                }
+                return;
+            }
+            
             time += 0.008;
             
             // Fill with dark base color first
@@ -146,12 +159,12 @@ export class Scene7 extends Scene {
             
             fluidCtx.putImageData(imageData, 0, 0);
             
-            fluidAnimationId = requestAnimationFrame(animateFluid);
+            // Use instance property for proper cleanup
+            if (!this.isTransitioning) {
+                this.fluidAnimationId = requestAnimationFrame(animateFluid);
+            }
         };
         animateFluid();
-        
-        // Store animation ID for cleanup
-        this.fluidAnimationId = fluidAnimationId;
         
         // Create TV static overlay canvas
         const staticCanvas = document.createElement('canvas');
@@ -168,6 +181,15 @@ export class Scene7 extends Scene {
         
         // Animate TV static
         const animateStatic = () => {
+            // Stop if transitioning
+            if (this.isTransitioning) {
+                if (this.staticAnimationId) {
+                    cancelAnimationFrame(this.staticAnimationId);
+                    this.staticAnimationId = null;
+                }
+                return;
+            }
+            
             const imageData = ctx.createImageData(staticCanvas.width, staticCanvas.height);
             const data = imageData.data;
             
@@ -180,7 +202,11 @@ export class Scene7 extends Scene {
             }
             
             ctx.putImageData(imageData, 0, 0);
-            this.staticAnimationId = requestAnimationFrame(animateStatic);
+            
+            // Only continue if not transitioning
+            if (!this.isTransitioning) {
+                this.staticAnimationId = requestAnimationFrame(animateStatic);
+            }
         };
         animateStatic();
         
@@ -367,6 +393,9 @@ export class Scene7 extends Scene {
     }
     
     completeGame() {
+        // Mark as transitioning to stop animations
+        this.isTransitioning = true;
+        
         // Pause to let user see all matched cards
         setTimeout(() => {
             // Add shadow-hidden class to keep shadows hidden throughout animation
@@ -432,6 +461,9 @@ export class Scene7 extends Scene {
     }
     
     cleanup() {
+        // Mark as transitioning first
+        this.isTransitioning = true;
+        
         // Stop fluid animation
         if (this.fluidAnimationId) {
             cancelAnimationFrame(this.fluidAnimationId);

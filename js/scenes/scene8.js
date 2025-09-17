@@ -14,7 +14,7 @@ export class Scene8 extends Scene {
         this.totalRotation = 0;
         this.lastAngle = null;
         this.angularVelocity = 0;
-        this.requiredRotations = 3;
+        this.requiredRotations = 5;
         
         // Visual state - MATHEMATICAL SPIRAL
         this.spiralRotation = 0;
@@ -24,6 +24,7 @@ export class Scene8 extends Scene {
         
         // Particle system
         this.particles = [];
+        this.rays = [];
         this.lastRotationCount = 0;
         
         // Animation state
@@ -39,8 +40,20 @@ export class Scene8 extends Scene {
         // Glow layers
         this.glowIntensity = 0;
         
+        // Background darkening
+        this.backgroundDarkness = 0;
+        this.targetBackgroundDarkness = 0;
+        
+        // Zoom effect
+        this.zoomLevel = 1;
+        this.targetZoomLevel = 1;
+        
         // Store dot properties for consistent movement
         this.floatingDots = [];
+        
+        // Guide cursors
+        this.cursorImage = null;
+        this.guideCursors = [];
         
         // Store event handlers for cleanup
         this.resizeHandler = null;
@@ -98,6 +111,13 @@ export class Scene8 extends Scene {
         this.element.appendChild(interactiveContainer);
         this.container.appendChild(this.element);
         
+        // Load cursor image
+        this.cursorImage = new Image();
+        this.cursorImage.src = 'assets/svg/cursor.svg';
+        
+        // Initialize guide cursors
+        this.initializeGuideCursors();
+        
         // Setup
         this.setupEventListeners();
         this.generateSpiralPath();
@@ -117,6 +137,68 @@ export class Scene8 extends Scene {
                 rotation: Math.random() * Math.PI * 2 // Random initial rotation for stars
             });
         }
+    }
+    
+    initializeGuideCursors() {
+        // Create multiple guide cursors at various distances
+        const cursorConfigs = [
+            { radius: 50, speed: 0.025, angleOffset: 0 },
+            { radius: 80, speed: 0.022, angleOffset: Math.PI / 4 },
+            { radius: 110, speed: 0.020, angleOffset: Math.PI / 2 },
+            { radius: 140, speed: 0.018, angleOffset: 3 * Math.PI / 4 },
+            { radius: 170, speed: 0.016, angleOffset: Math.PI },
+            { radius: 200, speed: 0.014, angleOffset: 5 * Math.PI / 4 },
+            { radius: 230, speed: 0.012, angleOffset: 3 * Math.PI / 2 },
+            { radius: 260, speed: 0.010, angleOffset: 7 * Math.PI / 4 }
+        ];
+        
+        cursorConfigs.forEach((config, i) => {
+            this.guideCursors.push({
+                angle: config.angleOffset, // Starting angle
+                baseRadius: config.radius,
+                radius: config.radius,
+                speed: config.speed,
+                opacity: 1.0
+            });
+        });
+    }
+    
+    updateGuideCursors() {
+        // Always show cursors at full visibility
+        
+        this.guideCursors.forEach((cursor, i) => {
+            // Update angle for rotation
+            cursor.angle += cursor.speed;
+            
+            // Oscillate radius slightly for spiral effect
+            cursor.radius = cursor.baseRadius + Math.sin(cursor.angle * 2) * 10;
+            
+            // Always fully visible
+            cursor.opacity = 1.0;
+        });
+    }
+    
+    drawGuideCursors() {
+        if (!this.cursorImage || !this.cursorImage.complete) return;
+        
+        const ctx = this.ctx;
+        
+        this.guideCursors.forEach(cursor => {
+            // Calculate position
+            const x = this.centerX + Math.cos(cursor.angle) * cursor.radius;
+            const y = this.centerY + Math.sin(cursor.angle) * cursor.radius;
+            
+            // Draw cursor SVG
+            ctx.save();
+            ctx.translate(x, y);
+            // No rotation - cursor points to its natural direction (top-left)
+            ctx.globalAlpha = cursor.opacity;
+            
+            // Draw the yellow cursor SVG
+            ctx.drawImage(this.cursorImage, -10, -10, 20, 20);
+            
+            ctx.restore();
+        });
     }
     
     draw4PointStar(ctx, x, y, size, rotation) {
@@ -201,10 +283,14 @@ export class Scene8 extends Scene {
     }
     
     processMovement(x, y) {
+        // Adjust coordinates for zoom level
+        const adjustedX = this.centerX + (x - this.centerX) / this.zoomLevel;
+        const adjustedY = this.centerY + (y - this.centerY) / this.zoomLevel;
+        
         // Add to trail with glow
         this.trail.push({ 
-            x, 
-            y, 
+            x: adjustedX, 
+            y: adjustedY, 
             life: 1.0,
             glow: 1.0
         });
@@ -213,13 +299,13 @@ export class Scene8 extends Scene {
             this.trail.shift();
         }
         
-        // Track rotation
+        // Track rotation (using original coordinates for rotation detection)
         this.mousePositions.push({ x, y, time: Date.now() });
         if (this.mousePositions.length > this.maxPositions) {
             this.mousePositions.shift();
         }
         
-        // Calculate angle from center
+        // Calculate angle from center (using original coordinates for accurate rotation)
         const dx = x - this.centerX;
         const dy = y - this.centerY;
         const angle = Math.atan2(dy, dx);
@@ -256,22 +342,30 @@ export class Scene8 extends Scene {
             this.createExplosion();
             this.lastRotationCount = currentRotationCount;
             
-            if (currentRotationCount === 3) {
+            // Increase background darkness and zoom with each rotation
+            this.targetBackgroundDarkness = currentRotationCount / this.requiredRotations;
+            // Zoom in progressively: 1x, 1.2x, 1.4x, 1.6x, 1.8x
+            this.targetZoomLevel = 1 + (currentRotationCount * 0.2);
+            
+            if (currentRotationCount === 5) {
                 setTimeout(() => this.triggerTransition(), 2000);
             }
         }
     }
     
     createExplosion() {
-        // Create more randomly distributed, smaller particles
-        const particleCount = 25; // Fewer particles
+        // Create rays first
+        this.createRays();
+        
+        // Create more randomly distributed particles with higher speeds
+        const particleCount = 30; // More particles for fuller explosion
         for (let i = 0; i < particleCount; i++) {
             // More random angle distribution
             const angle = Math.random() * Math.PI * 2;
-            const speed = 0.5 + Math.random() * 1.5; // Much slower speeds
+            const speed = 2 + Math.random() * 4; // Much higher speeds (was 0.5-2, now 2-6)
             
             // Random spawn position around center (not exactly at center)
-            const spawnRadius = Math.random() * 30;
+            const spawnRadius = Math.random() * 20;
             const spawnAngle = Math.random() * Math.PI * 2;
             
             this.particles.push({
@@ -280,12 +374,89 @@ export class Scene8 extends Scene {
                 vx: Math.cos(angle) * speed,
                 vy: Math.sin(angle) * speed,
                 life: 1.0,
-                size: 3 + Math.random() * 5, // Smaller particles (3-8px instead of 10-15px)
-                hue: 55 + Math.random() * 5, // Lighter yellow range
+                size: 4 + Math.random() * 6, // Slightly larger particles
+                hue: 55 + Math.random() * 10, // Wider color range
                 rotation: Math.random() * Math.PI * 2, // Initial rotation for star
-                rotationSpeed: (Math.random() - 0.5) * 0.1 // Spin speed
+                rotationSpeed: (Math.random() - 0.5) * 0.15 // Faster spin
             });
         }
+    }
+    
+    createRays() {
+        // Create flash-like rays that jump around and extend to screen edges
+        const rayCount = 20; // More rays for chaotic flash effect
+        for (let i = 0; i < rayCount; i++) {
+            const angle = Math.random() * Math.PI * 2; // Random angles
+            this.rays.push({
+                angle: angle,
+                length: this.maxRadius * 1.5, // Always extend beyond screen edges
+                width: 1 + Math.random() * 0.5, // Very thin rays (1-1.5px)
+                opacity: 1.0,
+                flashTime: 0.05 + Math.random() * 0.1, // Flash duration 50-150ms worth of frames
+                flashTimer: 0,
+                jumps: 3 + Math.floor(Math.random() * 2), // 3-4 jumps
+                jumpDelay: 0.02 + Math.random() * 0.03 // Delay between jumps
+            });
+        }
+    }
+    
+    drawRays() {
+        const ctx = this.ctx;
+        
+        // Update and draw flash rays
+        this.rays = this.rays.filter(ray => {
+            // Update flash timer
+            ray.flashTimer += 0.016; // Assuming ~60fps
+            
+            // Check if ray should jump to new position
+            if (ray.flashTimer > ray.flashTime) {
+                ray.jumps--;
+                if (ray.jumps <= 0) return false; // Remove ray after all jumps
+                
+                // Jump to new position
+                ray.angle = Math.random() * Math.PI * 2;
+                ray.length = this.maxRadius * 1.5; // Always extend to screen edges
+                ray.flashTimer = 0;
+                ray.opacity = 0.8 + Math.random() * 0.2; // Varying brightness
+                ray.flashTime = 0.05 + Math.random() * 0.1; // New flash duration
+            }
+            
+            // Calculate fade based on flash progress
+            const flashProgress = ray.flashTimer / ray.flashTime;
+            const fade = ray.opacity * (1 - flashProgress * 0.7); // Fade to 30% by end of flash
+            
+            // Draw thin ray line as solid beam to screen edge
+            ctx.save();
+            ctx.translate(this.centerX, this.centerY);
+            ctx.rotate(ray.angle);
+            
+            // Single bright line with subtle glow
+            ctx.globalCompositeOperation = 'screen';
+            
+            // Thin glow for visibility
+            ctx.strokeStyle = `rgba(255, 255, 200, ${fade * 0.2})`;
+            ctx.lineWidth = ray.width * 2;
+            ctx.lineCap = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(ray.length, 0);
+            ctx.stroke();
+            
+            // Core bright line - solid color, no gradient
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.strokeStyle = `rgba(255, 255, 230, ${fade})`; // Solid bright yellow-white
+            ctx.lineWidth = ray.width; // Consistent thin width
+            
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(ray.length, 0);
+            ctx.stroke();
+            
+            ctx.restore();
+            
+            return true;
+        });
     }
     
     drawSpiral() {
@@ -468,9 +639,9 @@ export class Scene8 extends Scene {
             // Update physics - slower movement and decay
             particle.x += particle.vx;
             particle.y += particle.vy;
-            particle.vx *= 0.99; // Less velocity decay (was 0.98)
-            particle.vy *= 0.99;
-            particle.life -= 0.005; // Slower life decay (was 0.01)
+            particle.vx *= 0.98; // Slightly more decay for longer travel
+            particle.vy *= 0.98;
+            particle.life -= 0.007; // Slightly faster decay to match distance
             particle.rotation += particle.rotationSpeed; // Spin the star
             
             if (particle.life <= 0) return false;
@@ -505,7 +676,14 @@ export class Scene8 extends Scene {
     }
     
     animate(currentTime) {
-        if (this.isTransitioning) return;
+        // Stop immediately if transitioning
+        if (this.isTransitioning) {
+            if (this.animationId) {
+                cancelAnimationFrame(this.animationId);
+                this.animationId = null;
+            }
+            return;
+        }
         
         // Check idle state
         const now = Date.now();
@@ -513,26 +691,52 @@ export class Scene8 extends Scene {
             this.isIdle = true;
         }
         
-        // Clear and fill background - match Scene 7's beige fade
-        this.ctx.fillStyle = '#f5e6d3';
+        // Smoothly transition background darkness and zoom
+        this.backgroundDarkness += (this.targetBackgroundDarkness - this.backgroundDarkness) * 0.05;
+        this.zoomLevel += (this.targetZoomLevel - this.zoomLevel) * 0.05;
+        
+        // Clear and fill background with progressive darkening
+        // Interpolate from beige (#f5e6d3) to black based on darkness level
+        const r = Math.floor(245 * (1 - this.backgroundDarkness));
+        const g = Math.floor(230 * (1 - this.backgroundDarkness));
+        const b = Math.floor(211 * (1 - this.backgroundDarkness));
+        this.ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Update rotation speed based on interaction - SLOWER
         const targetSpeed = this.isIdle ? 0.001 : 0.002 + Math.abs(this.angularVelocity) * 0.005;
         this.spiralRotation += targetSpeed;
         
+        // Apply zoom transformation
+        this.ctx.save();
+        this.ctx.translate(this.centerX, this.centerY);
+        this.ctx.scale(this.zoomLevel, this.zoomLevel);
+        this.ctx.translate(-this.centerX, -this.centerY);
+        
         // Draw layers with variable stroke width
         this.drawSpiral();
         // this.drawBlackCircle(); // Removed center black circle
         this.drawFloatingDots();
         
+        // Update and draw guide cursors
+        this.updateGuideCursors();
+        this.drawGuideCursors();
+        
         if (this.trail.length > 0) {
             this.drawTrail();
+        }
+        
+        // Draw rays before particles for proper layering
+        if (this.rays.length > 0) {
+            this.drawRays();
         }
         
         if (this.particles.length > 0) {
             this.updateParticles();
         }
+        
+        // Restore canvas state after zoom
+        this.ctx.restore();
         
         // Update trail
         this.trail.forEach(point => {
@@ -545,13 +749,21 @@ export class Scene8 extends Scene {
         this.angularVelocity *= 0.98;
         this.glowIntensity *= 0.95; // Much slower glow decay
         
-        // Continue animation
-        this.animationId = requestAnimationFrame((time) => this.animate(time));
+        // Continue animation only if not transitioning
+        if (!this.isTransitioning) {
+            this.animationId = requestAnimationFrame((time) => this.animate(time));
+        }
     }
     
     triggerTransition() {
         if (this.isTransitioning) return;
         this.isTransitioning = true;
+        
+        // Cancel animation frame immediately
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        }
         
         this.element.style.transition = 'opacity 0.5s ease-out';
         this.element.style.opacity = '0';
@@ -596,9 +808,12 @@ export class Scene8 extends Scene {
         // Clear heavy data structures
         this.spiralSegments = [];
         this.particles = [];
+        this.rays = [];
         this.trail = [];
         this.floatingDots = [];
+        this.guideCursors = [];
         this.mousePositions = [];
+        this.cursorImage = null;
         
         // Clear canvas context
         if (this.ctx) {

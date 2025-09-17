@@ -9,7 +9,7 @@ export class Scene6 extends Scene {
         // Game state
         this.gameActive = false;
         this.score = 0;
-        this.targetScore = 10;
+        this.targetScore = 5;
         this.pills = [];
         this.smokeyPosition = 50; // Percentage from left
         this.smokeySpeed = 0.5; // Movement speed (much slower for better control)
@@ -183,6 +183,10 @@ export class Scene6 extends Scene {
         
         // Start game after animations complete (wait for all transitions)
         setTimeout(() => {
+            // Remove the slide-up animation class to prevent conflicts with celebration
+            if (this.smokey) {
+                this.smokey.classList.remove('scene-6-smokey');
+            }
             this.startGame();
         }, 3300); // Wait for land slide (2s) + text fade (0.8s) + smokey/indicators slide (0.8s)
     }
@@ -298,27 +302,31 @@ export class Scene6 extends Scene {
     }
     
     animate() {
-        if (!this.gameActive) return;
+        // Keep animating even after game ends (for celebration)
+        // Just stop spawning new pills and checking collisions
         
         const now = Date.now();
         
-        // Spawn new pills
-        if (now - this.lastSpawnTime > this.spawnInterval) {
-            this.spawnPill();
-            this.lastSpawnTime = now;
+        // Only spawn pills and check collisions if game is active
+        if (this.gameActive) {
+            // Spawn new pills
+            if (now - this.lastSpawnTime > this.spawnInterval) {
+                this.spawnPill();
+                this.lastSpawnTime = now;
+            }
+            
+            // Update pills
+            this.updatePills();
+            
+            // Check collisions
+            this.checkCollisions();
         }
         
-        // Update Smokey position
+        // Always update Smokey position and animation
         this.updateSmokeyPosition();
         
         // Update cat animation frame
         this.updateCatFrame();
-        
-        // Update pills
-        this.updatePills();
-        
-        // Check collisions
-        this.checkCollisions();
         
         this.animationId = requestAnimationFrame(() => this.animate());
     }
@@ -511,8 +519,8 @@ export class Scene6 extends Scene {
         
         // Auto-advance to next scene after fireworks complete
         setTimeout(() => {
-            // Don't call cleanup here - let SceneManager handle it
             this.onComplete();
+            // Manually advance to next scene
             if (window.sceneManager) {
                 window.sceneManager.nextScene();
             }
@@ -586,7 +594,7 @@ export class Scene6 extends Scene {
         // Clear game state
         this.pills = [];
         this.fireworks = [];
-        this.preloadedImages.clear();
+        this.preloadedImages = [];
         
         // Remove event listeners
         document.removeEventListener('keydown', this.keydownHandler);

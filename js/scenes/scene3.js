@@ -36,17 +36,23 @@ export class Scene3 extends Scene {
         starsContainer.className = 'stars-container';
         
         // Create multiple stars with random positions
-        for (let i = 0; i < 40; i++) {
+        for (let i = 0; i < 80; i++) {
             const star = document.createElement('div');
             star.className = 'star';
             star.style.left = `${Math.random() * 100}%`;
             star.style.top = `${Math.random() * 100}%`;
-            star.style.animationDelay = `${Math.random() * 3}s`;
+            star.style.animationDelay = `${Math.random() * 4}s`;
             
-            // Vary star sizes slightly
-            const size = Math.random() * 2 + 1; // 1-3px
+            // Vary star sizes for more depth
+            const size = Math.random() * 3 + 0.5; // 0.5-3.5px
             star.style.width = `${size}px`;
             star.style.height = `${size}px`;
+            
+            // Vary animation duration for different twinkle speeds
+            star.style.animationDuration = `${2 + Math.random() * 3}s`; // 2-5s
+            
+            // Add slight opacity variation
+            star.style.opacity = `${0.3 + Math.random() * 0.7}`; // 0.3-1.0
             
             starsContainer.appendChild(star);
         }
@@ -317,13 +323,96 @@ export class Scene3 extends Scene {
         if (this.hasCompleted) return;
         this.hasCompleted = true;
         
-        // Auto advance after delay
+        // Start transition sequence
+        this.startTransitionToScene4();
+        
+        // Auto advance after animations complete
         setTimeout(() => {
             this.onComplete();
             if (window.sceneManager) {
                 window.sceneManager.nextScene();
             }
-        }, 1000);
+        }, 4500); // Give full time for all animations to complete
+    }
+    
+    startTransitionToScene4() {
+        // Fade out step 2 instructions
+        if (this.instructionStep2) {
+            this.instructionStep2.style.transition = 'opacity 0.8s ease-out';
+            this.instructionStep2.style.opacity = '0';
+        }
+        
+        // Fade out text
+        const textElements = this.element.querySelectorAll('.scene3-text, .text-part-1, .text-part-2');
+        textElements.forEach(el => {
+            el.style.transition = 'opacity 0.8s ease-out';
+            el.style.opacity = '0';
+        });
+        
+        // Close the head lid first
+        if (this.headLid) {
+            this.headLid.style.transition = 'transform 0.6s ease-out';
+            this.headLid.style.transform = 'rotateX(0deg)'; // Close the lid
+        }
+        
+        // After initial fades and head closing, start the rest
+        setTimeout(() => {
+            // Remove floor so books can fall off screen
+            if (this.floorBody && this.physics && this.physics.world) {
+                Matter.World.remove(this.physics.world, this.floorBody);
+                this.floorBody = null;
+            }
+            
+            // Make books drop off screen
+            this.bookImagePairs.forEach(pair => {
+                if (pair.body && this.physics) {
+                    // Apply strong downward force to make books fall
+                    Matter.Body.setVelocity(pair.body, { x: 0, y: 25 });
+                }
+            });
+            
+            // Move Smokey off to the right (after head is closed)
+            const smokeyElements = this.element.querySelectorAll('.smokey-head, .smokey-overlay');
+            smokeyElements.forEach(el => {
+                el.style.transition = 'transform 1.5s ease-in';
+                el.style.transform = 'translateX(150%)';
+            });
+            
+            // Fade out stars
+            const starsContainer = this.element.querySelector('.stars-container');
+            if (starsContainer) {
+                // Remove the animation to allow transition
+                starsContainer.style.animation = 'none';
+                starsContainer.style.opacity = '1'; // Set current state
+                // Force reflow
+                starsContainer.offsetHeight;
+                // Now apply the fade
+                starsContainer.style.transition = 'opacity 1.5s ease-out';
+                starsContainer.style.opacity = '0';
+            }
+            
+            // Create black overlay for smooth fade to black
+            setTimeout(() => {
+                const blackOverlay = document.createElement('div');
+                blackOverlay.className = 'scene3-black-overlay';
+                blackOverlay.style.position = 'absolute';
+                blackOverlay.style.top = '0';
+                blackOverlay.style.left = '0';
+                blackOverlay.style.width = '100%';
+                blackOverlay.style.height = '100%';
+                blackOverlay.style.background = '#000000';
+                blackOverlay.style.opacity = '0';
+                blackOverlay.style.zIndex = '1000';
+                blackOverlay.style.pointerEvents = 'none';
+                blackOverlay.style.transition = 'opacity 1.5s ease-out';
+                
+                this.element.appendChild(blackOverlay);
+                
+                // Force reflow then fade in
+                blackOverlay.offsetHeight;
+                blackOverlay.style.opacity = '1';
+            }, 1500); // Start later and take longer
+        }, 500); // Start after text fades (shorter delay)
     }
     
     initPhysics(canvas) {
@@ -347,8 +436,8 @@ export class Scene3 extends Scene {
             
             console.log('Canvas dimensions:', width, height);
             
-            // Floor (visible, at bottom)
-            this.physics.createRectangle(width/2, height - 10, width, 20, { 
+            // Floor (visible, at bottom) - store reference to remove later
+            this.floorBody = this.physics.createRectangle(width/2, height - 10, width, 20, { 
                 isStatic: true,
                 render: { fillStyle: '#333333' }
             });
@@ -562,9 +651,9 @@ export class Scene3 extends Scene {
                     if (isPlatformA || isPlatformB) {
                         const book = isPlatformA ? pair.bodyB : pair.bodyA;
                         
-                        // Check if this is one of our books
-                        if (this.physicsBooks.includes(book)) {
-                            console.log('Book hit bounce platform!');
+                        // Check if this is one of our books AND it's moving downward
+                        if (this.physicsBooks.includes(book) && book.velocity.y > 0) {
+                            console.log('Book hit bounce platform from above! Velocity:', book.velocity.y);
                             
                             // Apply strong bounce velocity - left and up
                             Matter.Body.setVelocity(book, { 

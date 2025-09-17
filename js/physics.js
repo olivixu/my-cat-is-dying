@@ -129,10 +129,26 @@ export class PhysicsWrapper {
             }
         };
         
-        const body = Matter.Bodies.rectangle(x, y, width, height, {
+        // Deep merge render options to preserve visible: false
+        const renderOptions = {
+            ...defaults.render,
+            ...(options.render || {})
+        };
+        
+        // If visible is false, hide everything
+        if (renderOptions.visible === false) {
+            renderOptions.fillStyle = 'transparent';
+            renderOptions.strokeStyle = 'transparent';
+            renderOptions.lineWidth = 0;
+        }
+        
+        const mergedOptions = {
             ...defaults,
-            ...options
-        });
+            ...options,
+            render: renderOptions
+        };
+        
+        const body = Matter.Bodies.rectangle(x, y, width, height, mergedOptions);
         
         this.bodies.push(body);
         Matter.World.add(this.world, body);

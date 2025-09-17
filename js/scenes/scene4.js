@@ -15,13 +15,13 @@ export class Scene4 extends Scene {
         this.treats = [
             { id: 'wetfood', image: 'assets/images/Treat/Treat_0000_Layer-wet-food-1.png', name: 'Wet Food', tastiness: 1 },
             { id: 'greenies', image: 'assets/images/Treat/Treat_0004_Layer-greenies-2.png', name: 'Greenies', tastiness: 2 },
-            { id: 'chicken', image: 'assets/images/Treat/Treat_0000_Layer-chicken-3.png', name: 'Chicken', tastiness: 3 },
-            { id: 'minnows', image: 'assets/images/Treat/Treat_0003_Layer-minnows-4.png', name: 'Minnows', tastiness: 4 },
+            { id: 'minnows', image: 'assets/images/Treat/Treat_0003_Layer-minnows-4.png', name: 'Minnows', tastiness: 3 },
+            { id: 'chicken', image: 'assets/images/Treat/Treat_0000_Layer-chicken-3.png', name: 'Chicken', tastiness: 4 },
             { id: 'churu', image: 'assets/images/Treat/Treat_0001_Layer-churu-5.png', name: 'Churu', tastiness: 5 }
         ];
         
         // Correct order (by IDs from least to most tasty)
-        this.correctOrder = ['wetfood', 'greenies', 'chicken', 'minnows', 'churu'];
+        this.correctOrder = ['wetfood', 'greenies', 'minnows', 'chicken', 'churu'];
         
         // Current arrangement - shuffle for puzzle, ensuring it's not already correct
         this.currentOrder = this.shuffleForPuzzle([...this.treats]);
@@ -113,10 +113,12 @@ export class Scene4 extends Scene {
         gameBoard.appendChild(angrySmokeyImg);
         gameBoard.appendChild(happySmokeyImg);
         
-        // Create the track line
-        const trackLine = document.createElement('div');
-        trackLine.className = 'track-line';
-        gameBoard.appendChild(trackLine);
+        // Add axis line SVG instead of div track line
+        const axisLine = document.createElement('img');
+        axisLine.src = 'assets/SVG/axis-line.svg';
+        axisLine.className = 'axis-line';
+        axisLine.alt = 'Least to Most Tasty';
+        gameBoard.appendChild(axisLine);
         
         // Create slots container
         const slotsContainer = document.createElement('div');
@@ -140,10 +142,11 @@ export class Scene4 extends Scene {
                 <span class="treat-name">${treat.name}</span>
             `;
             
-            // Create feedback dot
-            const feedbackDot = document.createElement('div');
+            // Create feedback dot (using SVG images)
+            const feedbackDot = document.createElement('img');
             feedbackDot.className = 'position-feedback';
             feedbackDot.dataset.position = index;
+            feedbackDot.style.display = 'none'; // Hidden initially
             
             // Add elements to slot
             slot.appendChild(treatElement);
@@ -164,10 +167,11 @@ export class Scene4 extends Scene {
         this.slotsContainer = slotsContainer;
         this.feedbackDots = slotsContainer.querySelectorAll('.position-feedback');
         
-        // Create success message (hidden initially)
-        const successMessage = document.createElement('div');
+        // Create success message image (hidden initially)
+        const successMessage = document.createElement('img');
         successMessage.className = 'success-message hidden';
-        successMessage.innerHTML = '<p>Perfect! You know what Smokey likes!</p>';
+        successMessage.src = 'assets/SVG/Correct-1.svg';
+        successMessage.alt = 'Success!';
         
         // Assemble game
         gameContainer.appendChild(labelsContainer);
@@ -296,10 +300,14 @@ export class Scene4 extends Scene {
             const feedbackDot = this.feedbackDots[index];
             
             if (feedbackDot) {
+                feedbackDot.style.display = 'block'; // Show the feedback dot
+                
                 if (isCorrect) {
+                    feedbackDot.src = 'assets/SVG/Success.svg';
                     feedbackDot.classList.add('correct');
                     feedbackDot.classList.remove('incorrect');
                 } else {
+                    feedbackDot.src = 'assets/SVG/Error.svg';
                     feedbackDot.classList.add('incorrect');
                     feedbackDot.classList.remove('correct');
                 }
@@ -335,12 +343,29 @@ export class Scene4 extends Scene {
             treat.classList.add('success');
         });
         
-        // Show success message
+        // Fade out game elements
+        const gameBoard = this.element.querySelector('.treat-game-board');
+        if (gameBoard) {
+            gameBoard.classList.add('fade-out-complete');
+        }
+        
+        // Show success message with scale-in animation
         this.successMessage.classList.remove('hidden');
+        this.successMessage.classList.add('scale-in');
+        
+        // Animate between Correct-1 and Correct-2
+        let isCorrect1 = true;
+        const swapInterval = setInterval(() => {
+            isCorrect1 = !isCorrect1;
+            this.successMessage.src = isCorrect1 ? 
+                'assets/SVG/Correct-1.svg' : 
+                'assets/SVG/Correct-2.svg';
+        }, 400); // Swap every 400ms
         
         // Auto advance after showing success
         // Store timer ID for cleanup to prevent memory leaks
         this.completionTimer = setTimeout(() => {
+            clearInterval(swapInterval); // Stop the animation
             this.onComplete();
             if (window.sceneManager) {
                 window.sceneManager.nextScene();

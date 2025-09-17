@@ -18,6 +18,7 @@ export class Scene9 extends Scene {
         // Grading state
         this.score = 0;
         this.hasBeenGraded = false;
+        this.scoreInterval = null;
     }
     
     async init() {
@@ -475,14 +476,28 @@ export class Scene9 extends Scene {
         }
         
         // Animate score counting up
+        // Clear any existing interval
+        if (this.scoreInterval) {
+            clearInterval(this.scoreInterval);
+            this.scoreInterval = null;
+        }
+        
         let currentScore = 0;
         const increment = Math.ceil(score / 30);
-        const interval = setInterval(() => {
+        this.scoreInterval = setInterval(() => {
+            // Check if element still exists
+            if (!this.scoreElement) {
+                clearInterval(this.scoreInterval);
+                this.scoreInterval = null;
+                return;
+            }
+            
             currentScore = Math.min(currentScore + increment, score);
             this.scoreElement.textContent = currentScore;
             
             if (currentScore >= score) {
-                clearInterval(interval);
+                clearInterval(this.scoreInterval);
+                this.scoreInterval = null;
                 // Add celebration for high scores
                 if (score >= 85) {
                     this.celebrate();
@@ -504,6 +519,12 @@ export class Scene9 extends Scene {
     }
     
     cleanup() {
+        // Clear any running intervals
+        if (this.scoreInterval) {
+            clearInterval(this.scoreInterval);
+            this.scoreInterval = null;
+        }
+        
         // Clean up canvas and context
         if (this.ctx) {
             this.ctx = null;

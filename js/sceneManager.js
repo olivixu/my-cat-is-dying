@@ -255,6 +255,20 @@ export class SceneManager {
                 }, 1000);
             }
             
+            // Handle Scene 3 to 4 transition
+            if (previousScene && this.currentSceneIndex === 3) {
+                // Delay setting container background to allow Scene 3's fade to complete
+                setTimeout(() => {
+                    this.container.style.backgroundColor = '#000000';
+                }, 2000); // Wait for Scene 3's fade animation
+            }
+            
+            // Handle Scene 4 to 5 transition
+            if (previousScene && this.currentSceneIndex === 4) {
+                // Set container background to black for Scene 5
+                this.container.style.backgroundColor = '#000000';
+            }
+            
             // Set up completion callback
             this.currentScene.onCompleteCallback = () => {
                 this.onSceneComplete();

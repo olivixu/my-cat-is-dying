@@ -448,6 +448,7 @@
 .scene3-text .text-part-2 {
     display: block;
     opacity: 0;
+    margin-top: 20px; /* Add vertical spacing between text lines */
     animation: fadeIn 1s ease-out 2.5s forwards; /* 1.5s gap */
 }
 
@@ -501,7 +502,7 @@
 
 /* Scene 3: Smokey Head Book Game */
 .scene-3 {
-    background: linear-gradient(180deg, #0a0a1f 0%, #050510 100%) !important;
+    background: linear-gradient(180deg, #0a0a1f 0%, #050510 100%);
     position: relative;
     overflow: hidden;
 }
@@ -768,22 +769,46 @@
 
 /* Scene 4: Treat ranking game */
 .scene-4 {
-    background-image: url('../assets/images/Ocean_background.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    background: #000000; /* Fallback black background */
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    animation: fadeIn 0.8s ease-out forwards; /* Scene fades in from black */
+}
+
+/* Axis line for treat ordering */
+.axis-line {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: auto;
+    z-index: 1;
+}
+
+.scene-4 .story-text {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease-out 0.5s forwards; /* Quick fade after container */
+    position: relative;
+    z-index: 1;
 }
 
 .scene-4 .story-text h2 {
-    color: #000000;
+    color: #ffffff; /* White text */
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.6); /* Add shadow for readability */
 }
 
-.treat-ranking-game {
+.scene-4 .treat-ranking-game {
     position: relative;
     padding: 40px;
     width: 100%;
     max-width: 900px;
     margin: 0 auto;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease-out 0.7s forwards; /* Quick stagger */
 }
 
 .ranking-labels {
@@ -804,44 +829,33 @@
     width: 700px;
     height: 200px;
     margin: 40px auto;
+    opacity: 1;
+    transition: opacity 0.8s ease-out;
 }
 
 .board-end-left {
     position: absolute;
-    left: -60px;
+    left: -90px;
     top: 50%;
     transform: translateY(-50%);
-    width: 50px;
-    height: 50px;
+    width: 75px;
+    height: 75px;
     object-fit: contain;
     z-index: 2;
 }
 
 .board-end-right {
     position: absolute;
-    right: -60px;
+    right: -90px;
     top: 50%;
     transform: translateY(-50%);
-    width: 50px;
-    height: 50px;
+    width: 75px;
+    height: 75px;
     object-fit: contain;
     z-index: 2;
 }
 
-.track-line {
-    position: absolute;
-    width: 600px;
-    height: 8px;
-    left: 50px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: linear-gradient(90deg, 
-        rgba(255, 255, 255, 0.2) 0%, 
-        rgba(255, 255, 255, 0.4) 100%);
-    border-radius: 4px;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-    z-index: 5;
-}
+/* Removed track-line - using axis-line SVG instead */
 
 .slots-container {
     position: absolute;
@@ -863,38 +877,74 @@
     justify-content: space-between;
 }
 
-/* Position feedback dots on the track line */
+/* Position feedback dots on the axis line */
 .position-feedback {
     position: absolute;
-    bottom: 92px; /* Position on the line */
+    bottom: 90px; /* Position on the axis line SVG */
     left: 50%;
     transform: translateX(-50%);
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.7);
-    border: 2px solid rgba(255, 255, 255, 0.9);
+    width: 24px;
+    height: 24px;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     z-index: 20;
 }
 
 .position-feedback.correct {
-    background: #4ade80;
-    border-color: #22c55e;
-    box-shadow: 0 0 20px rgba(74, 222, 128, 0.9), 0 2px 4px rgba(0, 0, 0, 0.2);
     animation: pulse-correct 0.5s ease;
 }
 
 .position-feedback.incorrect {
-    background: #f87171;
-    border-color: #ef4444;
-    box-shadow: 0 0 20px rgba(248, 113, 113, 0.9), 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    25% { transform: translateX(-52%) translateY(-2px); }
+    75% { transform: translateX(-48%) translateY(2px); }
 }
 
 @keyframes pulse-correct {
     0%, 100% { transform: translateX(-50%) scale(1); }
     50% { transform: translateX(-50%) scale(1.4); }
+}
+
+/* Success message for Scene 4 */
+.scene-4 .success-message {
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: auto;
+    z-index: 100;
+    opacity: 0;
+    background: transparent;
+    padding: 0;
+    border: none;
+}
+
+.scene-4 .success-message.scale-in {
+    animation: scaleInSuccess 0.5s ease-out forwards;
+}
+
+.scene-4 .success-message.hidden {
+    display: none;
+}
+
+@keyframes scaleInSuccess {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Fade out animation for completed game */
+.treat-game-board.fade-out-complete {
+    opacity: 0.3;
 }
 
 .treat-item {
@@ -1060,25 +1110,54 @@
 
 /* Scene 5: Breathing rhythm game */
 .scene-5 {
-    background: #000000;
+    background: #000000; /* Black background */
     overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    position: relative;
+}
+
+.scene5-video-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    opacity: 0;
+    animation: fadeIn 1.2s ease-out 0.3s forwards; /* Video fades in */
 }
 
 .scene-5 .story-text {
     margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.8s ease-out 0.5s forwards;
+    position: relative;
+    z-index: 1;
 }
 
 .scene-5 .story-text h2 {
-    color: #ffffff;
+    color: #000000;
     text-align: center;
 }
 
-.breathing-game {
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.scene-5 .breathing-game {
     position: relative;
     width: 100%;
     height: 400px;
@@ -1087,6 +1166,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.8s ease-out 0.8s forwards; /* Slightly delayed after text */
+    z-index: 1;
 }
 
 .game-instructions {

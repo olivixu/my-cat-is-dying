@@ -62,6 +62,42 @@ export class Scene5 extends Scene {
         this.element = document.createElement('div');
         this.element.className = 'scene story-scene scene-5';
         
+        // Create video background
+        const videoBackground = document.createElement('video');
+        videoBackground.className = 'scene5-video-background';
+        videoBackground.src = 'assets/images/Scene 4 background/Smokey-napping-bitmap-higher.mp4';
+        videoBackground.autoplay = true;
+        videoBackground.muted = true;
+        videoBackground.playsInline = true;
+        
+        // Implement boomerang playback (forward then reverse)
+        let playingForward = true;
+        let reverseInterval = null;
+        
+        videoBackground.addEventListener('ended', () => {
+            if (playingForward) {
+                playingForward = false;
+                // Play in reverse by stepping backwards
+                reverseInterval = setInterval(() => {
+                    if (videoBackground.currentTime <= 0.1) {
+                        clearInterval(reverseInterval);
+                        playingForward = true;
+                        videoBackground.currentTime = 0;
+                        videoBackground.play();
+                    } else {
+                        videoBackground.currentTime -= 0.033; // ~30fps backwards
+                    }
+                }, 33);
+            }
+        });
+        
+        // Start playing
+        videoBackground.play().catch(e => console.log('Video autoplay failed:', e));
+        
+        // Store references for cleanup
+        this.videoBackground = videoBackground;
+        this.reverseInterval = reverseInterval;
+        
         // Create text display
         const textContainer = document.createElement('div');
         textContainer.className = 'story-text';
@@ -123,6 +159,7 @@ export class Scene5 extends Scene {
         gameContainer.appendChild(successMessage);
         
         // Assemble scene
+        this.element.appendChild(videoBackground);
         this.element.appendChild(textContainer);
         this.element.appendChild(gameContainer);
         
@@ -756,6 +793,17 @@ export class Scene5 extends Scene {
         if (this.completionTimers) {
             this.completionTimers.forEach(timer => clearTimeout(timer));
             this.completionTimers = [];
+        }
+        
+        // Clean up video and reverse playback interval
+        if (this.reverseInterval) {
+            clearInterval(this.reverseInterval);
+            this.reverseInterval = null;
+        }
+        if (this.videoBackground) {
+            this.videoBackground.pause();
+            this.videoBackground.src = '';
+            this.videoBackground = null;
         }
         
         // Stop animation
