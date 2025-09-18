@@ -6,7 +6,14 @@ export class Scene10 extends Scene {
         super(container);
         this.text = "I don't know how much pain she holds";
         
+        // Animation state
+        this.introComplete = false;
+        this.gridAnimationPhase = 0; // 0: black, 1: vertical lines, 2: horizontal lines, 3: elements
+        this.gridAnimationProgress = 0;
+        this.elementsVisible = false;
+        
         // Game state
+        this.gameWaiting = false; // Waiting for user input to start
         this.gameActive = false;
         this.gameComplete = false;
         this.currentWave = 0;
@@ -56,6 +63,9 @@ export class Scene10 extends Scene {
         this.canvas = null;
         this.ctx = null;
         
+        // Victory overlay
+        this.victoryOverlay = null;
+        
         // Arena dimensions
         this.arenaWidth = 400;
         this.arenaHeight = 300;
@@ -82,12 +92,14 @@ export class Scene10 extends Scene {
         
         // Create text display
         const textContainer = document.createElement('div');
-        textContainer.className = 'story-text retro-title';
+        textContainer.className = 'story-text retro-title scene-element';
         textContainer.innerHTML = `<h2>${this.text}</h2>`;
+        textContainer.style.opacity = '0';
         
         // Create game container
         const gameContainer = document.createElement('div');
-        gameContainer.className = 'bullet-hell-container';
+        gameContainer.className = 'bullet-hell-container scene-element';
+        gameContainer.style.opacity = '0';
         
         // Create canvas
         this.canvas = document.createElement('canvas');
@@ -97,23 +109,77 @@ export class Scene10 extends Scene {
         this.ctx = this.canvas.getContext('2d');
         this.ctx.imageSmoothingEnabled = false; // Pixel perfect rendering
         
+        // Create victory overlay (hidden initially)
+        this.victoryOverlay = document.createElement('div');
+        this.victoryOverlay.className = 'victory-overlay';
+        this.victoryOverlay.style.position = 'absolute';
+        this.victoryOverlay.style.background = '#000000';
+        this.victoryOverlay.style.width = this.arenaWidth + 'px';
+        this.victoryOverlay.style.height = this.arenaHeight + 'px';
+        this.victoryOverlay.style.left = '0';
+        this.victoryOverlay.style.top = '0';
+        this.victoryOverlay.style.transformOrigin = 'center';
+        this.victoryOverlay.style.transform = 'scale(0)';
+        this.victoryOverlay.style.opacity = '0';
+        this.victoryOverlay.style.zIndex = '10';
+        
         // Create UI elements
         const gameUI = document.createElement('div');
         gameUI.className = 'bullet-hell-ui retro-ui';
         
         // Create health canvas for pixel hearts
         const healthCanvas = document.createElement('canvas');
-        healthCanvas.className = 'health-canvas';
+        healthCanvas.className = 'health-canvas scene-element';
         healthCanvas.width = 120;
         healthCanvas.height = 20;
+        healthCanvas.style.opacity = '0';
         this.healthCanvas = healthCanvas;
         this.healthCtx = healthCanvas.getContext('2d');
         this.healthCtx.imageSmoothingEnabled = false;
         
+        // Create controls instruction
+        const controlsContainer = document.createElement('div');
+        controlsContainer.className = 'controls-instruction scene-element';
+        controlsContainer.style.opacity = '0';
+        controlsContainer.style.display = 'flex';
+        controlsContainer.style.alignItems = 'center';
+        controlsContainer.style.justifyContent = 'center';
+        controlsContainer.style.gap = '10px';
+        controlsContainer.style.marginTop = '15px';
+        
+        const wasdImg = document.createElement('img');
+        wasdImg.src = 'assets/images/WASD.png';
+        wasdImg.style.imageRendering = 'pixelated';
+        wasdImg.style.imageRendering = '-moz-crisp-edges';
+        wasdImg.style.imageRendering = 'crisp-edges';
+        wasdImg.style.height = '60px';
+        wasdImg.style.width = 'auto';
+        
+        const orText = document.createElement('span');
+        orText.textContent = 'OR';
+        orText.style.color = '#ffffff';
+        orText.style.fontFamily = 'Courier New, monospace';
+        orText.style.fontSize = '16px';
+        orText.style.padding = '0 5px';
+        
+        const arrowsImg = document.createElement('img');
+        arrowsImg.src = 'assets/images/Arrows.png';
+        arrowsImg.style.imageRendering = 'pixelated';
+        arrowsImg.style.imageRendering = '-moz-crisp-edges';
+        arrowsImg.style.imageRendering = 'crisp-edges';
+        arrowsImg.style.height = '60px';
+        arrowsImg.style.width = 'auto';
+        
+        controlsContainer.appendChild(wasdImg);
+        controlsContainer.appendChild(orText);
+        controlsContainer.appendChild(arrowsImg);
+        
         // Assemble game container
         gameContainer.appendChild(this.canvas);
+        gameContainer.appendChild(this.victoryOverlay);
         gameContainer.appendChild(gameUI);
         gameUI.appendChild(healthCanvas);
+        gameUI.appendChild(controlsContainer); // Add controls below hearts in UI
         
         // Assemble scene
         this.element.appendChild(textContainer);
@@ -130,16 +196,25 @@ export class Scene10 extends Scene {
         // Update health display
         this.updateHealthDisplay();
         
-        // Auto-start the game after a brief delay
-        setTimeout(() => {
-            this.startGame();
-        }, 500);
+        // Start intro animation
+        this.startIntroAnimation();
     }
     
     setupControls() {
         // Keyboard controls
         this.handleKeyDown = (e) => {
             if (this.keys.hasOwnProperty(e.key)) {
+                // Check if waiting for input to start game
+                if (this.gameWaiting && !this.gameActive) {
+                    // Check if it's a movement key
+                    const isMovementKey = ['w', 'W', 'a', 'A', 's', 'S', 'd', 'D',
+                                         'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key);
+                    if (isMovementKey) {
+                        this.gameWaiting = false;
+                        this.startGame();
+                    }
+                }
+                
                 // Prevent default and stop propagation when game is active
                 if (this.gameActive) {
                     e.preventDefault();
@@ -694,6 +769,11 @@ export class Scene10 extends Scene {
         }
         this.projectiles = [];
         
+        // Start victory overlay animation after a brief pause
+        setTimeout(() => {
+            this.animateVictoryOverlay();
+        }, 1500);
+        
         // Wait for the full animation, then advance
         setTimeout(() => {
             this.gameActive = false; // Now stop the game loop
@@ -701,7 +781,21 @@ export class Scene10 extends Scene {
             if (window.sceneManager) {
                 window.sceneManager.nextScene();
             }
-        }, 3000);
+        }, 4000); // Extended to account for overlay animation
+    }
+    
+    animateVictoryOverlay() {
+        // Calculate scale needed to cover entire viewport
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const scaleX = viewportWidth / this.arenaWidth;
+        const scaleY = viewportHeight / this.arenaHeight;
+        const scale = Math.max(scaleX, scaleY) * 1.2; // Add 20% buffer
+        
+        // Animate the overlay
+        this.victoryOverlay.style.transition = 'transform 1.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in';
+        this.victoryOverlay.style.opacity = '1';
+        this.victoryOverlay.style.transform = `scale(${scale})`;
     }
     
     gameOver() {
@@ -716,6 +810,89 @@ export class Scene10 extends Scene {
         setTimeout(() => {
             this.startGame();
         }, 1500);
+    }
+    
+    startIntroAnimation() {
+        // Phase 1: Start with black screen (already set)
+        setTimeout(() => {
+            // Phase 2: Animate vertical grid lines
+            this.animateVerticalLines();
+        }, 200); // Reduced from 500ms
+    }
+    
+    animateVerticalLines() {
+        this.gridAnimationPhase = 1;
+        // Add class to trigger CSS animation
+        this.element.classList.add('vertical-lines');
+        
+        // Wait for vertical lines to finish drawing
+        setTimeout(() => {
+            this.animateHorizontalLines();
+        }, 1200); // Match CSS transition duration
+    }
+    
+    animateHorizontalLines() {
+        this.gridAnimationPhase = 2;
+        // Add class to trigger CSS animation
+        this.element.classList.add('horizontal-lines');
+        
+        // Wait for horizontal lines to finish drawing
+        setTimeout(() => {
+            this.spawnElements();
+        }, 1200); // Match CSS transition duration
+    }
+    
+    spawnElements() {
+        this.gridAnimationPhase = 3;
+        this.elementsVisible = true;
+        
+        // Get all scene elements
+        const elements = this.element.querySelectorAll('.scene-element');
+        
+        // Make elements appear instantly, one after another
+        elements.forEach((element, index) => {
+            setTimeout(() => {
+                element.style.opacity = '1';
+            }, index * 150); // 150ms between each element appearing
+        });
+        
+        // Show waiting screen after all elements are visible
+        setTimeout(() => {
+            this.introComplete = true;
+            this.gameWaiting = true;
+            this.showWaitingScreen();
+        }, elements.length * 150 + 300);
+    }
+    
+    showWaitingScreen() {
+        // Clear canvas
+        this.ctx.fillStyle = '#000000';
+        this.ctx.fillRect(0, 0, this.arenaWidth, this.arenaHeight);
+        
+        // Draw border
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(1, 1, this.arenaWidth - 2, this.arenaHeight - 2);
+        
+        // Draw player heart at starting position
+        const playerX = this.arenaWidth / 2;
+        const playerY = this.arenaHeight - 50;
+        this.ctx.fillStyle = '#ff0000';
+        const x = Math.floor(playerX);
+        const y = Math.floor(playerY);
+        
+        // Draw pixel heart shape
+        this.ctx.fillRect(x - 3, y - 2, 2, 2);
+        this.ctx.fillRect(x + 1, y - 2, 2, 2);
+        this.ctx.fillRect(x - 4, y, 8, 2);
+        this.ctx.fillRect(x - 3, y + 2, 6, 2);
+        this.ctx.fillRect(x - 2, y + 4, 4, 2);
+        this.ctx.fillRect(x - 1, y + 6, 2, 1);
+        
+        // Draw progress bar placeholder (empty)
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(10, this.arenaHeight - 15, this.arenaWidth - 20, 8);
     }
     
     cleanup() {

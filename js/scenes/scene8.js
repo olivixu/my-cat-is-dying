@@ -67,6 +67,11 @@ export class Scene8 extends Scene {
         this.element = document.createElement('div');
         this.element.className = 'scene story-scene scene-8';
         
+        // Set immediate visibility with matching background to prevent flash (like Scene 6 & 7)
+        this.element.style.backgroundColor = '#5F5A4B'; // Match Scene 7's beige tones
+        this.element.style.opacity = '1'; // Override default opacity: 0 to be immediately visible
+        console.log('[Scene8] Setting background to beige #5F5A4B');
+        
         // Create text display
         const textContainer = document.createElement('div');
         textContainer.className = 'story-text';
@@ -81,7 +86,7 @@ export class Scene8 extends Scene {
         canvas.className = 'spiral-canvas';
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d', {
-            alpha: false,
+            alpha: true,
             desynchronized: true
         });
         
@@ -676,14 +681,7 @@ export class Scene8 extends Scene {
     }
     
     animate(currentTime) {
-        // Stop immediately if transitioning
-        if (this.isTransitioning) {
-            if (this.animationId) {
-                cancelAnimationFrame(this.animationId);
-                this.animationId = null;
-            }
-            return;
-        }
+        // Keep animating even during transition
         
         // Check idle state
         const now = Date.now();
@@ -695,13 +693,14 @@ export class Scene8 extends Scene {
         this.backgroundDarkness += (this.targetBackgroundDarkness - this.backgroundDarkness) * 0.05;
         this.zoomLevel += (this.targetZoomLevel - this.zoomLevel) * 0.05;
         
-        // Clear and fill background with progressive darkening
-        // Interpolate from beige (#f5e6d3) to black based on darkness level
-        const r = Math.floor(245 * (1 - this.backgroundDarkness));
-        const g = Math.floor(230 * (1 - this.backgroundDarkness));
-        const b = Math.floor(211 * (1 - this.backgroundDarkness));
-        this.ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        // Clear canvas without filling background - let CSS background show through
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Apply background darkening overlay
+        if (this.backgroundDarkness > 0) {
+            this.ctx.fillStyle = `rgba(0, 0, 0, ${this.backgroundDarkness * 0.6})`;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        }
         
         // Update rotation speed based on interaction - SLOWER
         const targetSpeed = this.isIdle ? 0.001 : 0.002 + Math.abs(this.angularVelocity) * 0.005;
@@ -749,32 +748,58 @@ export class Scene8 extends Scene {
         this.angularVelocity *= 0.98;
         this.glowIntensity *= 0.95; // Much slower glow decay
         
-        // Continue animation only if not transitioning
-        if (!this.isTransitioning) {
-            this.animationId = requestAnimationFrame((time) => this.animate(time));
-        }
+        // Continue animation always
+        this.animationId = requestAnimationFrame((time) => this.animate(time));
     }
     
     triggerTransition() {
         if (this.isTransitioning) return;
-        this.isTransitioning = true;
+        this.isTransitioning = true; // Just to prevent multiple triggers
         
-        // Cancel animation frame immediately
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-            this.animationId = null;
+        // First fade out text
+        const textElement = this.element.querySelector('.story-text');
+        if (textElement) {
+            textElement.style.transition = 'opacity 0.5s ease-out';
+            textElement.style.opacity = '0';
         }
         
-        this.element.style.transition = 'opacity 0.5s ease-out';
-        this.element.style.opacity = '0';
+        // Don't clear arrays - let everything keep animating
         
+        // After text starts fading, fade entire scene to black
         setTimeout(() => {
-            this.cleanup();
-            this.onComplete();
-            if (window.sceneManager) {
-                window.sceneManager.nextScene();
-            }
-        }, 500);
+            // Create full screen black overlay
+            const blackOverlay = document.createElement('div');
+            blackOverlay.style.position = 'fixed';
+            blackOverlay.style.top = '0';
+            blackOverlay.style.left = '0';
+            blackOverlay.style.width = '100%';
+            blackOverlay.style.height = '100%';
+            blackOverlay.style.backgroundColor = 'black';
+            blackOverlay.style.opacity = '0';
+            blackOverlay.style.zIndex = '1000';
+            blackOverlay.style.pointerEvents = 'none';
+            blackOverlay.style.transition = 'opacity 1.5s ease-in-out';
+            
+            this.element.appendChild(blackOverlay);
+            
+            // Trigger fade to black
+            requestAnimationFrame(() => {
+                blackOverlay.style.opacity = '1';
+            });
+            
+            // After fade completes, transition to next scene
+            setTimeout(() => {
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+                this.cleanup();
+                this.onComplete();
+                if (window.sceneManager) {
+                    window.sceneManager.nextScene();
+                }
+            }, 2500);
+        }, 600);
     }
     
     cleanup() {

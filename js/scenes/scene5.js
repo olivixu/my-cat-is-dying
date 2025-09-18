@@ -136,7 +136,7 @@ export class Scene5 extends Scene {
         // Create instruction text
         const instructions = document.createElement('div');
         instructions.className = 'game-instructions';
-        instructions.innerHTML = '<p>Click and HOLD while a blue bar is in the green BREATHE zone.<br>Release while the bar is still in the zone for perfect timing!</p>';
+        instructions.innerHTML = '<p>Click and HOLD while a white bar is in the BREATHE zone.<br>Release while the bar is still in the zone for perfect timing!</p>';
         
         // Create progress dots
         const progressDots = document.createElement('div');
@@ -717,10 +717,10 @@ export class Scene5 extends Scene {
                 expandOverlay.className = 'expand-overlay';
                 expandOverlay.style.cssText = `
                     position: fixed;
-                    width: 12px;
-                    height: 12px;
-                    background: #5B8DEE;
-                    border-radius: 50%;
+                    width: 14px;
+                    height: 14px;
+                    background: #DEFF96;
+                    border-radius: 0;
                     left: ${rect.left + rect.width / 2}px;
                     top: ${rect.top + rect.height / 2}px;
                     transform: translate(-50%, -50%);

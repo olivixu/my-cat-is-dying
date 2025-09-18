@@ -222,7 +222,22 @@ export class SceneManager {
                     setTimeout(() => {
                         sceneToCleanup.cleanup(index);
                     }, 900); // Slightly longer than fadeOut animation
-                } else {
+                } 
+                // Special case for Scene 8 to 9 - let the black fade complete
+                else if (this.currentSceneIndex === 7 && index === 8) {
+                    // Set container to black immediately to prevent flash
+                    this.container.style.backgroundColor = '#000000';
+                    console.log('[SceneManager] Scene 8 to 9 - setting black background and delaying cleanup');
+                    
+                    // Store reference to clean up later
+                    const sceneToCleanup = previousScene;
+                    
+                    // Delay cleanup to let Scene 8's fade to black complete
+                    setTimeout(() => {
+                        sceneToCleanup.cleanup(index);
+                    }, 2800); // Wait for Scene 8's black overlay fade (2500ms + buffer)
+                }
+                else {
                     // All other transitions: immediate cleanup
                     previousScene.element?.classList.add('exiting');
                     previousScene.cleanup(index);
@@ -266,6 +281,26 @@ export class SceneManager {
             // Handle Scene 4 to 5 transition
             if (previousScene && this.currentSceneIndex === 4) {
                 // Set container background to black for Scene 5
+                this.container.style.backgroundColor = '#000000';
+            }
+            
+            // Handle Scene 6 to 7 transition
+            if (previousScene && this.currentSceneIndex === 6) {
+                // Set container background to black to match Scene 6's fade to black
+                this.container.style.backgroundColor = '#000000';
+            }
+            
+            // Handle Scene 7 to 8 transition
+            if (previousScene && this.currentSceneIndex === 7) {
+                console.log('[SceneManager] Scene 7 to 8 transition - setting beige background');
+                // Set container background to beige to match Scene 7's ending colors
+                this.container.style.backgroundColor = '#5F5A4B';
+            }
+            
+            // Handle Scene 8 to 9 transition
+            if (previousScene && this.currentSceneIndex === 8) {
+                console.log('[SceneManager] Scene 8 to 9 transition - setting black background');
+                // Set container background to black to match Scene 8's fade to black
                 this.container.style.backgroundColor = '#000000';
             }
             

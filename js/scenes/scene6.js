@@ -517,14 +517,20 @@ export class Scene6 extends Scene {
         // Create fireworks display
         this.createFireworks();
         
-        // Auto-advance to next scene after fireworks complete
+        // Start exit transition after celebration
         setTimeout(() => {
-            this.onComplete();
-            // Manually advance to next scene
-            if (window.sceneManager) {
-                window.sceneManager.nextScene();
-            }
-        }, 3500); // Extended delay for fireworks
+            // Add exit transition class to trigger animations
+            this.element.classList.add('scene-6-exit-transition');
+            
+            // Wait for exit animations to complete before advancing
+            setTimeout(() => {
+                this.onComplete();
+                // Manually advance to next scene
+                if (window.sceneManager) {
+                    window.sceneManager.nextScene();
+                }
+            }, 2000); // Wait for exit animations
+        }, 2500); // Reduced initial delay to start transition sooner
     }
     
     createFireworks() {

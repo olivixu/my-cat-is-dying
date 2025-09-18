@@ -51,22 +51,17 @@
     transform: translateY(-2px);
 }
 
-/* Scene 8: Optimized glow effects */
-.scene-8 .spiral-canvas {
-    /* CSS filter for neon glow effect - more performant than canvas shadowBlur */
-    filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.4));
+/* Scene 8: Blackboard Drawing */
+.scene-8 .blackboard-canvas {
+    cursor: none; /* Hide cursor, show chalk instead */
     will-change: transform;
 }
 
-.scene-8 .spiral-canvas.active-interaction {
-    filter: drop-shadow(0 0 12px rgba(255, 255, 0, 0.6));
+.scene-8 .blackboard-canvas.drawing {
+    /* Optional: add subtle effect when drawing */
 }
 
-/* Hardware acceleration for Scene 8 */
-.scene-8 {
-    transform: translateZ(0);
-    backface-visibility: hidden;
-}
+/* Hardware acceleration for Scene 8 - MOVED TO MAIN SCENE-8 BLOCK */
 
 /* Scene 1: Begin button scene */
 .scene-1 {
@@ -1142,7 +1137,7 @@
 }
 
 .scene-5 .story-text h2 {
-    color: #000000;
+    color: #5F60B3;
     text-align: center;
 }
 
@@ -1205,8 +1200,8 @@
     transform: translateY(-50%) scale(1);
     width: 70px;
     height: 70px;
-    background: rgba(91, 141, 238, 0.1);
-    border: 1px solid #5B8DEE;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #ffffff;
     border-radius: 50%;
     z-index: 15;
     /* Remove transition since we're animating in JS */
@@ -1230,7 +1225,7 @@
     left: 50%;
     width: 100%;
     height: 100%;
-    border: 1px solid rgba(91, 141, 238, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     transform: translate(-50%, -50%) scale(1);
     animation: emanateRing 3s ease-out infinite;
@@ -1260,7 +1255,7 @@
     left: 50%;
     width: 100%;
     height: 100%;
-    border: 1px solid #4ade80;
+    border: 1px solid #DEFF96;
     border-radius: 50%;
     transform: translate(-50%, -50%) scale(1);
     animation: successRing 1s ease-out forwards;
@@ -1291,20 +1286,20 @@
 .breath-line {
     position: absolute;
     height: 6px;
-    background: #5B8DEE;
+    background: #ffffff;
     top: 50%;
     transform: translateY(-50%);
     transition: background 0.3s ease, opacity 0.3s ease;
-    border-radius: 3px;
+    border-radius: 0;
     z-index: 12;
 }
 
 .breath-line.active {
-    background: #7BA7E7;
+    background: #DEFF96;
 }
 
 .breath-line.success {
-    background: #4ade80;
+    background: #DEFF96;
 }
 
 .breath-line.completed {
@@ -1325,15 +1320,29 @@
 }
 
 .progress-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    transition: background 0.3s ease;
+    width: 14px;
+    height: 14px;
+    padding: 3px;
+    box-sizing: content-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
 }
 
-.progress-dot.active {
-    background: #5B8DEE;
+.progress-dot::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 1);
+    border-radius: 0;
+    transition: all 0.3s ease;
+}
+
+.progress-dot.active::before {
+    width: 14px;
+    height: 14px;
+    background: #DEFF96;
 }
 
 /* Expand overlay animation */
@@ -1886,10 +1895,89 @@
     display: none;
 }
 
+/* Scene 6 to 7 Transition Animations */
+.scene-6.scene-6-exit-transition .xp-land {
+    animation: slideDownLandscape 1.5s ease-in forwards;
+}
+
+.scene-6.scene-6-exit-transition .pill-game-container {
+    animation: slideDownElements 1.2s ease-in forwards;
+}
+
+.scene-6.scene-6-exit-transition .story-text {
+    animation: slideDownCenteredText 1.2s ease-in forwards;
+}
+
+.scene-6.scene-6-exit-transition .pill-score {
+    animation: slideDownHorizontallyCentered 1.2s ease-in forwards;
+}
+
+.scene-6.scene-6-exit-transition .xp-sky {
+    animation: fadeToBlack 2s ease-in-out forwards;
+}
+
+@keyframes slideDownLandscape {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(100vh);
+    }
+}
+
+@keyframes slideDownElements {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(100vh);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeToBlack {
+    0% {
+        opacity: 1;
+        filter: brightness(1);
+    }
+    50% {
+        opacity: 1;
+        filter: brightness(0.3);
+    }
+    100% {
+        opacity: 0;
+        filter: brightness(0);
+    }
+}
+
+@keyframes slideDownCenteredText {
+    from {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-50%, calc(-50% + 100vh));
+        opacity: 0;
+    }
+}
+
+@keyframes slideDownHorizontallyCentered {
+    from {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-50%) translateY(100vh);
+        opacity: 0;
+    }
+}
+
 /* Scene 7: Card Matching Game */
 .scene-7 {
     position: relative;
     overflow: hidden;
+    background: #000000; /* Start with black to match Scene 6 fade */
 }
 
 .scene-7 .fluid-background {
@@ -1899,6 +1987,8 @@
     width: 100%;
     height: 100%;
     z-index: 0;
+    opacity: 0;
+    animation: fadeInBackground 1.5s ease-out 0.5s forwards;
 }
 
 .scene-7 .static-overlay {
@@ -1908,15 +1998,55 @@
     width: 100%;
     height: 100%;
     pointer-events: none;
-    opacity: 0.4;
+    opacity: 0;
     mix-blend-mode: screen;
     z-index: 1;
+    animation: fadeInOverlay 1s ease-out 1s forwards;
 }
 
-.scene-7 .story-text,
+@keyframes fadeInBackground {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 0.4;
+    }
+}
+
+@keyframes slideUpFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.scene-7 .story-text {
+    position: relative;
+    z-index: 2;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: slideUpFadeIn 0.8s ease-out 1.5s forwards;
+}
+
 .scene-7 .card-matching-game {
     position: relative;
     z-index: 2;
+    opacity: 0;
+    transform: translateY(30px);
+    animation: slideUpFadeIn 0.8s ease-out 1.8s forwards;
 }
 
 .card-matching-game {
@@ -2235,7 +2365,20 @@
 
 /* Scene 8: Minimal Spiral */
 .scene-8 {
-    background: #2a2a2a !important;
+    background: #f5e6d3 !important; /* Beige to match Scene 7 ending */
+    overflow: visible !important; /* Allow content to expand beyond bounds */
+    transform: translateZ(0); /* Hardware acceleration */
+    backface-visibility: hidden;
+}
+
+/* Override parent container overflow when Scene 8 is active */
+#scene-container:has(.scene-8.active) {
+    overflow: visible !important;
+}
+
+/* Ensure interactive container doesn't clip */
+.scene-8 .interactive-container {
+    overflow: visible !important;
 }
 
 .scene-8 .story-text {
@@ -2244,9 +2387,11 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scale(0);
     width: 100%;
     text-align: center;
+    opacity: 0;
+    animation: expandText 0.8s ease-out 0.3s forwards;
 }
 
 .scene-8 .story-text h2 {
@@ -2266,6 +2411,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    opacity: 0;
+    clip-path: circle(0% at 50% 50%);
+    animation: expandCircleMask 1s ease-out 0.6s forwards;
 }
 
 .spiral-canvas {
@@ -2275,12 +2423,28 @@
     width: 100%;
     height: 100%;
     cursor: crosshair;
-    background: #2a2a2a;
+    background: transparent; /* Remove gray background - let Scene 8 background show through */
+    overflow: visible !important; /* Don't clip spiral content */
 }
 
 .spiral-instructions {
     display: none;
 }
+
+@keyframes expandText {
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes expandCircleMask {
+    to {
+        opacity: 1;
+        clip-path: circle(75% at 50% 50%); /* 75% ensures full coverage of screen */
+    }
+}
+
 
 /* Old mirror styles - keeping for reference */
 .human-questions-old {
@@ -2349,31 +2513,72 @@
 /* Scene 10: Bullet Hell Game - Retro RPG Style */
 .bullet-hell-scene.retro-rpg {
     background: #000000;
-    background-image: 
-        repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 19px,
-            #051505 19px,
-            #051505 20px
-        ),
-        repeating-linear-gradient(
-            90deg,
-            transparent,
-            transparent 19px,
-            #051505 19px,
-            #051505 20px
-        );
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 0;
     font-family: 'Courier New', monospace;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Grid line overlays for animation */
+.bullet-hell-scene.retro-rpg::before,
+.bullet-hell-scene.retro-rpg::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0; /* Keep grid lines behind content */
+}
+
+/* Vertical grid lines */
+.bullet-hell-scene.retro-rpg::before {
+    background-image: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 19px,
+        #051505 19px,
+        #051505 20px
+    );
+    clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
+    transition: clip-path 1.2s ease-out;
+}
+
+.bullet-hell-scene.retro-rpg.vertical-lines::before {
+    clip-path: polygon(0 0, 100% 0, 110% 100%, 0 100%);
+}
+
+/* Horizontal grid lines */
+.bullet-hell-scene.retro-rpg::after {
+    background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 19px,
+        #051505 19px,
+        #051505 20px
+    );
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 1.2s ease-out;
+}
+
+.bullet-hell-scene.retro-rpg.horizontal-lines::after {
+    clip-path: inset(0 0 0 0);
 }
 
 .bullet-hell-scene.retro-rpg .story-text.retro-title {
     margin-bottom: 20px;
+    position: relative;
+    z-index: 1; /* Keep above grid lines */
+}
+
+.bullet-hell-scene.retro-rpg .bullet-hell-container {
+    position: relative;
+    z-index: 1; /* Keep above grid lines */
 }
 
 .bullet-hell-scene.retro-rpg .story-text.retro-title h2 {
@@ -2390,6 +2595,7 @@
     width: 400px;
     height: 300px;
     margin: 0;
+    margin-bottom: 80px; /* Space for controls below */
     background: transparent;
 }
 
@@ -2422,11 +2628,14 @@
 
 .bullet-hell-scene.retro-rpg .bullet-hell-ui.retro-ui {
     position: absolute;
-    bottom: -60px;
+    top: 330px; /* Position further below the 300px tall canvas */
     left: 0;
     right: 0;
     text-align: center;
     z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .bullet-hell-scene.retro-rpg .health-canvas {
@@ -2975,15 +3184,90 @@
     opacity: 0.9;
 }
 
-/* Scene 9: Drawing Game - FigJam Style */
+/* Scene 9: Drawing Game - Blackboard Style */
 .scene-9 {
-    background: #f5f5f5 !important;
+    background: #000000 !important; /* Black background for blackboard theme */
+    position: relative;
+}
+
+.scene-9::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/assets/images/Blackboard-background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    animation: fadeInBackground 1.5s ease-out 0.3s forwards;
+    z-index: 0;
+}
+
+.scene-9 .story-text,
+.scene-9 .interactive-container {
+    position: relative;
+    z-index: 1;
+}
+
+.scene-9 .interactive-container {
+    /* Prevent layout shift when grade appears */
+    min-height: 450px;
 }
 
 .scene-9 .story-text h2 {
-    color: #1a1a1a;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-weight: 500;
+    color: #ffffff; /* White text for blackboard theme */
+    /* Inherit default font from other scenes */
+}
+
+/* Bounce in animations for Scene 9 */
+.scene-9 .story-text-part1 {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: bounceInUp 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.5s forwards;
+}
+
+.scene-9 .story-text-part2 {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: bounceInUp 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.7s forwards;
+}
+
+.scene-9 .blackboard-container {
+    position: relative;
+    opacity: 0;
+    transform: scale(0.8);
+    animation: bounceInScale 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.9s forwards;
+    /* Maintain layout space to prevent jumping */
+    display: inline-block;
+}
+
+.scene-9 .drawing-controls {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: bounceInUp 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 1.1s forwards;
+}
+
+@keyframes fadeInBackground {
+    to {
+        opacity: 0.3; /* Subtle background opacity */
+    }
+}
+
+@keyframes bounceInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes bounceInScale {
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .scene-9 .story-text-part2 {
@@ -3047,20 +3331,21 @@
     height: 100%;
     background: transparent;
     position: relative;
-    z-index: 3;
+    z-index: 2; /* Below reference overlay */
 }
 
 .reference-overlay {
     position: absolute;
     top: 50%;
-    left: 50%;
+    left: 45%; /* Shifted left from 50% */
     transform: translate(-50%, -50%);
-    width: 300px;
-    height: 300px;
+    width: 280px; /* Smaller size */
+    height: 280px;
     object-fit: contain;
-    opacity: 0.15;
+    opacity: 0.4; /* More visible for tracing */
     pointer-events: none;
-    z-index: 2;
+    z-index: 5; /* Above canvas so it shows on top */
+    filter: brightness(3) contrast(2); /* Make SVG lines bright white on blackboard */
 }
 
 .drawing-controls {
@@ -3093,58 +3378,66 @@
 }
 
 .drawing-controls .btn-submit {
-    background: #5c7cfa;
-    color: white;
-    border-color: #5c7cfa;
-    padding: 14px 32px;
-    font-size: 16px;
+    width: 150px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    transition: transform 0.2s ease, opacity 0.3s ease;
 }
 
 .drawing-controls .btn-submit:hover {
-    background: #4c6ef5;
-    border-color: #4c6ef5;
+    transform: scale(1.05);
 }
 
 .drawing-controls .btn-submit.invisible {
-    opacity: 0;
+    visibility: hidden;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    /* Maintain layout space */
+    position: relative;
 }
 
 .drawing-controls .btn-submit:not(.invisible) {
-    opacity: 1;
+    visibility: visible;
     pointer-events: auto;
     transition: opacity 0.3s ease;
 }
 
-.grade-display {
+.blackboard-container .grade-display {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #ffffff;
-    padding: 40px;
-    border-radius: 16px;
+    top: 30px;
+    right: 40px;
+    background: transparent;
     text-align: center;
-    min-width: 300px;
     transition: all 0.3s ease;
-    z-index: 10;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-    border: 2px solid #e0e0e0;
+    z-index: 20;
 }
 
 .grade-display.hidden {
     opacity: 0;
     pointer-events: none;
-    transform: translate(-50%, -50%) scale(0.9);
+    transform: scale(0.9);
 }
 
-.grade-score {
-    font-size: 56px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    color: #5c7cfa;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+.blackboard-container .grade-display .grade-letter {
+    width: 80px;
+    height: 80px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    /* Add animation for grade appearing */
+    animation: gradeBounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes gradeBounceIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    70% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
 }
 
 .score-number {
@@ -3159,23 +3452,34 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-.grade-display .continue-btn {
-    background: #5c7cfa;
-    color: white;
-    border: none;
-    padding: 14px 32px;
-    border-radius: 24px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+/* Continue button removed - auto-advances now */
+
+/* Scene 9 Exit Transition */
+@keyframes slideDownFadeOut {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(80px);
+        opacity: 0;
+    }
 }
 
-.grade-display .continue-btn:hover {
-    transform: translateY(-2px);
-    background: #4c6ef5;
-    box-shadow: 0 6px 20px rgba(92, 124, 250, 0.3);
+/* Stagger the exit animations - top to bottom order */
+.scene-9 .story-text-part1.scene-9-exit {
+    animation: slideDownFadeOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0s;
+}
+
+.scene-9 .interactive-container.scene-9-exit {
+    animation: slideDownFadeOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.15s;
+}
+
+.scene-9 .story-text-part2.scene-9-exit {
+    animation: slideDownFadeOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation-delay: 0.3s;
 }
 
 /* Grade color variations */

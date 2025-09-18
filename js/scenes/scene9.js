@@ -15,16 +15,84 @@ export class Scene9 extends Scene {
         this.lastX = 0;
         this.lastY = 0;
         
+        // Separate canvas for user drawing (without blackboard)
+        this.drawingCanvas = null;
+        this.drawingCtx = null;
+        
         // Grading state
         this.score = 0;
         this.hasBeenGraded = false;
         this.scoreInterval = null;
+        
+        // Blackboard and chalk
+        this.blackboardImage = null;
+        this.chalkImage = null;
+        this.blackboardLoaded = false;
+        this.chalkLoaded = false;
+        this.chalkX = 0;
+        this.chalkY = 0;
+        this.showChalk = false;
+        
+        // Store event handlers for cleanup
+        this.documentMouseMoveHandler = null;
+        
+        // Reference canvas for SVG outline comparison
+        this.referenceCanvas = null;
+        this.referenceCtx = null;
+        this.outlinePixels = null;
+        
+        // Grade display
+        this.gradeImage = null;
+    }
+    
+    async createReferenceCanvas() {
+        // Create hidden canvas for SVG outline comparison
+        this.referenceCanvas = document.createElement('canvas');
+        this.referenceCanvas.width = 600;
+        this.referenceCanvas.height = 400;
+        this.referenceCtx = this.referenceCanvas.getContext('2d');
+        
+        // Load and draw the SVG outline
+        const svgImg = new Image();
+        svgImg.src = '/assets/SVG/Smokey-outline.svg';
+        
+        await new Promise(resolve => {
+            svgImg.onload = () => {
+                // Clear and draw the SVG at the same position as displayed
+                this.referenceCtx.clearRect(0, 0, 600, 400);
+                
+                // Match the CSS positioning from .reference-overlay
+                const width = 280;
+                const height = 280;
+                const x = (600 * 0.45) - (width / 2); // 45% from left
+                const y = (400 * 0.5) - (height / 2);  // 50% from top
+                
+                this.referenceCtx.drawImage(svgImg, x, y, width, height);
+                
+                // Store the outline pixel data for comparison
+                const imageData = this.referenceCtx.getImageData(0, 0, 600, 400);
+                this.outlinePixels = imageData.data;
+                
+                resolve();
+            };
+        });
     }
     
     async init() {
+        // Load images first
+        await this.loadImages();
+        
+        // Create reference canvas for SVG outline
+        await this.createReferenceCanvas();
+        
         // Create scene element
         this.element = document.createElement('div');
         this.element.className = 'scene story-scene scene-9';
+        
+        // Set immediate visibility with black background to prevent flash from Scene 8
+        this.element.style.backgroundColor = '#000000'; // Black to match Scene 8's fade to black
+        this.element.style.opacity = '1'; // Override default opacity: 0 to be immediately visible
+        console.log('[Scene9] Setting background to black #000000');
         
         // Create first part of text display
         const textContainer1 = document.createElement('div');
@@ -40,57 +108,78 @@ export class Scene9 extends Scene {
         const interactiveContainer = document.createElement('div');
         interactiveContainer.className = 'interactive-container drawing-game';
         
-        // Create Post-it container (no instructions text)
-        const postItContainer = document.createElement('div');
-        postItContainer.className = 'postit-container';
+        // Create blackboard container
+        const blackboardContainer = document.createElement('div');
+        blackboardContainer.className = 'blackboard-container';
         
         // Create canvas
         const canvas = document.createElement('canvas');
-        canvas.className = 'drawing-canvas';
-        canvas.width = 400;
+        canvas.className = 'drawing-canvas blackboard-canvas';
+        canvas.width = 600;
         canvas.height = 400;
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         
-        // Setup canvas style - dark stroke for Post-it background
-        this.ctx.strokeStyle = '#333333';
-        this.ctx.lineWidth = 2;
-        this.ctx.lineCap = 'round';
-        this.ctx.lineJoin = 'round';
+        // Create separate canvas for tracking user drawing (invisible)
+        this.drawingCanvas = document.createElement('canvas');
+        this.drawingCanvas.width = 600;
+        this.drawingCanvas.height = 400;
+        this.drawingCtx = this.drawingCanvas.getContext('2d');
+        
+        // Draw blackboard background
+        this.drawBlackboard();
         
         // Create reference image overlay (visible by default with low opacity)
         const referenceImg = document.createElement('img');
         referenceImg.className = 'reference-overlay';
-        referenceImg.src = '/assets/images/happy smokey.png';
+        referenceImg.src = '/assets/SVG/Smokey-outline.svg';
         referenceImg.alt = 'Trace Smokey';
+        
+        // Create chalk cursor (hidden initially)
+        const chalkCursor = document.createElement('img');
+        chalkCursor.className = 'chalk-cursor';
+        chalkCursor.src = 'assets/images/Chalk.png';
+        chalkCursor.style.display = 'none';
+        chalkCursor.style.position = 'fixed';
+        chalkCursor.style.pointerEvents = 'none';
+        chalkCursor.style.height = '60px'; // Only set height, let width auto-adjust
+        chalkCursor.style.width = 'auto'; // Maintain aspect ratio
+        chalkCursor.style.zIndex = '1000';
+        this.chalkCursor = chalkCursor;
         
         // Create single submit button (invisible initially but takes up space)
         const controls = document.createElement('div');
         controls.className = 'drawing-controls';
-        controls.innerHTML = `
-            <button class="btn-submit invisible">Submit Drawing</button>
-        `;
+        
+        // Use SVG image as submit button
+        const submitBtn = document.createElement('img');
+        submitBtn.className = 'btn-submit invisible';
+        submitBtn.src = '/assets/SVG/Submit-button.svg';
+        submitBtn.alt = 'Submit Drawing';
+        submitBtn.style.cursor = 'pointer';
+        controls.appendChild(submitBtn);
+        
         this.submitBtn = null;
         
-        // Create grade display (hidden initially)
+        // Create grade display container (hidden initially)
         const gradeDisplay = document.createElement('div');
         gradeDisplay.className = 'grade-display hidden';
         gradeDisplay.innerHTML = `
-            <div class="grade-score">
-                <span class="score-number">0</span>%
-            </div>
-            <p class="grade-message"></p>
-            <button class="continue-btn">Continue</button>
+            <img class="grade-letter" src="" alt="Grade" />
         `;
         
-        // Assemble Post-it container
-        postItContainer.appendChild(referenceImg);
-        postItContainer.appendChild(canvas);
+        // Assemble blackboard container
+        blackboardContainer.appendChild(referenceImg);
+        blackboardContainer.appendChild(canvas);
         
         // Assemble interactive container
-        interactiveContainer.appendChild(postItContainer);
+        interactiveContainer.appendChild(blackboardContainer);
         interactiveContainer.appendChild(controls);
-        interactiveContainer.appendChild(gradeDisplay);
+        // Add grade display to blackboard container instead to prevent layout shift
+        blackboardContainer.appendChild(gradeDisplay);
+        
+        // Add chalk cursor to body for proper positioning
+        document.body.appendChild(chalkCursor);
         
         // Assemble scene
         this.element.appendChild(textContainer1);
@@ -102,8 +191,7 @@ export class Scene9 extends Scene {
         
         // Store references
         this.gradeDisplay = gradeDisplay;
-        this.scoreElement = gradeDisplay.querySelector('.score-number');
-        this.messageElement = gradeDisplay.querySelector('.grade-message');
+        this.gradeImage = gradeDisplay.querySelector('.grade-letter');
         this.referenceImg = referenceImg;
         
         // Setup event listeners
@@ -112,19 +200,83 @@ export class Scene9 extends Scene {
         
         // Store button reference
         this.submitBtn = this.element.querySelector('.btn-submit');
+    }
+    
+    async loadImages() {
+        // Load blackboard image
+        this.blackboardImage = new Image();
+        this.blackboardImage.src = 'assets/images/Blackboard.png';
         
-        // Add continue button handler
-        const continueBtn = gradeDisplay.querySelector('.continue-btn');
-        continueBtn?.addEventListener('click', () => {
-            this.onComplete();
-            if (window.sceneManager) {
-                window.sceneManager.nextScene();
-            }
-        });
+        // Load chalk image
+        this.chalkImage = new Image();
+        this.chalkImage.src = 'assets/images/Chalk.png';
+        
+        // Wait for both images to load
+        await Promise.all([
+            new Promise(resolve => {
+                this.blackboardImage.onload = () => {
+                    this.blackboardLoaded = true;
+                    resolve();
+                };
+            }),
+            new Promise(resolve => {
+                this.chalkImage.onload = () => {
+                    this.chalkLoaded = true;
+                    resolve();
+                };
+            })
+        ]);
+    }
+    
+    drawBlackboard() {
+        if (!this.blackboardLoaded) return;
+        
+        const ctx = this.ctx;
+        
+        // Calculate scale to fit blackboard to canvas
+        const scale = Math.min(
+            this.canvas.width / this.blackboardImage.width,
+            this.canvas.height / this.blackboardImage.height
+        );
+        
+        const drawWidth = this.blackboardImage.width * scale;
+        const drawHeight = this.blackboardImage.height * scale;
+        const offsetX = (this.canvas.width - drawWidth) / 2;
+        const offsetY = (this.canvas.height - drawHeight) / 2;
+        
+        // Draw blackboard image
+        ctx.drawImage(this.blackboardImage, offsetX, offsetY, drawWidth, drawHeight);
     }
     
     setupDrawingEvents() {
-        // Mouse events
+        // Show chalk cursor when mouse enters the scene
+        this.element.addEventListener('mouseenter', () => {
+            this.showChalk = true;
+            this.canvas.style.cursor = 'none';
+            if (this.chalkCursor) {
+                this.chalkCursor.style.display = 'block';
+            }
+        });
+        
+        // Hide chalk cursor when mouse leaves the entire scene
+        this.element.addEventListener('mouseleave', () => {
+            this.showChalk = false;
+            this.canvas.style.cursor = 'auto';
+            if (this.chalkCursor) {
+                this.chalkCursor.style.display = 'none';
+            }
+            this.stopDrawing();
+        });
+        
+        // Global mouse move to update chalk position anywhere in the scene
+        this.documentMouseMoveHandler = (e) => {
+            if (this.showChalk) {
+                this.updateChalkPosition(e);
+            }
+        };
+        document.addEventListener('mousemove', this.documentMouseMoveHandler);
+        
+        // Canvas-specific drawing events
         this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
         this.canvas.addEventListener('mousemove', (e) => this.draw(e));
         this.canvas.addEventListener('mouseup', () => this.stopDrawing());
@@ -159,6 +311,14 @@ export class Scene9 extends Scene {
         });
     }
     
+    updateChalkPosition(e) {
+        if (!this.chalkCursor || !this.showChalk) return;
+        
+        // Position chalk so cursor is at top-left of chalk image
+        this.chalkCursor.style.left = e.clientX + 'px';
+        this.chalkCursor.style.top = e.clientY + 'px';
+    }
+    
     setupControlEvents() {
         // Submit button
         const submitBtn = this.element.querySelector('.btn-submit');
@@ -183,10 +343,53 @@ export class Scene9 extends Scene {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
-        this.ctx.beginPath();
-        this.ctx.moveTo(this.lastX, this.lastY);
-        this.ctx.lineTo(x, y);
-        this.ctx.stroke();
+        // Save current composite operation
+        const prevComposite = this.ctx.globalCompositeOperation;
+        
+        // Use source-over to draw on top of blackboard
+        this.ctx.globalCompositeOperation = 'source-over';
+        
+        // Draw chalk stroke with texture effect - using neon color from title screen
+        for (let pass = 0; pass < 3; pass++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.lastX, this.lastY);
+            this.ctx.lineTo(x, y);
+            
+            if (pass === 0) {
+                // Rough outer texture
+                this.ctx.globalAlpha = 0.3;
+                this.ctx.strokeStyle = '#DEFF96'; // Neon yellow/lime
+                this.ctx.lineWidth = 6 + Math.random() * 2;
+            } else if (pass === 1) {
+                // Middle layer
+                this.ctx.globalAlpha = 0.5;
+                this.ctx.strokeStyle = '#DEFF96'; // Neon yellow/lime
+                this.ctx.lineWidth = 4;
+            } else {
+                // Core chalk line
+                this.ctx.globalAlpha = 0.8;
+                this.ctx.strokeStyle = '#DEFF96'; // Neon yellow/lime
+                this.ctx.lineWidth = 2;
+            }
+            
+            this.ctx.lineCap = 'round';
+            this.ctx.lineJoin = 'round';
+            this.ctx.stroke();
+        }
+        
+        // Also draw on the tracking canvas (simple white line for detection)
+        this.drawingCtx.beginPath();
+        this.drawingCtx.moveTo(this.lastX, this.lastY);
+        this.drawingCtx.lineTo(x, y);
+        this.drawingCtx.strokeStyle = '#FFFFFF';
+        this.drawingCtx.lineWidth = 5;
+        this.drawingCtx.lineCap = 'round';
+        this.drawingCtx.lineJoin = 'round';
+        this.drawingCtx.stroke();
+        
+        // Reset composite operation and alpha
+        this.ctx.globalCompositeOperation = prevComposite;
+        this.ctx.globalAlpha = 1.0;
         
         this.lastX = x;
         this.lastY = y;
@@ -206,6 +409,9 @@ export class Scene9 extends Scene {
     
     clearCanvas() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.drawingCtx.clearRect(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+        // Redraw blackboard after clearing
+        this.drawBlackboard();
         this.hasDrawn = false;
         this.hasBeenGraded = false;
         this.gradeDisplay.classList.add('hidden');
@@ -214,47 +420,156 @@ export class Scene9 extends Scene {
     }
     
     gradeDrawing() {
-        // Analyze the drawing for cat-like features
-        const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-        const pixels = imageData.data;
+        if (!this.outlinePixels) {
+            console.error('[Scene9] Reference outline not loaded');
+            return;
+        }
         
-        // Calculate various metrics
-        const coverage = this.calculateCoverage(pixels);
-        const hasEars = this.detectEars(pixels, imageData.width, imageData.height);
-        const hasBody = this.detectBody(pixels, imageData.width, imageData.height);
-        const hasTail = this.detectTail(pixels, imageData.width, imageData.height);
-        const proportions = this.checkProportions(pixels, imageData.width, imageData.height);
-        const continuity = this.checkContinuity(pixels, imageData.width, imageData.height);
-        const complexity = this.checkComplexity(pixels, imageData.width, imageData.height);
+        // Get the user's drawing from the tracking canvas (without blackboard)
+        const imageData = this.drawingCtx.getImageData(0, 0, this.drawingCanvas.width, this.drawingCanvas.height);
+        const userPixels = imageData.data;
         
-        // Calculate score (0-100)
-        let score = 0;
+        // Calculate tracing accuracy with more lenient detection
+        let tracedCorrectly = 0;
+        let totalOutlinePixels = 0;
+        let missedOutline = 0;
+        let drawnOutsideOutline = 0;
+        let totalDrawnPixels = 0;
         
-        // Base score from coverage (max 15 points)
-        score += Math.min(coverage * 200, 15);
+        // First pass: count outline pixels and check with larger radius
+        for (let i = 0; i < this.outlinePixels.length; i += 4) {
+            const outlineAlpha = this.outlinePixels[i + 3];
+            const userAlpha = userPixels[i + 3];
+            
+            if (userAlpha > 50) {
+                totalDrawnPixels++;
+            }
+            
+            // Check if this pixel is part of the outline
+            if (outlineAlpha > 128) {
+                totalOutlinePixels++;
+                
+                // Check in a small radius around this pixel for user drawing
+                // This accounts for slight misalignment
+                let foundNearby = false;
+                const pixelIndex = i / 4;
+                const x = pixelIndex % 600;
+                const y = Math.floor(pixelIndex / 600);
+                
+                // Check 3x3 area around this pixel
+                for (let dx = -3; dx <= 3; dx++) {
+                    for (let dy = -3; dy <= 3; dy++) {
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        if (nx >= 0 && nx < 600 && ny >= 0 && ny < 400) {
+                            const nearbyIndex = (ny * 600 + nx) * 4;
+                            if (userPixels[nearbyIndex + 3] > 50) {
+                                foundNearby = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (foundNearby) break;
+                }
+                
+                if (foundNearby) {
+                    tracedCorrectly++;
+                } else {
+                    missedOutline++;
+                }
+            } else {
+                // Check if user drew outside the outline (but be more lenient)
+                if (userAlpha > 50) {
+                    // Check if this drawn pixel is near an outline pixel
+                    let nearOutline = false;
+                    const pixelIndex = i / 4;
+                    const x = pixelIndex % 600;
+                    const y = Math.floor(pixelIndex / 600);
+                    
+                    // Check 5x5 area for nearby outline
+                    for (let dx = -5; dx <= 5; dx++) {
+                        for (let dy = -5; dy <= 5; dy++) {
+                            const nx = x + dx;
+                            const ny = y + dy;
+                            if (nx >= 0 && nx < 600 && ny >= 0 && ny < 400) {
+                                const nearbyIndex = (ny * 600 + nx) * 4;
+                                if (this.outlinePixels[nearbyIndex + 3] > 128) {
+                                    nearOutline = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (nearOutline) break;
+                    }
+                    
+                    if (!nearOutline) {
+                        drawnOutsideOutline++;
+                    }
+                }
+            }
+        }
         
-        // Feature detection (15 points each)
-        if (hasEars) score += 15;
-        if (hasBody) score += 15;
-        if (hasTail) score += 15;
+        // Calculate accuracy percentage
+        let accuracy = 0;
+        if (totalOutlinePixels > 0) {
+            // Base accuracy from how much of the outline was traced
+            accuracy = (tracedCorrectly / totalOutlinePixels) * 100;
+            
+            // Much smaller penalty for drawing outside (people aren't perfect!)
+            const outsidePenalty = Math.min((drawnOutsideOutline / totalOutlinePixels) * 5, 10);
+            accuracy = Math.max(accuracy - outsidePenalty, 0);
+            
+            // Bonus for drawing a reasonable amount (shows effort)
+            if (totalDrawnPixels > totalOutlinePixels * 0.5) {
+                accuracy += 10;
+            }
+        }
         
-        // Proportions (max 15 points)
-        score += proportions * 15;
+        // Add some bonus for effort if they drew something
+        const hasDrawn = tracedCorrectly > totalOutlinePixels * 0.1;
+        if (hasDrawn && accuracy < 30) {
+            accuracy = 30; // Minimum score for trying
+        }
         
-        // Line continuity (max 10 points)
-        score += continuity * 10;
+        // Round to nearest integer
+        accuracy = Math.round(accuracy);
         
-        // Drawing complexity (max 15 points)
-        score += complexity * 15;
+        // Debug logging
+        console.log('[Scene9] Grading debug:', {
+            totalOutlinePixels,
+            tracedCorrectly,
+            missedOutline,
+            drawnOutsideOutline,
+            totalDrawnPixels,
+            accuracy,
+            percentTraced: ((tracedCorrectly / totalOutlinePixels) * 100).toFixed(1) + '%'
+        });
         
-        // Ensure score is between 0 and 100
-        score = Math.min(Math.max(Math.round(score), 0), 100);
+        // Determine letter grade (minimum is C- since there's no F SVG)
+        let gradeLetter;
+        if (accuracy >= 90) {
+            gradeLetter = 'A+';
+        } else if (accuracy >= 85) {
+            gradeLetter = 'A';
+        } else if (accuracy >= 80) {
+            gradeLetter = 'A-';
+        } else if (accuracy >= 75) {
+            gradeLetter = 'B+';
+        } else if (accuracy >= 70) {
+            gradeLetter = 'B';
+        } else if (accuracy >= 65) {
+            gradeLetter = 'B-';
+        } else if (accuracy >= 60) {
+            gradeLetter = 'C+';
+        } else if (accuracy >= 55) {
+            gradeLetter = 'C';
+        } else {
+            // Minimum grade is C-
+            gradeLetter = 'C-';
+        }
         
-        // Add some randomness for fun (±5 points)
-        score = Math.min(Math.max(score + Math.floor(Math.random() * 11) - 5, 0), 100);
-        
-        this.score = score;
-        this.displayGrade(score);
+        this.score = accuracy;
+        this.displayGrade(gradeLetter);
     }
     
     calculateCoverage(pixels) {
@@ -436,74 +751,86 @@ export class Scene9 extends Scene {
         return 0.2;
     }
     
-    displayGrade(score) {
+    displayGrade(gradeLetter) {
         this.hasBeenGraded = true;
         
-        // Determine message based on score
-        let message = '';
-        if (score >= 95) {
-            message = "PERFECT! That's unmistakably Smokey! She's purring with pride! 😻";
-        } else if (score >= 85) {
-            message = "Amazing! That's definitely Smokey! She would be so proud.";
-        } else if (score >= 75) {
-            message = "Wonderful! I can clearly see Smokey in your drawing!";
-        } else if (score >= 65) {
-            message = "Great job! That's a lovely cat drawing!";
-        } else if (score >= 50) {
-            message = "Good attempt! It has definite cat-like qualities.";
-        } else if (score >= 35) {
-            message = "Nice try! Keep practicing, Smokey believes in you!";
-        } else if (score >= 20) {
-            message = "Creative interpretation! Smokey appreciates the effort.";
-        } else {
-            message = "Abstract art! Smokey appreciates all artistic expressions.";
-        }
+        // Map grade letter to SVG file - match actual filenames
+        const gradeFile = `/assets/SVG/Grades/${gradeLetter.replace('+', 'plus').replace('-', 'minus')}.svg`;
         
-        // Display grade with animation
+        // Display the grade
         this.gradeDisplay.classList.remove('hidden');
-        this.scoreElement.textContent = '0';
-        this.messageElement.textContent = message;
+        this.gradeImage.src = gradeFile;
+        this.gradeImage.alt = `Grade: ${gradeLetter}`;
         
-        // Add grade color based on score
-        if (score >= 85) {
+        // Add grade color class based on letter
+        this.gradeDisplay.classList.remove('grade-perfect', 'grade-great', 'grade-good', 'grade-try');
+        if (gradeLetter.startsWith('A')) {
             this.gradeDisplay.classList.add('grade-perfect');
-        } else if (score >= 70) {
+            // Celebrate for A grades
+            setTimeout(() => this.celebrate(), 500);
+        } else if (gradeLetter.startsWith('B')) {
             this.gradeDisplay.classList.add('grade-great');
-        } else if (score >= 50) {
+        } else if (gradeLetter.startsWith('C')) {
             this.gradeDisplay.classList.add('grade-good');
         } else {
             this.gradeDisplay.classList.add('grade-try');
         }
         
-        // Animate score counting up
-        // Clear any existing interval
-        if (this.scoreInterval) {
-            clearInterval(this.scoreInterval);
-            this.scoreInterval = null;
+        // Hide the submit button after grading (use visibility to maintain layout)
+        if (this.submitBtn) {
+            this.submitBtn.style.visibility = 'hidden';
         }
         
-        let currentScore = 0;
-        const increment = Math.ceil(score / 30);
-        this.scoreInterval = setInterval(() => {
-            // Check if element still exists
-            if (!this.scoreElement) {
-                clearInterval(this.scoreInterval);
-                this.scoreInterval = null;
-                return;
+        // Hide the reference overlay after grading
+        if (this.referenceImg) {
+            this.referenceImg.style.display = 'none';
+        }
+        
+        // Auto-advance to next scene after showing grade
+        setTimeout(() => {
+            this.startExitTransition();
+        }, 3000); // Show grade for 3 seconds before starting exit
+    }
+    
+    startExitTransition() {
+        console.log('[Scene9] Starting exit transition');
+        
+        // Create black overlay for smooth fade
+        const blackOverlay = document.createElement('div');
+        blackOverlay.className = 'scene9-black-overlay';
+        blackOverlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            opacity: 0;
+            z-index: 100;
+            pointer-events: none;
+        `;
+        this.element.appendChild(blackOverlay);
+        
+        // Add exit class to all scene elements for slide-down animation
+        const textElements = this.element.querySelectorAll('.story-text');
+        const interactiveElements = this.element.querySelectorAll('.interactive-container');
+        
+        textElements.forEach(el => el.classList.add('scene-9-exit'));
+        interactiveElements.forEach(el => el.classList.add('scene-9-exit'));
+        
+        // Fade in the black overlay (start slightly before elements finish)
+        setTimeout(() => {
+            blackOverlay.style.transition = 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1)';
+            blackOverlay.style.opacity = '1';
+        }, 400);
+        
+        // Complete transition and advance to next scene
+        setTimeout(() => {
+            this.onComplete();
+            if (window.sceneManager) {
+                window.sceneManager.nextScene();
             }
-            
-            currentScore = Math.min(currentScore + increment, score);
-            this.scoreElement.textContent = currentScore;
-            
-            if (currentScore >= score) {
-                clearInterval(this.scoreInterval);
-                this.scoreInterval = null;
-                // Add celebration for high scores
-                if (score >= 85) {
-                    this.celebrate();
-                }
-            }
-        }, 50);
+        }, 1500); // Wait for animations to complete
     }
     
     celebrate() {
@@ -525,6 +852,18 @@ export class Scene9 extends Scene {
             this.scoreInterval = null;
         }
         
+        // Remove document-level event listener
+        if (this.documentMouseMoveHandler) {
+            document.removeEventListener('mousemove', this.documentMouseMoveHandler);
+            this.documentMouseMoveHandler = null;
+        }
+        
+        // Remove chalk cursor from DOM
+        if (this.chalkCursor && this.chalkCursor.parentNode) {
+            this.chalkCursor.parentNode.removeChild(this.chalkCursor);
+            this.chalkCursor = null;
+        }
+        
         // Clean up canvas and context
         if (this.ctx) {
             this.ctx = null;
@@ -532,13 +871,23 @@ export class Scene9 extends Scene {
         if (this.canvas) {
             this.canvas = null;
         }
+        if (this.drawingCtx) {
+            this.drawingCtx = null;
+        }
+        if (this.drawingCanvas) {
+            this.drawingCanvas = null;
+        }
         
         // Clean up references
         this.submitBtn = null;
         this.gradeDisplay = null;
-        this.scoreElement = null;
-        this.messageElement = null;
+        this.gradeImage = null;
         this.referenceImg = null;
+        this.referenceCanvas = null;
+        this.referenceCtx = null;
+        this.outlinePixels = null;
+        this.blackboardImage = null;
+        this.chalkImage = null;
         
         super.cleanup();
     }

@@ -31,6 +31,10 @@ export class Scene7 extends Scene {
         this.element = document.createElement('div');
         this.element.className = 'scene story-scene scene-7';
         
+        // Like Scene 6, set immediate visibility with black background to prevent flash
+        this.element.style.backgroundColor = '#000000'; // Start black to match Scene 6 fade
+        this.element.style.opacity = '1'; // Override default opacity: 0 to be immediately visible
+        
         // Create fluid background canvas
         const fluidCanvas = document.createElement('canvas');
         fluidCanvas.className = 'fluid-background';
