@@ -559,6 +559,53 @@
     }
 }
 
+/* Star stream particles that emerge from Smokey's head */
+.star-stream {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: starFloat 2s ease-out forwards, twinkle 0.8s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes starFloat {
+    0% {
+        transform: translateY(0) translateX(0) scale(1);
+        opacity: inherit;
+    }
+    50% {
+        opacity: inherit;
+    }
+    100% {
+        transform: translateY(-400px) translateX(var(--drift-x, 0)) scale(0.5);
+        opacity: 0;
+    }
+}
+
+/* Add random horizontal drift for variety */
+.star-stream:nth-child(odd) {
+    --drift-x: 30px;
+}
+
+.star-stream:nth-child(even) {
+    --drift-x: -30px;
+}
+
+.star-stream:nth-child(3n) {
+    --drift-x: 50px;
+    animation-duration: 2.3s;
+}
+
+.star-stream:nth-child(4n) {
+    --drift-x: -40px;
+    animation-duration: 1.8s;
+}
+
+.star-stream:nth-child(5n) {
+    --drift-x: 10px;
+    animation-duration: 2.1s;
+}
+
 .scene3-text {
     position: absolute;
     left: 35%;
@@ -2652,7 +2699,7 @@
 
 /* Scene 11: Photo Scrapbook */
 .scrapbook-scene {
-    background: radial-gradient(circle at center, #f5e6d3 0%, #d4b896 100%);
+    background: #000000;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2668,7 +2715,7 @@
 }
 
 .scrapbook-title h2 {
-    color: #4a3728;
+    color: #ffffff;
     font-size: 1.8rem;
     font-weight: 400;
     font-family: 'Georgia', serif;
@@ -2680,41 +2727,31 @@
 .book-container {
     perspective: 2000px;
     position: relative;
+    transition: transform 2s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.book-container.shifted {
+    transform: translateX(250px);
 }
 
 .book {
-    width: 700px;
-    height: 450px;
+    width: 1000px;
+    height: 650px;
     position: relative;
     transform-style: preserve-3d;
     cursor: pointer;
 }
 
 .static-left-page {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 350px;
-    height: 450px;
-    background: #faf8f3;
-    border-left: 1px solid #d4b896;
-    border-top: 1px solid #d4b896;
-    border-bottom: 1px solid #d4b896;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    box-shadow: inset 2px 0 5px rgba(0,0,0,0.05);
+    display: none; /* Removed - not needed with cover design */
 }
 
 .book-page {
     position: absolute;
-    right: 0;
+    left: 250px;
     top: 0;
-    width: 350px;
-    height: 450px;
+    width: 500px;
+    height: 650px;
     transform-style: preserve-3d;
     transform-origin: left center;
     transition: transform 2.5s cubic-bezier(0.4, 0.0, 0.2, 1);
@@ -2736,7 +2773,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 40px;
+    padding: 30px;
     box-shadow: 
         0 2px 4px rgba(0,0,0,0.05),
         inset 0 0 20px rgba(212, 184, 150, 0.05);
@@ -2795,10 +2832,10 @@
 
 .binding-shadow {
     position: absolute;
-    left: 347px;
+    left: 250px;
     top: 0;
     width: 6px;
-    height: 450px;
+    height: 650px;
     background: linear-gradient(90deg, 
         transparent 0%,
         rgba(0,0,0,0.05) 20%,
@@ -2807,6 +2844,91 @@
         transparent 100%);
     z-index: 100;
     pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease-in;
+}
+
+.binding-shadow.visible {
+    opacity: 1;
+}
+
+/* Book Cover Styles */
+.book-cover {
+    position: absolute;
+    left: 250px;
+    top: 0;
+    width: 500px;
+    height: 650px;
+    transform-style: preserve-3d;
+    transform-origin: left center;
+    transition: transform 2.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+    cursor: pointer;
+    z-index: 10;
+}
+
+.book-cover.flipped {
+    transform: rotateY(-180deg);
+}
+
+.cover-content {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.cover-content.front {
+    background-image: url('/assets/images/Photo-album/Cover.png');
+    z-index: 2;
+}
+
+.cover-content.back {
+    transform: rotateY(180deg);
+    background: #faf8f3;
+    border: 1px solid #d4b896;
+}
+
+/* Gradual darkness overlay for fading pages */
+.darkness-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* Black photo pages */
+.page-content.black-photo {
+    background: #000000;
+}
+
+.black-photo-frame {
+    width: 200px;
+    height: 200px;
+    background: #000000;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Black expansion overlay */
+.black-expansion-overlay {
+    position: fixed;
+    background: #000000;
+    z-index: 1000;
+    transition: transform 3s cubic-bezier(0.42, 0, 0.58, 1);
+    transform-origin: center center;
+}
+
+.black-expansion-overlay.expand {
+    transform: rotate(var(--initial-rotation, 0deg)) scale(60) !important;
 }
 
 /* Old Scene 11 button styles removed - now using scrapbook */
@@ -2831,6 +2953,7 @@
     gap: 150px;
     width: 100%;
     max-width: 900px;
+    z-index: 2000;
 }
 
 .scene12-text1, .scene12-text2 {

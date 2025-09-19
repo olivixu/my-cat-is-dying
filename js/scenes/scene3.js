@@ -88,6 +88,16 @@ export class Scene3 extends Scene {
         physicsCanvas.height = window.innerHeight;
         physicsCanvas.style.background = 'transparent';
         
+        // Create star particles container with proper z-index layering
+        this.starParticlesContainer = document.createElement('div');
+        this.starParticlesContainer.style.position = 'absolute';
+        this.starParticlesContainer.style.top = '0';
+        this.starParticlesContainer.style.left = '0';
+        this.starParticlesContainer.style.width = '100%';
+        this.starParticlesContainer.style.height = '100%';
+        this.starParticlesContainer.style.zIndex = '3'; // Between head-back (1-2) and smokey-overlay/body
+        this.starParticlesContainer.style.pointerEvents = 'none';
+        
         // Initialize physics
         this.initPhysics(physicsCanvas);
         
@@ -181,6 +191,7 @@ export class Scene3 extends Scene {
         this.element.appendChild(gameContainer);  // Contains head-back
         this.element.appendChild(physicsCanvas);  // Physics canvas
         this.element.appendChild(this.booksContainer);  // Books container with z-index 2
+        this.element.appendChild(this.starParticlesContainer);  // Star particles BEFORE smokey overlay
         this.element.appendChild(smokeyOverlay);  // Body and head-lid on top
         this.element.appendChild(instructionStep1);  // Instruction overlay on top
         this.element.appendChild(instructionStep2);  // Step 2 overlay (hidden)
@@ -323,16 +334,18 @@ export class Scene3 extends Scene {
         if (this.hasCompleted) return;
         this.hasCompleted = true;
         
-        // Start transition sequence
-        this.startTransitionToScene4();
+        // Wait for star stream to complete before starting transition
+        setTimeout(() => {
+            this.startTransitionToScene4();
+        }, 2000); // Let stars stream out first
         
-        // Auto advance after animations complete
+        // Auto advance after all animations complete
         setTimeout(() => {
             this.onComplete();
             if (window.sceneManager) {
                 window.sceneManager.nextScene();
             }
-        }, 4500); // Give full time for all animations to complete
+        }, 6000); // Total time for stars + transition
     }
     
     startTransitionToScene4() {
@@ -561,6 +574,104 @@ export class Scene3 extends Scene {
         console.log('Book respawned at position:', x, bookY);
     }
     
+    createStarStream(x, y) {
+        // Emit stars over time to create a stream effect
+        const totalDuration = 800; // Stream lasts 800ms
+        const starsPerEmission = 2; // 2 stars per emission
+        const emissionInterval = 40; // Emit every 40ms
+        const numEmissions = totalDuration / emissionInterval; // 20 emissions
+        
+        let emissionCount = 0;
+        
+        const emitStars = () => {
+            if (emissionCount >= numEmissions) return;
+            emissionCount++;
+            
+            // Create 2-3 stars per emission
+            const starsThisEmission = starsPerEmission + Math.floor(Math.random() * 2);
+            
+            for (let i = 0; i < starsThisEmission; i++) {
+                const star = document.createElement('div');
+                star.className = 'star star-stream';
+                
+                // Slightly larger stars for better visibility (3-7px)
+                const size = Math.random() * 4 + 3;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                // Moderate initial spread for stream effect
+                const spreadX = (Math.random() - 0.5) * 50; // -25 to +25px horizontal spread
+                const spreadY = (Math.random() - 0.5) * 20; // -10 to +10px vertical spread
+                star.style.left = `${x + spreadX}px`;
+                star.style.top = `${y + spreadY}px`;
+                
+                // Lower initial opacity for subtler effect
+                const initialOpacity = 0.3 + Math.random() * 0.5; // 0.3-0.8
+                star.style.opacity = initialOpacity;
+                
+                // White stars matching the background
+                star.style.background = 'white';
+                star.style.borderRadius = '50%';
+                
+                // Set position
+                star.style.position = 'absolute';
+                
+                // Append to star particles container
+                this.starParticlesContainer.appendChild(star);
+                
+                // Animate star with more vertical movement
+                const driftX = (Math.random() - 0.5) * 80; // -40 to +40px horizontal drift
+                const duration = 1800 + Math.random() * 400; // 1.8-2.2 seconds
+                const startTime = performance.now();
+                const initialY = parseFloat(star.style.top);
+                const initialX = parseFloat(star.style.left);
+                const totalDistance = 650; // Move up 650px
+                
+                // Animate using requestAnimationFrame
+                const animate = (currentTime) => {
+                    const elapsed = currentTime - startTime;
+                    const progress = elapsed / duration;
+                    
+                    // Continue animating even past progress = 1 for extended movement
+                    if (progress > 1.5) {
+                        star.remove();
+                        return;
+                    }
+                    
+                    // Ease-out curve for movement
+                    const easeOut = 1 - Math.pow(1 - Math.min(progress, 1), 2);
+                    
+                    // More vertical movement, less horizontal
+                    const currentY = initialY - (totalDistance * progress);
+                    const currentX = initialX + (driftX * easeOut * 0.5); // Reduced horizontal drift
+                    
+                    star.style.top = `${currentY}px`;
+                    star.style.left = `${currentX}px`;
+                    
+                    // Start fading out after 50% of duration
+                    if (progress > 0.5) {
+                        const fadeProgress = (progress - 0.5) / 0.5;
+                        star.style.opacity = Math.max(0, initialOpacity * (1 - fadeProgress));
+                    }
+                    
+                    // Scale down slightly as it rises
+                    star.style.transform = `scale(${Math.max(0.3, 1 - progress * 0.4)})`;
+                    
+                    requestAnimationFrame(animate);
+                };
+                
+                // Start animation immediately for stream effect
+                requestAnimationFrame(animate);
+            }
+            
+            // Schedule next emission
+            setTimeout(emitStars, emissionInterval);
+        };
+        
+        // Start the stream
+        emitStars();
+    }
+    
     setupCollisionDetection() {
         // Safety check
         if (!this.dropZone || !this.physicsCanvas) {
@@ -654,6 +765,19 @@ export class Scene3 extends Scene {
                         // Check if this is one of our books AND it's moving downward
                         if (this.physicsBooks.includes(book) && book.velocity.y > 0) {
                             console.log('Book hit bounce platform from above! Velocity:', book.velocity.y);
+                            
+                            // Create star stream effect at Smokey's head position
+                            const smokeyHead = this.element.querySelector('.smokey-head');
+                            if (smokeyHead) {
+                                const headRect = smokeyHead.getBoundingClientRect();
+                                const containerRect = this.element.getBoundingClientRect();
+                                
+                                // Position stars to come from upper part of head (100px higher than center)
+                                const starX = headRect.left + headRect.width/2 - containerRect.left;
+                                const starY = headRect.top + headRect.height/2 - containerRect.top - 100; // 100px above center
+                                
+                                this.createStarStream(starX, starY);
+                            }
                             
                             // Apply strong bounce velocity - left and up
                             Matter.Body.setVelocity(book, { 
