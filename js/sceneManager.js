@@ -237,6 +237,54 @@ export class SceneManager {
                         sceneToCleanup.cleanup(index);
                     }, 2800); // Wait for Scene 8's black overlay fade (2500ms + buffer)
                 }
+                // Special case for Scene 11 to 12 - let the black expansion complete
+                else if (this.currentSceneIndex === 10 && index === 11) {
+                    // Set container to black immediately to prevent flash
+                    this.container.style.backgroundColor = '#000000';
+                    console.log('[SceneManager] Scene 11 to 12 - setting black background and immediate scene cleanup, delayed overlay cleanup');
+                    
+                    // Clean up scene immediately but keep overlay
+                    previousScene.element?.classList.add('exiting');
+                    
+                    // Store the overlay reference before cleanup
+                    const overlayToRemove = previousScene.blackOverlay;
+                    
+                    // Clear the reference so cleanup doesn't remove it
+                    previousScene.blackOverlay = null;
+                    
+                    // Clean up the scene (but not the overlay)
+                    previousScene.cleanup(index);
+                    
+                    // Delay removal of just the overlay
+                    setTimeout(() => {
+                        if (overlayToRemove && overlayToRemove.parentNode) {
+                            overlayToRemove.parentNode.removeChild(overlayToRemove);
+                        }
+                    }, 5500); // Wait for Scene 12 to load (5000ms) + brief overlap
+                }
+                // Special case for Scene 12 to 13 - preserve white overlay
+                else if (this.currentSceneIndex === 11 && index === 12) {
+                    // Set container to white to prevent flash
+                    this.container.style.backgroundColor = '#ffffff';
+                    
+                    // Store the white overlay before cleanup
+                    const overlayToKeep = previousScene.whiteOverlay;
+                    previousScene.whiteOverlay = null; // Clear so cleanup won't remove it
+                    
+                    // Normal cleanup
+                    previousScene.element?.classList.add('exiting');
+                    previousScene.cleanup(index);
+                    this.currentScene = null;
+                    
+                    // Remove overlay after Scene 13 settles
+                    if (overlayToKeep) {
+                        setTimeout(() => {
+                            if (overlayToKeep.parentNode) {
+                                overlayToKeep.parentNode.removeChild(overlayToKeep);
+                            }
+                        }, 2000);
+                    }
+                }
                 else {
                     // All other transitions: immediate cleanup
                     previousScene.element?.classList.add('exiting');
