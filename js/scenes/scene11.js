@@ -12,76 +12,120 @@ export class Scene11 extends Scene {
         this.coverFlipped = false;
         this.currentPage = 0;
         this.autoFlipping = false;
-        this.flipSpeed = 2000;
-        this.speedMultiplier = 0.75;
-        this.minSpeed = 200;
+        this.baseFlipSpeed = 2000;
+        this.currentFlipSpeed = 2000;
+        this.minSpeed = 150;
+        this.maxSpeed = 3500;
         this.blackOverlay = null; // Track overlay for cleanup
         
-        // Page data - dates for each page face
+        // Page data - dates for each page face (chronologically ordered)
         this.pageData = [
-            // Happy memories
+            // 2020 - Early memories
             {
-                front: { date: "January 15, 2020", photo: "Cat photo 1" },
-                back: { date: "March 3, 2020", photo: "Cat photo 2" }
+                front: { date: "December 11, 2020", photo: "assets/images/Photo-album/Png/Dec 11 2020.png" },
+                back: { date: "December 15, 2020", photo: "assets/images/Photo-album/Png/Dec 15 2020.png" }
+            },
+            // 2021 - Happy times
+            {
+                front: { date: "January 4, 2021", photo: "assets/images/Photo-album/Png/Jan 4 2021.png" },
+                back: { date: "January 15, 2021", photo: "assets/images/Photo-album/Png/Jan 15 2021.png" }
             },
             {
-                front: { date: "June 21, 2020", photo: "Cat photo 3" },
-                back: { date: "September 10, 2020", photo: "Cat photo 4" }
+                front: { date: "March 16, 2021", photo: "assets/images/Photo-album/Png/Mar 16 2021.png" },
+                back: { date: "April 6, 2021", photo: "assets/images/Photo-album/Png/Apr 6 2021.png" }
             },
             {
-                front: { date: "December 25, 2020", photo: "Cat photo 5" },
-                back: { date: "February 14, 2021", photo: "Cat photo 6" }
+                front: { date: "August 1, 2021", photo: "assets/images/Photo-album/Png/Aug 1 2021.png" },
+                back: { date: "August 28, 2021", photo: "assets/images/Photo-album/Png/Aug 28 2021.png" }
             },
             {
-                front: { date: "May 1, 2021", photo: "Cat photo 7" },
-                back: { date: "August 15, 2021", photo: "Cat photo 8" }
+                front: { date: "August 31, 2021", photo: "assets/images/Photo-album/Png/Aug 31 2021.png" },
+                back: { date: "October 15, 2021", photo: "assets/images/Photo-album/Png/Oct 15 2021.png" }
             },
             {
-                front: { date: "November 11, 2021", photo: "Cat photo 9" },
-                back: { date: "January 1, 2022", photo: "Cat photo 10" }
-            },
-            // More memories
-            {
-                front: { date: "March 15, 2022", photo: "Cat photo 11" },
-                back: { date: "May 20, 2022", photo: "Cat photo 12" }
+                front: { date: "October 31, 2021", photo: "assets/images/Photo-album/Png/Oct 31 2021.png" },
+                back: { date: "November 14, 2021", photo: "assets/images/Photo-album/Png/Nov 14 2021.png" }
             },
             {
-                front: { date: "July 4, 2022", photo: "Cat photo 13" },
-                back: { date: "October 31, 2022", photo: "Cat photo 14" }
+                front: { date: "December 28, 2021", photo: "assets/images/Photo-album/Png/Dec 28 2021.png" },
+                back: { date: "July 29, 2022", photo: "assets/images/Photo-album/Png/July 29 2022.png" }
+            },
+            // 2022 - Still together
+            {
+                front: { date: "September 14, 2022", photo: "assets/images/Photo-album/Png/Sep 14 2022.png" },
+                back: { date: "October 13, 2022", photo: "assets/images/Photo-album/Png/Oct 13 2022.png" }
+            },
+            // 2023 - Beginning to fade
+            {
+                front: { date: "April 23, 2023", photo: "assets/images/Photo-album/Png/Apr 23 2023.png", darkness: 0.1 },
+                back: { date: "July 3, 2023", photo: "assets/images/Photo-album/Png/Jul 3 2023.png", darkness: 0.15 }
             },
             {
-                front: { date: "December 24, 2022", photo: "Cat photo 15" },
-                back: { date: "January 15, 2023", photo: "Cat photo 16" }
+                front: { date: "September 5, 2023", photo: "assets/images/Photo-album/Png/Sep 5 2023.png", darkness: 0.2 },
+                back: { date: "January 3, 2024", photo: "assets/images/Photo-album/Png/Jan 3 2024.png", darkness: 0.3 }
             },
-            // Gradually fading memories
+            // 2024-2025 - Fading memories
             {
-                front: { date: "March 2023", photo: "Still here", darkness: 0.1 },
-                back: { date: "April 2023", photo: "Fading slightly", darkness: 0.2 }
-            },
-            {
-                front: { date: "May 2023", photo: "Getting hazier", darkness: 0.3 },
-                back: { date: "June 2023", photo: "Harder to see", darkness: 0.4 }
+                front: { date: "September 7, 2024", photo: "assets/images/Photo-album/Png/Sep 7 2024.png", darkness: 0.4 },
+                back: { date: "February 13, 2025", photo: "assets/images/Photo-album/Png/Feb 13 2025.png", darkness: 0.5 }
             },
             {
-                front: { date: "July 2023", photo: "Dimming", darkness: 0.5 },
-                back: { date: "August 2023", photo: "Shadows growing", darkness: 0.6 }
+                front: { date: "February 14, 2025", photo: "assets/images/Photo-album/Png/Feb 14 2025.png", darkness: 0.55 },
+                back: { date: "February 27, 2025", photo: "assets/images/Photo-album/Png/Feb 27 2025.png", darkness: 0.6 }
             },
             {
-                front: { date: "September 2023", photo: "Almost gone", darkness: 0.7 },
-                back: { date: "October 2023", photo: "Barely there", darkness: 0.8 }
+                front: { date: "April 19, 2025", photo: "assets/images/Photo-album/Png/Apr 19 2025.png", darkness: 0.7 },
+                back: { date: "April 23, 2025", photo: "assets/images/Photo-album/Png/Apr 23 2025.png", darkness: 0.75 }
             },
             {
-                front: { date: "", photo: "...", darkness: 0.85 },
-                back: { date: "", photo: "...", darkness: 0.9 }
+                front: { date: "April 27, 2025", photo: "assets/images/Photo-album/Png/Apr 27 2025.png", darkness: 0.8 },
+                back: { date: "May 4, 2025", photo: "assets/images/Photo-album/Png/May 4 2025.png", darkness: 0.85 }
             },
             {
-                front: { date: "", photo: "", darkness: 0.95 },
-                back: { date: "", photo: "", darkness: 1.0, isLast: true }
+                front: { date: "July 28, 2025", photo: "assets/images/Photo-album/Png/July 28 2025.png", darkness: 0.9 },
+                back: { date: "August 31, 2025", photo: "assets/images/Photo-album/Png/Aug 31 2025.png", darkness: 1.0 }
+            },
+            // Mystery pages - completely black pages
+            {
+                front: { date: "", photo: "", darkness: 1.0, isBlank: true },
+                back: { date: "", photo: "", darkness: 1.0, isBlank: true }
+            },
+            {
+                front: { date: "", photo: "", darkness: 1.0, isBlank: true },
+                back: { date: "", photo: "", darkness: 1.0, isBlank: true }
+            },
+            {
+                front: { date: "", photo: "", darkness: 1.0, isBlank: true },
+                back: { date: "", photo: "", darkness: 1.0, isBlank: true }
+            },
+            {
+                front: { date: "", photo: "", darkness: 1.0, isBlank: true },
+                back: { date: "", photo: "", darkness: 1.0, isBlank: true }
+            },
+            {
+                front: { date: "", photo: "", darkness: 1.0, isBlank: true },
+                back: { date: "", photo: "", darkness: 1.0, isBlank: true }
+            },
+            {
+                front: { date: "", photo: "", darkness: 1.0, isBlank: true },
+                back: { date: "", photo: "", darkness: 1.0, isBlank: true, isLast: true }
             }
         ];
     }
     
     async init() {
+        // Preload cover image
+        const coverImage = new Image();
+        coverImage.src = 'assets/images/Photo-album/Cover.png';
+        await new Promise(resolve => {
+            if (coverImage.complete) {
+                resolve();
+            } else {
+                coverImage.onload = resolve;
+                coverImage.onerror = resolve; // Continue even if cover fails to load
+            }
+        });
+        
         // Create scene element
         this.element = document.createElement('div');
         this.element.className = 'scene story-scene scene-11 scrapbook-scene';
@@ -95,10 +139,12 @@ export class Scene11 extends Scene {
         const bookContainer = document.createElement('div');
         bookContainer.className = 'book-container';
         
-        // Create book
+        // Create book - start hidden
         const book = document.createElement('div');
         book.className = 'book';
         book.id = 'scrapbook';
+        book.style.opacity = '0';
+        book.style.transition = 'opacity 0.5s ease-out';
         
         // Create cover
         const cover = document.createElement('div');
@@ -126,18 +172,27 @@ export class Scene11 extends Scene {
             const pageFront = document.createElement('div');
             pageFront.className = 'page-content front';
             
-            if (data.front.darkness) {
+            if (data.front.isBlank) {
+                // Completely black page
+                pageFront.innerHTML = `
+                    ${data.front.date ? `<h2 style="color: #333;">${data.front.date}</h2>` : ''}
+                    <div class="photo-frame" style="background: #000; box-shadow: none;">
+                        <div class="photo-darkness-overlay" style="opacity: 1"></div>
+                    </div>
+                `;
+            } else if (data.front.darkness) {
                 pageFront.innerHTML = `
                     <h2>${data.front.date}</h2>
                     <div class="photo-frame">
-                        <div class="photo-placeholder" style="background: rgba(0, 0, 0, ${data.front.darkness}); color: rgba(160, 136, 114, ${1 - data.front.darkness})">${data.front.photo}</div>
+                        <img src="${data.front.photo}" alt="${data.front.date}" class="photo-placeholder" style="opacity: ${1 - data.front.darkness}">
+                        <div class="photo-darkness-overlay" style="opacity: ${data.front.darkness}"></div>
                     </div>
                 `;
             } else {
                 pageFront.innerHTML = `
                     <h2>${data.front.date}</h2>
                     <div class="photo-frame">
-                        <div class="photo-placeholder">${data.front.photo}</div>
+                        <img src="${data.front.photo}" alt="${data.front.date}" class="photo-placeholder">
                     </div>
                 `;
             }
@@ -146,18 +201,27 @@ export class Scene11 extends Scene {
             const pageBack = document.createElement('div');
             pageBack.className = 'page-content back';
             
-            if (data.back.darkness) {
+            if (data.back.isBlank) {
+                // Completely black page
+                pageBack.innerHTML = `
+                    ${data.back.date ? `<h2 style="color: #333;">${data.back.date}</h2>` : ''}
+                    <div class="photo-frame" style="background: #000; box-shadow: none;">
+                        <div class="photo-darkness-overlay" style="opacity: 1"></div>
+                    </div>
+                `;
+            } else if (data.back.darkness) {
                 pageBack.innerHTML = `
                     <h2>${data.back.date}</h2>
                     <div class="photo-frame">
-                        <div class="photo-placeholder" style="background: rgba(0, 0, 0, ${data.back.darkness}); color: rgba(160, 136, 114, ${1 - data.back.darkness})">${data.back.photo}</div>
+                        <img src="${data.back.photo}" alt="${data.back.date}" class="photo-placeholder" style="opacity: ${1 - data.back.darkness}">
+                        <div class="photo-darkness-overlay" style="opacity: ${data.back.darkness}"></div>
                     </div>
                 `;
             } else {
                 pageBack.innerHTML = `
                     <h2>${data.back.date}</h2>
                     <div class="photo-frame">
-                        <div class="photo-placeholder">${data.back.photo}</div>
+                        <img src="${data.back.photo}" alt="${data.back.date}" class="photo-placeholder">
                     </div>
                 `;
             }
@@ -185,6 +249,12 @@ export class Scene11 extends Scene {
         this.bookContainer = bookContainer;
         this.bindingShadow = bindingShadow;
         this.cover = cover;
+        this.pages = Array.from(book.querySelectorAll('.book-page'));
+        
+        // Fade in book after a brief delay
+        setTimeout(() => {
+            book.style.opacity = '1';
+        }, 100);
         
         // Single click handler on the book
         book.addEventListener('click', () => {
@@ -199,14 +269,31 @@ export class Scene11 extends Scene {
         this.autoFlip();
     }
     
+    calculateFlipSpeed(currentPage, totalPages) {
+        const pagesRemaining = totalPages - currentPage;
+        const progress = currentPage / totalPages;
+        
+        // Keep fast speed even for the last page
+        if (pagesRemaining === 1) {
+            // Keep it fast, just slightly less than the second-to-last
+            return this.minSpeed * 2; // 300ms
+        } else {
+            // Continuously accelerate until the end
+            // Use exponential acceleration for dramatic speed increase
+            const t = Math.min(progress * 1.2, 1); // Cap at 1 to avoid going too fast
+            const speedFactor = Math.pow(1 - t, 2) * 0.9 + 0.1; // Exponential from 1.0 to 0.1
+            return Math.max(this.minSpeed, this.baseFlipSpeed * speedFactor);
+        }
+    }
+    
     autoFlip() {
         // Flip cover first if not already flipped
         if (!this.coverFlipped) {
             this.flipCover();
             setTimeout(() => {
-                this.flipSpeed = Math.max(this.minSpeed, this.flipSpeed * this.speedMultiplier);
+                this.currentFlipSpeed = this.calculateFlipSpeed(0, this.pages.length);
                 this.autoFlip();
-            }, this.flipSpeed);
+            }, this.currentFlipSpeed);
             return;
         }
         
@@ -217,28 +304,13 @@ export class Scene11 extends Scene {
         
         this.flipPage();
         
-        // Calculate pages remaining
-        const pagesRemaining = this.pages.length - this.currentPage;
-        const totalPages = this.pages.length;
-        const progressPercent = this.currentPage / totalPages;
+        // Calculate next flip speed
+        this.currentFlipSpeed = this.calculateFlipSpeed(this.currentPage, this.pages.length);
         
-        // Schedule next flip - speed up first 60%, then slow down
+        // Schedule next flip
         setTimeout(() => {
-            if (progressPercent < 0.6) {
-                // Speed up for first 60%
-                this.flipSpeed = Math.max(this.minSpeed, this.flipSpeed * this.speedMultiplier);
-            } else if (pagesRemaining === 1) {
-                // Very slow for last page
-                this.flipSpeed = 3000;
-            } else if (pagesRemaining <= 3) {
-                // Slow down for last few pages
-                this.flipSpeed = Math.min(2000, this.flipSpeed * 1.3);
-            } else {
-                // Start slowing down after 60%
-                this.flipSpeed = Math.min(2000, this.flipSpeed * 1.15);
-            }
             this.autoFlip();
-        }, this.flipSpeed);
+        }, this.currentFlipSpeed);
     }
     
     flipCover() {
@@ -251,13 +323,13 @@ export class Scene11 extends Scene {
         }, 300);
         
         this.cover.style.zIndex = 1000;
-        this.cover.style.transition = `transform ${Math.min(2500, this.flipSpeed * 0.8)}ms cubic-bezier(0.4, 0.0, 0.2, 1)`;
+        this.cover.style.transition = `transform ${Math.min(2500, this.currentFlipSpeed * 0.8)}ms cubic-bezier(0.4, 0.0, 0.2, 1)`;
         this.cover.classList.add('flipped');
         
         // Reset z-index after flip completes
         setTimeout(() => {
             this.cover.style.zIndex = 0;
-        }, Math.min(2500, this.flipSpeed * 0.8));
+        }, Math.min(2500, this.currentFlipSpeed * 0.8));
         
         this.coverFlipped = true;
     }
@@ -271,21 +343,24 @@ export class Scene11 extends Scene {
         
         // Check if this is the last black photo page
         if (pageData && pageData.back && pageData.back.isLast) {
+            // Shift book further to the right for the last page (to center the right page)
+            this.bookContainer.style.transform = 'translateX(500px)';
+            
             // Trigger black expansion after this page flips
             setTimeout(() => {
                 this.triggerBlackExpansion();
-            }, Math.min(2500, this.flipSpeed * 0.8) + 500);
+            }, Math.min(2500, this.currentFlipSpeed * 0.8) + 1500);
         }
         
         // Bring page to front during flip
         page.style.zIndex = 1000;
-        page.style.transition = `transform ${Math.min(2500, this.flipSpeed * 0.8)}ms cubic-bezier(0.4, 0.0, 0.2, 1)`;
+        page.style.transition = `transform ${Math.min(2500, this.currentFlipSpeed * 0.8)}ms cubic-bezier(0.4, 0.0, 0.2, 1)`;
         page.classList.add('flipped');
         
         // Reset z-index after flip completes - keep flipped pages behind unflipped ones
         setTimeout(() => {
             page.style.zIndex = 0;
-        }, Math.min(2500, this.flipSpeed * 0.8));
+        }, Math.min(2500, this.currentFlipSpeed * 0.8));
         
         this.currentPage++;
     }
@@ -356,11 +431,11 @@ export class Scene11 extends Scene {
             // Store initial rotation for expansion
             blackOverlay.style.setProperty('--initial-rotation', rotation);
         } else {
-            // Fallback to center
-            blackOverlay.style.width = '200px';
-            blackOverlay.style.height = '200px';
+            // Fallback to center (slightly lower to match photo position)
+            blackOverlay.style.width = '100px';
+            blackOverlay.style.height = '100px';
             blackOverlay.style.left = '50%';
-            blackOverlay.style.top = '50%';
+            blackOverlay.style.top = '58%';
             blackOverlay.style.transform = 'translate(-50%, -50%)';
             blackOverlay.style.position = 'fixed';
         }

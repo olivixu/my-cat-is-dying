@@ -251,20 +251,92 @@ export class Scene2 extends Scene {
                         textContainer.classList.add('fading-out');
                     }
                     
-                    // Create and animate hand sweep
+                    // Create and animate hand sweep with image
                     const handSweep = document.createElement('div');
                     handSweep.className = 'hand-sweep';
+                    
+                    // Add the hand image
+                    const handImg = document.createElement('img');
+                    handImg.src = 'assets/images/Find smokey images/Hand.png';
+                    handImg.alt = 'Hand sweeping';
+                    handSweep.appendChild(handImg);
+                    
                     this.element.appendChild(handSweep);
                     
-                    // Sweep away objects and their tooltips
-                    const wrappers = this.element.querySelectorAll('.image-wrapper');
-                    wrappers.forEach((wrapper, index) => {
-                        setTimeout(() => {
-                            wrapper.style.transition = 'transform 0.8s ease-out, opacity 0.6s ease-out';
-                            wrapper.style.transform = `translateX(${150 + Math.random() * 100}vw) translateY(${-20 + Math.random() * 40}px) rotate(${Math.random() * 360}deg)`;
-                            wrapper.style.opacity = '0';
-                        }, index * 50);
-                    });
+                    // Animation parameters
+                    let handX = -800; // Start off-screen left (matches CSS width)
+                    const sweepSpeed = 8; // pixels per frame (slower for better control)
+                    const screenWidth = window.innerWidth;
+                    const gatheredItems = new Map(); // Store items with their state and offsets
+                    
+                    // Create the sweep animation
+                    const performSweep = () => {
+                        handX += sweepSpeed;
+                        handSweep.style.left = `${handX}px`;
+                        
+                        // Get all image wrappers
+                        const wrappers = this.element.querySelectorAll('.image-wrapper');
+                        
+                        wrappers.forEach((wrapper) => {
+                            const itemData = gatheredItems.get(wrapper);
+                            
+                            if (!itemData) {
+                                // Check if this item should be gathered
+                                const rect = wrapper.getBoundingClientRect();
+                                const itemCenterX = rect.left + rect.width / 2;
+                                
+                                if (itemCenterX < handX + 1200) {
+                                    // Calculate position along the sweep line (items gather at front edge of hand)
+                                    const horizontalOffset = 1000 + Math.random() * 100 - 50; // Gather around the front of the hand
+                                    const rotation = Math.random() * 30 - 15; // Slight rotation
+                                    
+                                    gatheredItems.set(wrapper, {
+                                        state: 'gathering',
+                                        hOffset: horizontalOffset,
+                                        rotation: rotation,
+                                        originalX: rect.left,
+                                        gatherFrame: 0 // Track gathering animation progress
+                                    });
+                                    
+                                    // Initial gathering animation
+                                    wrapper.style.transition = 'transform 0.2s ease-out';
+                                    wrapper.style.zIndex = '700';
+                                }
+                            } else if (itemData.state === 'gathering') {
+                                // Gathering phase - quick snap to line
+                                itemData.gatherFrame++;
+                                
+                                if (itemData.gatherFrame > 12) { // About 0.2s at 60fps
+                                    // Switch to gathered state
+                                    itemData.state = 'gathered';
+                                    wrapper.style.transition = 'none'; // Remove transition for smooth movement
+                                }
+                                
+                                // Move towards sweep line
+                                const targetX = handX + itemData.hOffset - itemData.originalX;
+                                wrapper.style.transform = `translateX(${targetX}px) translateY(0px) rotate(${itemData.rotation}deg)`;
+                                
+                            } else if (itemData.state === 'gathered') {
+                                // Gathered state - move exactly with hand
+                                const targetX = handX + itemData.hOffset - itemData.originalX;
+                                wrapper.style.transform = `translateX(${targetX}px) translateY(0px) rotate(${itemData.rotation}deg)`;
+                                
+                                // Check if item has moved off screen
+                                if (handX + itemData.hOffset > screenWidth + 200) {
+                                    wrapper.style.opacity = '0';
+                                    itemData.state = 'exited';
+                                }
+                            }
+                        });
+                        
+                        // Continue sweeping until hand and all items are off screen
+                        if (handX < screenWidth + 400) {
+                            requestAnimationFrame(performSweep);
+                        }
+                    };
+                    
+                    // Start the sweep animation
+                    requestAnimationFrame(performSweep);
                     
                     // After sweep completes, add slide animation and transition
                     setTimeout(() => {

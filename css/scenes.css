@@ -394,22 +394,26 @@
 /* Hand Sweep and Split Page Transition */
 .hand-sweep {
     position: fixed;
-    left: -200px;
-    top: 50%;
-    width: 200px;
-    height: 200px;
+    left: -800px;
+    top: 60%;
+    width: 90vh;
+    height: 90vh;
     transform: translateY(-50%);
     z-index: 900;
     pointer-events: none;
-    /* Placeholder hand - using CSS for now */
-    background: radial-gradient(ellipse at center, rgba(255, 224, 189, 0.9) 30%, transparent 70%);
-    border-radius: 50% 40% 50% 40%;
     animation: handSweep 2s ease-out forwards;
+}
+
+.hand-sweep img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
 }
 
 @keyframes handSweep {
     0% {
-        left: -200px;
+        left: -800px;
         transform: translateY(-50%) rotate(-10deg);
     }
     100% {
@@ -2712,6 +2716,10 @@
 .scrapbook-title {
     margin-bottom: 40px;
     z-index: 10;
+    /* Add entrance animation */
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeInUp 1s ease-out 0.5s forwards;
 }
 
 .scrapbook-title h2 {
@@ -2728,10 +2736,22 @@
     perspective: 2000px;
     position: relative;
     transition: transform 2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    /* Add entrance animation - fade only, no transform */
+    opacity: 0;
+    animation: fadeInBook 1s ease-out 0.8s forwards;
 }
 
 .book-container.shifted {
     transform: translateX(250px);
+}
+/* Special animation for book that doesn't use transform */
+@keyframes fadeInBook {
+    from { 
+        opacity: 0;
+    }
+    to { 
+        opacity: 1;
+    }
 }
 
 .book {
@@ -2804,30 +2824,44 @@
     box-shadow: 
         0 3px 10px rgba(0,0,0,0.15),
         0 1px 2px rgba(0,0,0,0.1);
-    transform: rotate(-1deg);
+    transform: rotate(-1deg) translateZ(0);
     position: relative;
+    transform-style: flat;
+    will-change: transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
 
 .book-page:nth-child(even) .photo-frame {
-    transform: rotate(-2deg);
+    transform: rotate(-2deg) translateZ(0);
 }
 
 .book-page:nth-child(odd) .photo-frame {
-    transform: rotate(1deg);
+    transform: rotate(1deg) translateZ(0);
 }
 
 .photo-placeholder {
     width: 100%;
     height: 100%;
+    display: block;
+    object-fit: cover;
     background: linear-gradient(45deg, #f0e8dc, #e8dcc8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #a08872;
-    font-family: 'Georgia', serif;
-    font-size: 0.9rem;
-    text-align: center;
-    font-style: italic;
+}
+
+img.photo-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-darkness-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000000;
+    pointer-events: none;
 }
 
 .binding-shadow {

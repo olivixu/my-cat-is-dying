@@ -767,7 +767,7 @@ export class Scene9 extends Scene {
         if (gradeLetter.startsWith('A')) {
             this.gradeDisplay.classList.add('grade-perfect');
             // Celebrate for A grades
-            setTimeout(() => this.celebrate(), 500);
+            // setTimeout(() => this.celebrate(), 500); // Removed sparkle emoji celebration
         } else if (gradeLetter.startsWith('B')) {
             this.gradeDisplay.classList.add('grade-great');
         } else if (gradeLetter.startsWith('C')) {
