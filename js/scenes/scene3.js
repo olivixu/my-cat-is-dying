@@ -112,19 +112,19 @@ export class Scene3 extends Scene {
         // Create head back image (bottom layer - inside of head)
         const smokeyHeadBack = document.createElement('img');
         smokeyHeadBack.className = 'smokey-head-back';
-        smokeyHeadBack.src = 'assets/images/smokey-head-back.png';
+        smokeyHeadBack.src = 'assets/images/Smokey-head-back.png';
         smokeyHeadBack.alt = 'Smokey head back';
         
         // Create body image (middle layer)
         const smokeyBody = document.createElement('img');
         smokeyBody.className = 'smokey-body';
-        smokeyBody.src = 'assets/images/smokey-body.png';
+        smokeyBody.src = 'assets/images/Smokey-body.png';
         smokeyBody.alt = 'Smokey body';
         
         // Create head lid image (top layer - lifts up)
         const headLid = document.createElement('img');
         headLid.className = 'head-lid';
-        headLid.src = 'assets/images/smokey-head.png';
+        headLid.src = 'assets/images/Smokey-head.png';
         headLid.alt = 'Smokey head';
         // Initially disable clicking during animation
         headLid.style.pointerEvents = 'none';
