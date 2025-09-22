@@ -3094,6 +3094,8 @@ img.photo-placeholder {
     flex-direction: column;
     align-items: center;
     overflow-y: auto;
+    opacity: 0;
+    animation: fadeInScene13 1s ease forwards;
 }
 
 .scene13-text {

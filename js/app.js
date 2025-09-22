@@ -103,81 +103,81 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Failed to initialize scene manager:', error);
     }
     
-    // Add some helpful keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        // Press 'R' to reload current scene
-        if (e.key === 'r' || e.key === 'R') {
-            if (window.sceneManager && !window.sceneManager.isTransitioning) {
-                window.sceneManager.loadScene(window.sceneManager.currentSceneIndex);
-            }
-        }
-        
-        // Press number keys to jump to specific scenes
-        if (e.key >= '1' && e.key <= '9') {
-            const sceneIndex = parseInt(e.key) - 1;
-            if (window.sceneManager && !window.sceneManager.isTransitioning && sceneIndex < scenes.length) {
-                window.sceneManager.loadScene(sceneIndex);
-            }
-        }
-        
-        // Press 'H' for help
-        if (e.key === 'h' || e.key === 'H') {
-            showHelp();
-        }
-    });
+    // Keyboard shortcuts disabled
+    // document.addEventListener('keydown', (e) => {
+    //     // Press 'R' to reload current scene
+    //     if (e.key === 'r' || e.key === 'R') {
+    //         if (window.sceneManager && !window.sceneManager.isTransitioning) {
+    //             window.sceneManager.loadScene(window.sceneManager.currentSceneIndex);
+    //         }
+    //     }
+    //     
+    //     // Press number keys to jump to specific scenes
+    //     if (e.key >= '1' && e.key <= '9') {
+    //         const sceneIndex = parseInt(e.key) - 1;
+    //         if (window.sceneManager && !window.sceneManager.isTransitioning && sceneIndex < scenes.length) {
+    //             window.sceneManager.loadScene(sceneIndex);
+    //         }
+    //     }
+    //     
+    //     // Press 'H' for help
+    //     if (e.key === 'h' || e.key === 'H') {
+    //         showHelp();
+    //     }
+    // });
     
-    // Help modal
-    function showHelp() {
-        const existingHelp = document.getElementById('help-modal');
-        if (existingHelp) {
-            existingHelp.remove();
-            return;
-        }
-        
-        const helpModal = document.createElement('div');
-        helpModal.id = 'help-modal';
-        helpModal.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(30, 41, 59, 0.95);
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            z-index: 10000;
-            max-width: 500px;
-        `;
-        helpModal.innerHTML = `
-            <h3 style="margin-bottom: 20px; color: var(--primary-color);">Keyboard Shortcuts</h3>
-            <div style="line-height: 1.8;">
-                <p><strong>Click dots on left:</strong> Navigate between scenes</p>
-                <p><strong>1-9:</strong> Jump to specific scene</p>
-                <p><strong>R:</strong> Reload current scene</p>
-                <p><strong>H:</strong> Toggle this help menu</p>
-                <p><strong>ESC:</strong> Close this menu</p>
-            </div>
-            <button onclick="this.parentElement.remove()" style="
-                margin-top: 20px;
-                padding: 10px 20px;
-                background: var(--primary-color);
-                border: none;
-                border-radius: 6px;
-                color: white;
-                cursor: pointer;
-            ">Close</button>
-        `;
-        document.body.appendChild(helpModal);
-        
-        // Close on ESC
-        const closeOnEsc = (e) => {
-            if (e.key === 'Escape') {
-                helpModal.remove();
-                document.removeEventListener('keydown', closeOnEsc);
-            }
-        };
-        document.addEventListener('keydown', closeOnEsc);
-    }
+    // Help modal disabled
+    // function showHelp() {
+    //     const existingHelp = document.getElementById('help-modal');
+    //     if (existingHelp) {
+    //         existingHelp.remove();
+    //         return;
+    //     }
+    //     
+    //     const helpModal = document.createElement('div');
+    //     helpModal.id = 'help-modal';
+    //     helpModal.style.cssText = `
+    //         position: fixed;
+    //         top: 50%;
+    //         left: 50%;
+    //         transform: translate(-50%, -50%);
+    //         background: rgba(30, 41, 59, 0.95);
+    //         padding: 30px;
+    //         border-radius: 12px;
+    //         border: 1px solid var(--border-color);
+    //         z-index: 10000;
+    //         max-width: 500px;
+    //     `;
+    //     helpModal.innerHTML = `
+    //         <h3 style="margin-bottom: 20px; color: var(--primary-color);">Keyboard Shortcuts</h3>
+    //         <div style="line-height: 1.8;">
+    //             <p><strong>Click dots on left:</strong> Navigate between scenes</p>
+    //             <p><strong>1-9:</strong> Jump to specific scene</p>
+    //             <p><strong>R:</strong> Reload current scene</p>
+    //             <p><strong>H:</strong> Toggle this help menu</p>
+    //             <p><strong>ESC:</strong> Close this menu</p>
+    //         </div>
+    //         <button onclick="this.parentElement.remove()" style="
+    //             margin-top: 20px;
+    //             padding: 10px 20px;
+    //             background: var(--primary-color);
+    //             border: none;
+    //             border-radius: 6px;
+    //             color: white;
+    //             cursor: pointer;
+    //         ">Close</button>
+    //     `;
+    //     document.body.appendChild(helpModal);
+    //     
+    //     // Close on ESC
+    //     const closeOnEsc = (e) => {
+    //         if (e.key === 'Escape') {
+    //             helpModal.remove();
+    //             document.removeEventListener('keydown', closeOnEsc);
+    //         }
+    //     };
+    //     document.addEventListener('keydown', closeOnEsc);
+    // }
     
     // Performance monitoring (optional)
     if (window.location.hash === '#debug') {

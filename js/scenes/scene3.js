@@ -345,7 +345,7 @@ export class Scene3 extends Scene {
             if (window.sceneManager) {
                 window.sceneManager.nextScene();
             }
-        }, 6000); // Total time for stars + transition
+        }, 4000); // Reduced from 6000ms for smoother flow
     }
     
     startTransitionToScene4() {

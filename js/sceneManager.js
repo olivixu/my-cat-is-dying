@@ -134,52 +134,55 @@ export class SceneManager {
         // Queue for pending transitions to prevent race conditions
         this.transitionQueue = [];
         
-        this.verticalNav = document.getElementById('vertical-nav');
+        // Navigation disabled - no vertical nav element
+        // this.verticalNav = document.getElementById('vertical-nav');
         
         this.init();
     }
     
     init() {
-        // Create vertical navigation dots
-        this.createVerticalDots();
+        // Navigation dots disabled
+        // this.createVerticalDots();
         
         // Load first scene
         this.loadScene(0);
     }
     
-    createVerticalDots() {
-        this.verticalNav.innerHTML = '';
-        this.scenes.forEach((scene, index) => {
-            const dot = document.createElement('div');
-            dot.className = 'scene-dot';
-            dot.dataset.sceneIndex = index;
-            dot.dataset.scene = scene.name;
-            
-            // Click to jump to scene
-            dot.addEventListener('click', () => {
-                if (!this.isTransitioning && index !== this.currentSceneIndex) {
-                    this.loadScene(index);
-                }
-            });
-            
-            this.verticalNav.appendChild(dot);
-        });
-    }
+    // Navigation dots disabled
+    // createVerticalDots() {
+    //     this.verticalNav.innerHTML = '';
+    //     this.scenes.forEach((scene, index) => {
+    //         const dot = document.createElement('div');
+    //         dot.className = 'scene-dot';
+    //         dot.dataset.sceneIndex = index;
+    //         dot.dataset.scene = scene.name;
+    //         
+    //         // Click to jump to scene
+    //         dot.addEventListener('click', () => {
+    //             if (!this.isTransitioning && index !== this.currentSceneIndex) {
+    //                 this.loadScene(index);
+    //             }
+    //         });
+    //         
+    //         this.verticalNav.appendChild(dot);
+    //     });
+    // }
     
     updateProgressIndicator() {
-        console.log('Updating progress indicator for scene:', this.currentSceneIndex);
-        
-        // Update vertical dots
-        const dots = this.verticalNav.querySelectorAll('.scene-dot');
-        dots.forEach((dot, index) => {
-            dot.classList.remove('active', 'completed');
-            if (index === this.currentSceneIndex) {
-                dot.classList.add('active');
-            } else if (index < this.currentSceneIndex || 
-                      (this.scenes[index].instance && this.scenes[index].instance.isComplete)) {
-                dot.classList.add('completed');
-            }
-        });
+        // Navigation dots disabled
+        // console.log('Updating progress indicator for scene:', this.currentSceneIndex);
+        // 
+        // // Update vertical dots
+        // const dots = this.verticalNav.querySelectorAll('.scene-dot');
+        // dots.forEach((dot, index) => {
+        //     dot.classList.remove('active', 'completed');
+        //     if (index === this.currentSceneIndex) {
+        //         dot.classList.add('active');
+        //     } else if (index < this.currentSceneIndex || 
+        //               (this.scenes[index].instance && this.scenes[index].instance.isComplete)) {
+        //         dot.classList.add('completed');
+        //     }
+        // });
     }
     
     async loadScene(index) {
@@ -426,9 +429,9 @@ export class SceneManager {
     }
     
     onSceneComplete() {
-        // Mark current scene as completed
-        const dots = this.verticalNav.querySelectorAll('.scene-dot');
-        dots[this.currentSceneIndex].classList.add('completed');
+        // Navigation dots disabled - no longer updating completion status
+        // const dots = this.verticalNav.querySelectorAll('.scene-dot');
+        // dots[this.currentSceneIndex].classList.add('completed');
     }
     
     wait(ms) {
