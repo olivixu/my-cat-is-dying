@@ -413,7 +413,7 @@ export class Scene3 extends Scene {
                 blackOverlay.style.left = '0';
                 blackOverlay.style.width = '100%';
                 blackOverlay.style.height = '100%';
-                blackOverlay.style.background = '#000000';
+                blackOverlay.style.background = '#101010';
                 blackOverlay.style.opacity = '0';
                 blackOverlay.style.zIndex = '1000';
                 blackOverlay.style.pointerEvents = 'none';

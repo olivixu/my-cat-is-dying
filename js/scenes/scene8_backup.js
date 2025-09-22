@@ -192,7 +192,7 @@ export class Scene8 extends Scene {
             canvas.height = maxDimension;
             const ctx = canvas.getContext('2d');
             
-            ctx.strokeStyle = '#000000';
+            ctx.strokeStyle = '#101010';
             ctx.translate(maxDimension / 2, maxDimension / 2);
             
             // Draw arcs for this radius range
@@ -268,7 +268,7 @@ export class Scene8 extends Scene {
     
     drawBlackCircle() {
         // Draw larger solid black circle in center
-        this.ctx.fillStyle = '#000000';
+        this.ctx.fillStyle = '#101010';
         this.ctx.beginPath();
         this.ctx.arc(this.centerX, this.centerY, 90, 0, Math.PI * 2);
         this.ctx.fill();

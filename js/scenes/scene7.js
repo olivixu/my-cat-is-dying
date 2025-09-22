@@ -32,7 +32,7 @@ export class Scene7 extends Scene {
         this.element.className = 'scene story-scene scene-7';
         
         // Like Scene 6, set immediate visibility with black background to prevent flash
-        this.element.style.backgroundColor = '#000000'; // Start black to match Scene 6 fade
+        this.element.style.backgroundColor = '#101010'; // Start dark to match Scene 6 fade
         this.element.style.opacity = '1'; // Override default opacity: 0 to be immediately visible
         
         // Create fluid background canvas
@@ -91,7 +91,7 @@ export class Scene7 extends Scene {
             time += 0.008;
             
             // Fill with dark base color first
-            fluidCtx.fillStyle = '#1a1118';
+            fluidCtx.fillStyle = '#3d3a4d';
             fluidCtx.fillRect(0, 0, fluidCanvas.width, fluidCanvas.height);
             
             // Draw multiple blob layers with higher visibility
@@ -118,12 +118,12 @@ export class Scene7 extends Scene {
                     blobX, blobY, 500 + mouseInfluence * 150
                 );
                 
-                // Much brighter, more visible colors from the reference
+                // Purple shades matching Scene 2 (#CBC6E3)
                 const colors = [
-                    ['rgb(120, 80, 116)', 'rgba(120, 80, 116, 0)'],  // Bright purple-mauve
-                    ['rgb(110, 85, 85)', 'rgba(110, 85, 85, 0)'],    // Bright warm brown
-                    ['rgb(95, 90, 75)', 'rgba(95, 90, 75, 0)'],      // Bright olive
-                    ['rgb(130, 75, 100)', 'rgba(130, 75, 100, 0)']   // Bright magenta
+                    ['rgb(203, 198, 227)', 'rgba(203, 198, 227, 0)'],  // Main purple (#CBC6E3)
+                    ['rgb(180, 170, 210)', 'rgba(180, 170, 210, 0)'],  // Darker purple
+                    ['rgb(220, 210, 240)', 'rgba(220, 210, 240, 0)'],  // Lighter purple
+                    ['rgb(190, 180, 220)', 'rgba(190, 180, 220, 0)']   // Mid purple
                 ];
                 
                 gradient.addColorStop(0, colors[layer][0]);

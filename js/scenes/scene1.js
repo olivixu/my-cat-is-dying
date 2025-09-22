@@ -119,7 +119,7 @@ export class Scene1 extends Scene {
                 }
                 
                 ctx.globalAlpha = 1; // Full opacity always
-                ctx.fillStyle = '#000000';
+                ctx.fillStyle = '#101010';
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 ctx.fill();

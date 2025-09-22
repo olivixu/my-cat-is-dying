@@ -2,15 +2,15 @@
 
 ## Common Transition Issues and Fixes
 
-### Scene 3 to 4: Navy to Black Fade Issue
-**Problem:** Scene 3 instantly jumps from navy gradient to black instead of smoothly fading.
+### Scene 3 to 4: Background to Black Fade Issue
+**Problem:** Scene 3 instantly jumps from background to black instead of smoothly fading.
 
-**Root Cause:** CSS gradients cannot animate to solid colors. When trying to transition from `linear-gradient(180deg, #0a0a1f 0%, #050510 100%)` to solid `#000000`, browsers jump instantly.
+**Root Cause:** Background colors need proper overlay transitions. When trying to transition from `#050510` to `#050510`, a smooth overlay technique is required.
 
 **Solution:** Use overlay technique for smooth fade
 1. Create a black overlay div that starts at `opacity: 0`
 2. Fade the overlay to `opacity: 1` over 1.5 seconds
-3. This creates a smooth transition from navy gradient to black
+3. This creates a smooth transition from background to black
 
 **Implementation:**
 ```javascript
@@ -18,7 +18,7 @@
 const blackOverlay = document.createElement('div');
 blackOverlay.className = 'scene3-black-overlay';
 blackOverlay.style.position = 'absolute';
-blackOverlay.style.background = '#000000';
+blackOverlay.style.background = '#050510';
 blackOverlay.style.opacity = '0';
 blackOverlay.style.transition = 'opacity 1.5s ease-out';
 this.element.appendChild(blackOverlay);

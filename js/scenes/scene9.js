@@ -90,9 +90,9 @@ export class Scene9 extends Scene {
         this.element.className = 'scene story-scene scene-9';
         
         // Set immediate visibility with black background to prevent flash from Scene 8
-        this.element.style.backgroundColor = '#000000'; // Black to match Scene 8's fade to black
+        this.element.style.backgroundColor = '#101010'; // Dark to match Scene 8's fade
         this.element.style.opacity = '1'; // Override default opacity: 0 to be immediately visible
-        console.log('[Scene9] Setting background to black #000000');
+        console.log('[Scene9] Setting background to dark #101010');
         
         // Create first part of text display
         const textContainer1 = document.createElement('div');
@@ -377,11 +377,11 @@ export class Scene9 extends Scene {
             this.ctx.stroke();
         }
         
-        // Also draw on the tracking canvas (simple white line for detection)
+        // Also draw on the tracking canvas (simple cream line for detection)
         this.drawingCtx.beginPath();
         this.drawingCtx.moveTo(this.lastX, this.lastY);
         this.drawingCtx.lineTo(x, y);
-        this.drawingCtx.strokeStyle = '#FFFFFF';
+        this.drawingCtx.strokeStyle = '#FAF8F3';
         this.drawingCtx.lineWidth = 5;
         this.drawingCtx.lineCap = 'round';
         this.drawingCtx.lineJoin = 'round';
@@ -804,7 +804,7 @@ export class Scene9 extends Scene {
             left: 0;
             width: 100%;
             height: 100%;
-            background: #000000;
+            background: #101010;
             opacity: 0;
             z-index: 100;
             pointer-events: none;
@@ -818,11 +818,13 @@ export class Scene9 extends Scene {
         textElements.forEach(el => el.classList.add('scene-9-exit'));
         interactiveElements.forEach(el => el.classList.add('scene-9-exit'));
         
-        // Fade in the black overlay (start slightly before elements finish)
-        setTimeout(() => {
-            blackOverlay.style.transition = 'opacity 1s cubic-bezier(0.4, 0, 0.2, 1)';
-            blackOverlay.style.opacity = '1';
-        }, 400);
+        // Fade in the black overlay immediately with smoother timing
+        requestAnimationFrame(() => {
+            blackOverlay.style.transition = 'opacity 1.5s ease-in-out';
+            requestAnimationFrame(() => {
+                blackOverlay.style.opacity = '1';
+            });
+        });
         
         // Complete transition and advance to next scene
         setTimeout(() => {
@@ -830,7 +832,7 @@ export class Scene9 extends Scene {
             if (window.sceneManager) {
                 window.sceneManager.nextScene();
             }
-        }, 1500); // Wait for animations to complete
+        }, 2000); // Wait for animations to complete
     }
     
     celebrate() {

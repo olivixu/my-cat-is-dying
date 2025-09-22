@@ -226,7 +226,7 @@ export class SceneManager {
                 // Special case for Scene 8 to 9 - let the black fade complete
                 else if (this.currentSceneIndex === 7 && index === 8) {
                     // Set container to black immediately to prevent flash
-                    this.container.style.backgroundColor = '#000000';
+                    this.container.style.backgroundColor = '#101010';
                     console.log('[SceneManager] Scene 8 to 9 - setting black background and delaying cleanup');
                     
                     // Store reference to clean up later
@@ -240,7 +240,7 @@ export class SceneManager {
                 // Special case for Scene 11 to 12 - let the black expansion complete
                 else if (this.currentSceneIndex === 10 && index === 11) {
                     // Set container to black immediately to prevent flash
-                    this.container.style.backgroundColor = '#000000';
+                    this.container.style.backgroundColor = '#101010';
                     console.log('[SceneManager] Scene 11 to 12 - setting black background and immediate scene cleanup, delayed overlay cleanup');
                     
                     // Clean up scene immediately but keep overlay
@@ -262,12 +262,12 @@ export class SceneManager {
                         }
                     }, 5500); // Wait for Scene 12 to load (5000ms) + brief overlap
                 }
-                // Special case for Scene 12 to 13 - preserve white overlay
+                // Special case for Scene 12 to 13 - preserve cream overlay
                 else if (this.currentSceneIndex === 11 && index === 12) {
-                    // Set container to white to prevent flash
-                    this.container.style.backgroundColor = '#ffffff';
+                    // Set container to cream to prevent flash
+                    this.container.style.backgroundColor = '#FAF8F3';
                     
-                    // Store the white overlay before cleanup
+                    // Store the cream overlay before cleanup
                     const overlayToKeep = previousScene.whiteOverlay;
                     previousScene.whiteOverlay = null; // Clear so cleanup won't remove it
                     
@@ -284,6 +284,19 @@ export class SceneManager {
                             }
                         }, 2000);
                     }
+                }
+                // Special case for Scene 4 to 5 - fade out Scene 4 smoothly
+                else if (this.currentSceneIndex === 3 && index === 4) {
+                    // Add fade-out class to Scene 4
+                    previousScene.element?.classList.add('scene4-exit');
+                    
+                    // Wait for fade animation to complete before cleanup
+                    setTimeout(() => {
+                        previousScene.cleanup(index);
+                        if (previousScene.element && previousScene.element.parentNode) {
+                            previousScene.element.parentNode.removeChild(previousScene.element);
+                        }
+                    }, 800); // Match the fade-out duration
                 }
                 else {
                     // All other transitions: immediate cleanup
@@ -308,13 +321,13 @@ export class SceneManager {
             
             // Now that Scene 3 is loaded, start Scene 2's fade out
             if (previousScene && this.currentSceneIndex === 2) {
-                // Set container background to dark blue for smooth transition
-                this.container.style.backgroundColor = '#0a0a1f';
+                // Set container background to dark for smooth transition
+                this.container.style.backgroundColor = '#101010';
                 previousScene.element?.classList.add('scene2-slide-out');
                 
                 // Reset to black after transition completes
                 setTimeout(() => {
-                    this.container.style.backgroundColor = '#000000';
+                    this.container.style.backgroundColor = '#101010';
                 }, 1000);
             }
             
@@ -322,20 +335,20 @@ export class SceneManager {
             if (previousScene && this.currentSceneIndex === 3) {
                 // Delay setting container background to allow Scene 3's fade to complete
                 setTimeout(() => {
-                    this.container.style.backgroundColor = '#000000';
+                    this.container.style.backgroundColor = '#101010';
                 }, 2000); // Wait for Scene 3's fade animation
             }
             
             // Handle Scene 4 to 5 transition
             if (previousScene && this.currentSceneIndex === 4) {
                 // Set container background to black for Scene 5
-                this.container.style.backgroundColor = '#000000';
+                this.container.style.backgroundColor = '#101010';
             }
             
             // Handle Scene 6 to 7 transition
             if (previousScene && this.currentSceneIndex === 6) {
                 // Set container background to black to match Scene 6's fade to black
-                this.container.style.backgroundColor = '#000000';
+                this.container.style.backgroundColor = '#101010';
             }
             
             // Handle Scene 7 to 8 transition
@@ -349,7 +362,7 @@ export class SceneManager {
             if (previousScene && this.currentSceneIndex === 8) {
                 console.log('[SceneManager] Scene 8 to 9 transition - setting black background');
                 // Set container background to black to match Scene 8's fade to black
-                this.container.style.backgroundColor = '#000000';
+                this.container.style.backgroundColor = '#101010';
             }
             
             // Set up completion callback

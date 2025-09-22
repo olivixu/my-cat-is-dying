@@ -249,9 +249,9 @@ export class Scene8 extends Scene {
             
             // Apply gradient stroke
             const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.maxRadius);
-            gradient.addColorStop(0, '#000000');
+            gradient.addColorStop(0, '#101010');
             gradient.addColorStop(0.5, '#111111');
-            gradient.addColorStop(1, '#000000');
+            gradient.addColorStop(1, '#101010');
             
             ctx.strokeStyle = gradient;
             ctx.lineWidth = 3;
@@ -320,7 +320,7 @@ export class Scene8 extends Scene {
             this.centerX, this.centerY, 0,
             this.centerX, this.centerY, 100
         );
-        gradient.addColorStop(0, '#000000');
+        gradient.addColorStop(0, '#101010');
         gradient.addColorStop(1, '#0a0a0a');
         
         this.ctx.fillStyle = gradient;

@@ -47,7 +47,7 @@ body {
     flex: 1;
     position: relative;
     overflow: hidden;
-    background: #000000;
+    background: #101010;
 }
 
 .scene {
@@ -85,25 +85,25 @@ body {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: rgba(250, 248, 243, 0.3);
+    border: 1px solid rgba(250, 248, 243, 0.5);
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
 }
 
 .scene-dot:hover {
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(250, 248, 243, 0.5);
     transform: scale(1.3);
 }
 
 .scene-dot.active {
-    background: #ffffff;
+    background: #FAF8F3;
     transform: scale(1.3);
 }
 
 .scene-dot.completed {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(250, 248, 243, 0.7);
 }
 
 /* Tooltip on hover */
@@ -114,7 +114,7 @@ body {
     top: 50%;
     transform: translateY(-50%);
     background: rgba(0, 0, 0, 0.8);
-    color: white;
+    color: #FAF8F3;
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 12px;

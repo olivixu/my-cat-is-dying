@@ -5,7 +5,7 @@
     align-items: center;
     justify-content: center;
     padding: 40px;
-    background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
+    background: #101010;
 }
 
 .story-text {
@@ -44,6 +44,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     z-index: 10;
+    outline: none !important;
 }
 
 .continue-btn:hover, .restart-btn:hover, .give-treat-btn:hover {
@@ -78,7 +79,7 @@
 }
 
 .scene1-text h1 {
-    color: #000000;
+    color: #101010;
     font-size: 2.5rem;
     font-weight: 400;
     letter-spacing: -0.02em;
@@ -94,7 +95,7 @@
     width: 180px;
     height: 180px;
     border-radius: 50%;
-    background: #000000;
+    background: #101010;
     border: none;
     cursor: pointer;
     transition: transform 0.3s ease;
@@ -104,7 +105,7 @@
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     transform: translateZ(0);
-    box-shadow: 0 118px 33px 0 rgba(0, 0, 0, 0.00), 0 76px 30px 0 rgba(0, 0, 0, 0.01), 0 43px 26px 0 rgba(0, 0, 0, 0.05), 0 19px 19px 0 rgba(0, 0, 0, 0.09), 0 5px 10px 0 rgba(0, 0, 0, 0.10);
+    box-shadow: 0 118px 33px 0 rgba(16, 16, 16, 0.00), 0 76px 30px 0 rgba(16, 16, 16, 0.01), 0 43px 26px 0 rgba(16, 16, 16, 0.05), 0 19px 19px 0 rgba(16, 16, 16, 0.09), 0 5px 10px 0 rgba(16, 16, 16, 0.10);
 }
 
 .begin-button:hover {
@@ -169,7 +170,7 @@
 
 /* Scene 2: Magnifying Glass Search Game */
 .scene-2 {
-    background: #000000 !important;
+    background: #101010 !important;
     position: relative;
     overflow: hidden;
     cursor: none;
@@ -183,7 +184,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: #7E58F9;
+    background: #CBC6E3;
     z-index: 1;
 }
 
@@ -213,7 +214,7 @@
     opacity: 1;
     background: radial-gradient(circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%), 
         transparent var(--spotlight-radius, 0px),
-        black var(--spotlight-radius, 0px));
+        #101010 var(--spotlight-radius, 0px));
     transition: none;
 }
 
@@ -239,7 +240,7 @@
 }
 
 .scene2-text h2 {
-    color: #ffffff;
+    color: #FAF8F3;
     text-align: center;
     margin: 0;
     width: 100%;
@@ -323,9 +324,9 @@
     pointer-events: none;
     box-shadow: 
         2px 3px 8px rgba(0, 0, 0, 0.2),
-        inset 0 1px 2px rgba(255, 255, 255, 0.5);
+        inset 0 1px 2px rgba(250, 248, 243, 0.5);
     border: 1px solid rgba(139, 69, 19, 0.1);
-    text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5);
+    text-shadow: 1px 1px 1px rgba(250, 248, 243, 0.5);
     z-index: 10000;
 }
 
@@ -371,11 +372,11 @@
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 2rem;
-    color: #ffffff;
+    color: #FAF8F3;
     background: rgba(0, 0, 0, 0.8);
     padding: 20px 40px;
     border-radius: 10px;
-    border: 2px solid #ffffff;
+    border: 2px solid #FAF8F3;
     z-index: 200;
     animation: fadeInScale 0.5s ease;
 }
@@ -429,10 +430,7 @@
     animation: fadeOut 0.8s ease-out forwards;
 }
 
-/* Scene 3 fades in */
-.scene-3 {
-    animation: fadeIn 0.8s ease-out forwards;
-}
+/* Scene 3 fades in - REMOVED, consolidated below */
 
 /* Scene 3 text fades in two parts */
 .scene3-text {
@@ -501,9 +499,10 @@
 
 /* Scene 3: Smokey Head Book Game */
 .scene-3 {
-    background: linear-gradient(180deg, #0a0a1f 0%, #050510 100%);
+    background: #101010 !important;
     position: relative;
     overflow: hidden;
+    animation: fadeIn 0.8s ease-out forwards;
 }
 
 /* Physics book images */
@@ -547,7 +546,7 @@
 
 .star {
     position: absolute;
-    background: white;
+    background: #FAF8F3;
     border-radius: 50%;
     animation: twinkle 3s ease-in-out infinite;
 }
@@ -566,7 +565,7 @@
 /* Star stream particles that emerge from Smokey's head */
 .star-stream {
     position: absolute;
-    background: white;
+    background: #FAF8F3;
     border-radius: 50%;
     animation: starFloat 2s ease-out forwards, twinkle 0.8s ease-in-out infinite;
     pointer-events: none;
@@ -771,8 +770,8 @@
     top: -80px;
     left: 50%;
     transform: translateX(-50%) scale(0);
-    background: white;
-    color: black;
+    background: #FAF8F3;
+    color: #101010;
     padding: 15px 25px;
     border-radius: 20px;
     font-size: 24px;
@@ -792,7 +791,7 @@
     height: 0;
     border-left: 10px solid transparent;
     border-right: 10px solid transparent;
-    border-top: 10px solid white;
+    border-top: 10px solid #FAF8F3;
 }
 
 .speech-bubble.show {
@@ -815,11 +814,11 @@
 
 /* Scene 4: Treat ranking game */
 .scene-4 {
-    background: #000000; /* Fallback black background */
+    background: #101010; /* Dark background matching Scene 3 */
     position: relative;
     overflow: hidden;
     opacity: 0;
-    animation: fadeIn 0.8s ease-out forwards; /* Scene fades in from black */
+    animation: fadeIn 0.8s ease-out forwards; /* Scene fades in from dark */
 }
 
 /* Axis line for treat ordering */
@@ -842,7 +841,7 @@
 }
 
 .scene-4 .story-text h2 {
-    color: #ffffff; /* White text */
+    color: #FAF8F3; /* White text */
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 0, 0, 0.6); /* Add shadow for readability */
 }
 
@@ -863,7 +862,7 @@
     width: 100%;
     margin-bottom: 20px;
     font-size: 18px;
-    color: white;
+    color: #FAF8F3;
     font-weight: bold;
     position: relative;
     z-index: 5;
@@ -977,6 +976,11 @@
     display: none;
 }
 
+/* Scene 4 exit transition */
+.scene-4.scene4-exit {
+    animation: fadeOut 0.8s ease-out forwards;
+}
+
 @keyframes scaleInSuccess {
     from {
         opacity: 0;
@@ -1057,8 +1061,8 @@
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    border: 2px solid rgba(255, 255, 255, 0.5);
+    background: rgba(250, 248, 243, 0.3);
+    border: 2px solid rgba(250, 248, 243, 0.5);
     transition: all 0.3s ease;
 }
 
@@ -1078,7 +1082,7 @@
     display: block;
     margin: 0 auto;
     padding: 12px 40px;
-    background: white;
+    background: #FAF8F3;
     color: #764ba2;
     border: none;
     border-radius: 25px;
@@ -1102,7 +1106,7 @@
 .scene-5 .success-message {
     text-align: center;
     margin-top: 40px;
-    color: white;
+    color: #FAF8F3;
     font-size: 20px;
     animation: fadeIn 0.5s ease;
 }
@@ -1156,7 +1160,7 @@
 
 /* Scene 5: Breathing rhythm game */
 .scene-5 {
-    background: #000000; /* Black background */
+    background: #101010; /* Black background */
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -1238,7 +1242,7 @@
     left: 0;
     width: 100%;
     height: 1px;
-    background: #ffffff;
+    background: #FAF8F3;
     top: 50%;
     transform: translateY(-50%);
     z-index: 10;
@@ -1251,8 +1255,8 @@
     transform: translateY(-50%) scale(1);
     width: 70px;
     height: 70px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid #ffffff;
+    background: rgba(250, 248, 243, 0.1);
+    border: 1px solid #FAF8F3;
     border-radius: 50%;
     z-index: 15;
     /* Remove transition since we're animating in JS */
@@ -1276,7 +1280,7 @@
     left: 50%;
     width: 100%;
     height: 100%;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(250, 248, 243, 0.3);
     border-radius: 50%;
     transform: translate(-50%, -50%) scale(1);
     animation: emanateRing 3s ease-out infinite;
@@ -1337,7 +1341,7 @@
 .breath-line {
     position: absolute;
     height: 6px;
-    background: #ffffff;
+    background: #FAF8F3;
     top: 50%;
     transform: translateY(-50%);
     transition: background 0.3s ease, opacity 0.3s ease;
@@ -1385,7 +1389,7 @@
     content: '';
     width: 8px;
     height: 8px;
-    background: rgba(255, 255, 255, 1);
+    background: rgba(250, 248, 243, 1);
     border-radius: 0;
     transition: all 0.3s ease;
 }
@@ -1418,7 +1422,7 @@
         rgba(147, 197, 253, 0.8) 0%, 
         rgba(59, 130, 246, 0.6) 50%,
         rgba(37, 99, 235, 0.4) 100%);
-    border: 3px solid rgba(255, 255, 255, 0.3);
+    border: 3px solid rgba(250, 248, 243, 0.3);
     transition: width 0.1s ease, height 0.1s ease;
     display: flex;
     align-items: center;
@@ -1441,7 +1445,7 @@
 
 .score-display {
     text-align: center;
-    color: white;
+    color: #FAF8F3;
 }
 
 .perfect-counter {
@@ -1492,7 +1496,7 @@
     padding: 20px;
     background: rgba(74, 222, 128, 0.2);
     border-radius: 10px;
-    color: white;
+    color: #FAF8F3;
     font-size: 24px;
     font-weight: bold;
     animation: fadeInScale 0.5s ease;
@@ -1643,7 +1647,7 @@
 .control-or-text {
     font-family: 'Press Start 2P', cursive;
     font-size: 12px;
-    color: white;
+    color: #FAF8F3;
     text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.8);
     margin: 0 10px;
     display: inline-flex;
@@ -1667,7 +1671,7 @@
 
 .score-text {
     font-size: 24px;
-    color: white;
+    color: #FAF8F3;
     margin-bottom: 10px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
@@ -1736,7 +1740,7 @@
 
 .game-hint {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(250, 248, 243, 0.9);
     font-style: italic;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
@@ -1830,7 +1834,7 @@
     position: absolute;
     width: 4px;
     height: 4px;
-    background: white;
+    background: #FAF8F3;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -1884,13 +1888,13 @@
         transform: translate(-50%, 200px);
         opacity: 1;
         height: 20px;
-        background: linear-gradient(to top, transparent, #FFD700, #FFF);
+        background: linear-gradient(to top, transparent, #FFD700, #FAF8F3);
     }
     100% {
         transform: translate(-50%, -50%);
         opacity: 0.8;
         height: 6px;
-        background: #FFF;
+        background: #FAF8F3;
     }
 }
 
@@ -1934,7 +1938,7 @@
     padding: 20px;
     background: rgba(74, 222, 128, 0.2);
     border-radius: 10px;
-    color: white;
+    color: #FAF8F3;
 }
 
 .success-message p {
@@ -2028,7 +2032,7 @@
 .scene-7 {
     position: relative;
     overflow: hidden;
-    background: #000000; /* Start with black to match Scene 6 fade */
+    background: #101010; /* Start with black to match Scene 6 fade */
 }
 
 .scene-7 .fluid-background {
@@ -2107,7 +2111,7 @@
 
 .game-instructions-text {
     text-align: center;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(250, 248, 243, 0.8);
     font-style: italic;
     margin-bottom: 30px;
 }
@@ -2328,7 +2332,7 @@
 .match-progress {
     text-align: center;
     font-size: 18px;
-    color: white;
+    color: #FAF8F3;
     margin: 20px 0;
 }
 
@@ -2360,7 +2364,7 @@
 
 .completion-message p {
     font-size: 20px;
-    color: white;
+    color: #FAF8F3;
     margin-bottom: 20px;
 }
 
@@ -2446,7 +2450,7 @@
 }
 
 .scene-8 .story-text h2 {
-    color: #ffffff !important;
+    color: #FAF8F3 !important;
     font-weight: 400;
     white-space: nowrap;
     text-shadow: 0 2px 8px rgba(255, 245, 179, 0.5), 
@@ -2563,7 +2567,7 @@
 
 /* Scene 10: Bullet Hell Game - Retro RPG Style */
 .bullet-hell-scene.retro-rpg {
-    background: #000000;
+    background: #101010;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2593,8 +2597,8 @@
         90deg,
         transparent,
         transparent 19px,
-        #051505 19px,
-        #051505 20px
+        rgba(222, 255, 150, 0.2) 19px,
+        rgba(222, 255, 150, 0.2) 20px
     );
     clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);
     transition: clip-path 1.2s ease-out;
@@ -2610,8 +2614,8 @@
         0deg,
         transparent,
         transparent 19px,
-        #051505 19px,
-        #051505 20px
+        rgba(222, 255, 150, 0.2) 19px,
+        rgba(222, 255, 150, 0.2) 20px
     );
     clip-path: inset(0 100% 0 0);
     transition: clip-path 1.2s ease-out;
@@ -2619,6 +2623,29 @@
 
 .bullet-hell-scene.retro-rpg.horizontal-lines::after {
     clip-path: inset(0 0 0 0);
+}
+
+/* Fade grid to 10% opacity when elements are visible */
+.bullet-hell-scene.retro-rpg.elements-visible::before {
+    background-image: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 19px,
+        rgba(222, 255, 150, 0.1) 19px,
+        rgba(222, 255, 150, 0.1) 20px
+    );
+    transition: background-image 0.8s ease-out;
+}
+
+.bullet-hell-scene.retro-rpg.elements-visible::after {
+    background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 19px,
+        rgba(222, 255, 150, 0.1) 19px,
+        rgba(222, 255, 150, 0.1) 20px
+    );
+    transition: background-image 0.8s ease-out;
 }
 
 .bullet-hell-scene.retro-rpg .story-text.retro-title {
@@ -2633,7 +2660,7 @@
 }
 
 .bullet-hell-scene.retro-rpg .story-text.retro-title h2 {
-    color: #ffffff;
+    color: #FAF8F3;
     font-size: 16px;
     font-family: 'Courier New', monospace;
     text-transform: uppercase;
@@ -2703,7 +2730,7 @@
 
 /* Scene 11: Photo Scrapbook */
 .scrapbook-scene {
-    background: #000000;
+    background: #101010;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2723,7 +2750,7 @@
 }
 
 .scrapbook-title h2 {
-    color: #ffffff;
+    color: #FAF8F3;
     font-size: 1.8rem;
     font-weight: 400;
     font-family: 'Georgia', serif;
@@ -2820,7 +2847,7 @@
     width: 200px;
     height: 200px;
     padding: 10px;
-    background: white;
+    background: #FAF8F3;
     box-shadow: 
         0 3px 10px rgba(0,0,0,0.15),
         0 1px 2px rgba(0,0,0,0.1);
@@ -2860,7 +2887,7 @@ img.photo-placeholder {
     left: 0;
     width: 100%;
     height: 100%;
-    background: #000000;
+    background: #101010;
     pointer-events: none;
 }
 
@@ -2932,20 +2959,20 @@ img.photo-placeholder {
     left: 0;
     width: 100%;
     height: 100%;
-    background: #000000;
+    background: #101010;
     pointer-events: none;
     z-index: 5;
 }
 
 /* Black photo pages */
 .page-content.black-photo {
-    background: #000000;
+    background: #101010;
 }
 
 .black-photo-frame {
     width: 200px;
     height: 200px;
-    background: #000000;
+    background: #101010;
     position: absolute;
     top: 50%;
     left: 50%;
@@ -2955,7 +2982,7 @@ img.photo-placeholder {
 /* Black expansion overlay */
 .black-expansion-overlay {
     position: fixed;
-    background: #000000;
+    background: #101010;
     z-index: 1000;
     transition: transform 3s cubic-bezier(0.42, 0, 0.58, 1);
     transform-origin: center center;
@@ -2969,7 +2996,7 @@ img.photo-placeholder {
 
 /* Scene 12: Poetic Animation */
 .scene-12 {
-    background: #000000;
+    background: #101010;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -2996,7 +3023,7 @@ img.photo-placeholder {
 }
 
 .scene12-text1 h2, .scene12-text2 h2 {
-    color: #ffffff;
+    color: #FAF8F3;
     font-size: 1.6rem;
     font-weight: 300;
     letter-spacing: -0.02em;
@@ -3016,7 +3043,7 @@ img.photo-placeholder {
     left: 0;
     width: 2px;
     height: 2px;
-    background: #ffffff;
+    background: #FAF8F3;
     transform: translate(-100vw, -50%);
     z-index: 1000;
 }
@@ -3060,23 +3087,24 @@ img.photo-placeholder {
 
 /* Scene 13: Love */
 .scene-13 {
-    background: #ffffff;
+    background: #FAF8F3;
+    min-height: 100vh;
+    padding: 150px 20px 300px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    position: relative;
+    overflow-y: auto;
 }
 
 .scene13-text {
-    margin-bottom: 60px;
+    margin-bottom: 30px;
     opacity: 0;
     animation: fadeInScene13 1s ease forwards;
     animation-delay: 0.3s;
 }
 
 .scene13-text h1 {
-    color: #000000;
+    color: #101010;
     font-size: 2.5rem;
     font-weight: 300;
     letter-spacing: -0.02em;
@@ -3086,55 +3114,49 @@ img.photo-placeholder {
 
 .love-scene {
     text-align: center;
+    margin: 20px auto 0 auto;
+    max-width: 800px;
 }
 
 .scene-13 .interactive-container {
-    opacity: 0;
-    animation: fadeInScene13 1s ease forwards;
-    animation-delay: 0.8s;
+    /* Removed opacity animation to allow blend modes to work */
+    gap: 0;
 }
 
-.eternal-hearts {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    margin: 40px 0;
+.last-photo {
+    max-width: 60%;
+    height: auto;
+    border-radius: 4px;
+    margin: 10px auto 20px;
+    display: block;
 }
 
-.eternal-hearts .heart {
-    font-size: 2rem;
-    animation: heart-beat 1.5s infinite ease-in-out;
+.letter-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: 10px auto;
+    mix-blend-mode: darken;
 }
 
-@keyframes heart-beat {
-    0%, 100% { transform: scale(1); }
-    25% { transform: scale(1.2); }
-    50% { transform: scale(1); }
-    75% { transform: scale(1.1); }
-}
-
-.love-text {
-    color: rgba(0, 0, 0, 0.7);
-    font-style: italic;
-    font-size: 1.2rem;
-    margin: 20px 0;
-}
-
-.scene-13 .restart-btn {
+/* Override ALL button styles for scene 13 */
+.scene.scene-13 .restart-btn {
+    all: unset;
+    display: block;
     padding: 15px 40px;
-    background: rgba(0, 0, 0, 0.05);
-    border: 2px solid rgba(0, 0, 0, 0.2);
-    color: #000000;
-    border-radius: 8px;
+    background: transparent;
+    color: #101010;
+    font-family: 'Inria Serif', serif;
     font-size: 18px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-top: 20px;
+    text-align: center;
 }
 
-.scene-13 .restart-btn:hover {
-    background: rgba(0, 0, 0, 0.1);
-    border-color: rgba(0, 0, 0, 0.4);
+.scene.scene-13 .restart-btn:hover {
+    color: #505050;
+    border-color: #505050;
     transform: translateY(-2px);
 }
 
@@ -3265,7 +3287,7 @@ img.photo-placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: #FAF8F3;
     font-size: 24px;
     font-weight: bold;
     cursor: move;
@@ -3343,7 +3365,7 @@ img.photo-placeholder {
 
 /* Scene 9: Drawing Game - Blackboard Style */
 .scene-9 {
-    background: #000000 !important; /* Black background for blackboard theme */
+    background: #101010 !important; /* Black background for blackboard theme */
     position: relative;
 }
 
@@ -3375,7 +3397,7 @@ img.photo-placeholder {
 }
 
 .scene-9 .story-text h2 {
-    color: #ffffff; /* White text for blackboard theme */
+    color: #FAF8F3; /* White text for blackboard theme */
     /* Inherit default font from other scenes */
 }
 
@@ -3516,7 +3538,7 @@ img.photo-placeholder {
 }
 
 .drawing-controls button {
-    background: #ffffff;
+    background: #FAF8F3;
     color: #1a1a1a;
     border: 2px solid #e0e0e0;
     padding: 12px 24px;
@@ -3618,25 +3640,25 @@ img.photo-placeholder {
         opacity: 1;
     }
     100% {
-        transform: translateY(80px);
+        transform: translateY(20px);
         opacity: 0;
     }
 }
 
 /* Stagger the exit animations - top to bottom order */
 .scene-9 .story-text-part1.scene-9-exit {
-    animation: slideDownFadeOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: slideDownFadeOut 1.2s ease-in-out forwards;
     animation-delay: 0s;
 }
 
 .scene-9 .interactive-container.scene-9-exit {
-    animation: slideDownFadeOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    animation-delay: 0.15s;
+    animation: slideDownFadeOut 1.2s ease-in-out forwards;
+    animation-delay: 0.2s;
 }
 
 .scene-9 .story-text-part2.scene-9-exit {
-    animation: slideDownFadeOut 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    animation-delay: 0.3s;
+    animation: slideDownFadeOut 1.2s ease-in-out forwards;
+    animation-delay: 0.4s;
 }
 
 /* Grade color variations */

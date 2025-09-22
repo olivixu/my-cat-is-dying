@@ -113,7 +113,7 @@ export class Scene10 extends Scene {
         this.victoryOverlay = document.createElement('div');
         this.victoryOverlay.className = 'victory-overlay';
         this.victoryOverlay.style.position = 'absolute';
-        this.victoryOverlay.style.background = '#000000';
+        this.victoryOverlay.style.background = '#101010';
         this.victoryOverlay.style.width = this.arenaWidth + 'px';
         this.victoryOverlay.style.height = this.arenaHeight + 'px';
         this.victoryOverlay.style.left = '0';
@@ -157,7 +157,7 @@ export class Scene10 extends Scene {
         
         const orText = document.createElement('span');
         orText.textContent = 'OR';
-        orText.style.color = '#ffffff';
+        orText.style.color = '#FAF8F3';
         orText.style.fontFamily = 'Courier New, monospace';
         orText.style.fontSize = '16px';
         orText.style.padding = '0 5px';
@@ -383,7 +383,7 @@ export class Scene10 extends Scene {
                             vy: 1.5,
                             size: 6,
                             type: 'tear',
-                            color: '#ffffff'
+                            color: '#FAF8F3'
                         });
                     }
                     break;
@@ -407,7 +407,7 @@ export class Scene10 extends Scene {
                             vy: Math.sin(targetAngle) * 1.2,
                             size: 6,
                             type: 'spiral',
-                            color: '#ffffff'
+                            color: '#FAF8F3'
                         });
                     }
                     break;
@@ -449,7 +449,7 @@ export class Scene10 extends Scene {
                             x, y, vx, vy,
                             size: 4,
                             type: 'cross',
-                            color: '#ffffff'
+                            color: '#FAF8F3'
                         });
                     }
                     break;
@@ -467,7 +467,7 @@ export class Scene10 extends Scene {
                             vy: Math.cos(this.waveTimer / 200) * 1.5,
                             size: 4,
                             type: 'wave',
-                            color: '#ffffff',
+                            color: '#FAF8F3',
                             phase: this.waveTimer
                         });
                     }
@@ -502,7 +502,7 @@ export class Scene10 extends Scene {
                             vy: Math.sin(angle) * speed,
                             size: 4 + Math.random() * 4,
                             type: 'chaos',
-                            color: '#ffffff'
+                            color: '#FAF8F3'
                         });
                     }
                     break;
@@ -520,7 +520,7 @@ export class Scene10 extends Scene {
                             vy: -Math.sin(angle) * 0.8,
                             size: 6,
                             type: 'final',
-                            color: '#ffffff'
+                            color: '#FAF8F3'
                         });
                     }
                     break;
@@ -633,11 +633,12 @@ export class Scene10 extends Scene {
             const y = 8;
             
             if (i < this.player.health) {
-                // Draw filled heart - blend to yellow when victorious
+                // Draw filled heart - blend to green when victorious
                 if (this.player.victorious) {
-                    const r = 255;
+                    // Blend from red (255, 0, 0) to green (222, 255, 150)
+                    const r = Math.floor(255 - (33 * this.heartYellowBlend));
                     const g = Math.floor(255 * this.heartYellowBlend);
-                    const b = 0;
+                    const b = Math.floor(150 * this.heartYellowBlend);
                     this.healthCtx.fillStyle = `rgb(${r}, ${g}, ${b})`;
                 } else {
                     this.healthCtx.fillStyle = '#ff0000';
@@ -650,7 +651,7 @@ export class Scene10 extends Scene {
                 this.healthCtx.fillRect(x - 1, y + 6, 2, 1);
             } else {
                 // Draw empty heart outline
-                this.healthCtx.fillStyle = '#ffffff';
+                this.healthCtx.fillStyle = '#FAF8F3';
                 // Top bumps
                 this.healthCtx.fillRect(x - 3, y - 2, 2, 1);
                 this.healthCtx.fillRect(x + 1, y - 2, 2, 1);
@@ -673,8 +674,8 @@ export class Scene10 extends Scene {
             this.victoryFade = Math.max(0, this.victoryFade - this.victoryFadeSpeed);
         }
         
-        // Clear canvas with black
-        this.ctx.fillStyle = '#000000';
+        // Clear canvas with dark background
+        this.ctx.fillStyle = '#101010';
         this.ctx.fillRect(0, 0, this.arenaWidth, this.arenaHeight);
         
         // Apply fade effect if victorious
@@ -685,20 +686,20 @@ export class Scene10 extends Scene {
         // Draw particles as pixels
         for (const particle of this.particles) {
             if (particle.opacity > 0.3) {
-                this.ctx.fillStyle = '#ffffff';
+                this.ctx.fillStyle = '#FAF8F3';
                 this.ctx.fillRect(Math.floor(particle.x), Math.floor(particle.y), 2, 2);
             }
         }
         
-        // Draw projectiles as white pixels/teardrops
-        this.ctx.fillStyle = '#ffffff';
+        // Draw projectiles as cream pixels/teardrops
+        this.ctx.fillStyle = '#FAF8F3';
         for (const proj of this.projectiles) {
             if (proj.type === 'tear') {
                 // Draw simple teardrop
                 this.ctx.fillRect(proj.x - 2, proj.y - 4, 4, 6);
                 this.ctx.fillRect(proj.x - 1, proj.y + 2, 2, 2);
             } else {
-                // Draw as simple white squares
+                // Draw as simple cream squares
                 const size = Math.max(2, proj.size / 2);
                 this.ctx.fillRect(proj.x - size/2, proj.y - size/2, size, size);
             }
@@ -712,11 +713,12 @@ export class Scene10 extends Scene {
         if (this.player.invulnerable && Math.floor(this.player.invulnerabilityTimer / 100) % 2 === 0) {
             // Skip drawing when flashing
         } else {
-            // Blend from red to yellow during victory
+            // Blend from red to green during victory
             if (this.player.victorious) {
-                const r = 255;
+                // Blend from red (255, 0, 0) to green (222, 255, 150)
+                const r = Math.floor(255 - (33 * this.heartYellowBlend));
                 const g = Math.floor(255 * this.heartYellowBlend);
-                const b = 0;
+                const b = Math.floor(150 * this.heartYellowBlend);
                 this.ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
             } else {
                 this.ctx.fillStyle = '#ff0000';
@@ -739,16 +741,16 @@ export class Scene10 extends Scene {
         }
         
         // Draw border (on top)
-        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.strokeStyle = '#FAF8F3';
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(1, 1, this.arenaWidth - 2, this.arenaHeight - 2);
         
         // Draw progress bar (retro style)
         const progress = Math.min(1, this.survivalTime / this.targetSurvivalTime);
-        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.strokeStyle = '#FAF8F3';
         this.ctx.lineWidth = 1;
         this.ctx.strokeRect(10, this.arenaHeight - 15, this.arenaWidth - 20, 8);
-        this.ctx.fillStyle = '#ffffff';
+        this.ctx.fillStyle = '#FAF8F3';
         const barWidth = Math.floor((this.arenaWidth - 22) * progress);
         for (let i = 0; i < barWidth; i += 3) {
             this.ctx.fillRect(11 + i, this.arenaHeight - 14, 2, 6);
@@ -846,6 +848,9 @@ export class Scene10 extends Scene {
         this.gridAnimationPhase = 3;
         this.elementsVisible = true;
         
+        // Add class to fade grid opacity
+        this.element.classList.add('elements-visible');
+        
         // Get all scene elements
         const elements = this.element.querySelectorAll('.scene-element');
         
@@ -866,11 +871,11 @@ export class Scene10 extends Scene {
     
     showWaitingScreen() {
         // Clear canvas
-        this.ctx.fillStyle = '#000000';
+        this.ctx.fillStyle = '#101010';
         this.ctx.fillRect(0, 0, this.arenaWidth, this.arenaHeight);
         
         // Draw border
-        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.strokeStyle = '#FAF8F3';
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(1, 1, this.arenaWidth - 2, this.arenaHeight - 2);
         
@@ -890,7 +895,7 @@ export class Scene10 extends Scene {
         this.ctx.fillRect(x - 1, y + 6, 2, 1);
         
         // Draw progress bar placeholder (empty)
-        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.strokeStyle = '#FAF8F3';
         this.ctx.lineWidth = 1;
         this.ctx.strokeRect(10, this.arenaHeight - 15, this.arenaWidth - 20, 8);
     }

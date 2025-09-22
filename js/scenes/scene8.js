@@ -68,9 +68,9 @@ export class Scene8 extends Scene {
         this.element.className = 'scene story-scene scene-8';
         
         // Set immediate visibility with matching background to prevent flash (like Scene 6 & 7)
-        this.element.style.backgroundColor = '#5F5A4B'; // Match Scene 7's beige tones
+        this.element.style.backgroundColor = '#F5E6D3'; // Light beige
         this.element.style.opacity = '1'; // Override default opacity: 0 to be immediately visible
-        console.log('[Scene8] Setting background to beige #5F5A4B');
+        console.log('[Scene8] Setting background to light beige #F5E6D3');
         
         // Create text display
         const textContainer = document.createElement('div');
@@ -380,7 +380,7 @@ export class Scene8 extends Scene {
                 vy: Math.sin(angle) * speed,
                 life: 1.0,
                 size: 4 + Math.random() * 6, // Slightly larger particles
-                hue: 55 + Math.random() * 10, // Wider color range
+                hue: 75, // Green hue to match #DEFF96
                 rotation: Math.random() * Math.PI * 2, // Initial rotation for star
                 rotationSpeed: (Math.random() - 0.5) * 0.15 // Faster spin
             });
@@ -439,7 +439,7 @@ export class Scene8 extends Scene {
             ctx.globalCompositeOperation = 'screen';
             
             // Thin glow for visibility
-            ctx.strokeStyle = `rgba(255, 255, 200, ${fade * 0.2})`;
+            ctx.strokeStyle = `rgba(222, 255, 150, ${fade * 0.2})`;
             ctx.lineWidth = ray.width * 2;
             ctx.lineCap = 'round';
             
@@ -450,7 +450,7 @@ export class Scene8 extends Scene {
             
             // Core bright line - solid color, no gradient
             ctx.globalCompositeOperation = 'source-over';
-            ctx.strokeStyle = `rgba(255, 255, 230, ${fade})`; // Solid bright yellow-white
+            ctx.strokeStyle = `rgba(222, 255, 150, ${fade})`; // Solid bright green
             ctx.lineWidth = ray.width; // Consistent thin width
             
             ctx.beginPath();
@@ -501,9 +501,9 @@ export class Scene8 extends Scene {
                     
                     // Apply gradient stroke
                     const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.maxRadius);
-                    gradient.addColorStop(0, '#000000');
+                    gradient.addColorStop(0, '#101010');
                     gradient.addColorStop(0.5, '#111111');
-                    gradient.addColorStop(1, '#000000');
+                    gradient.addColorStop(1, '#101010');
                     
                     ctx.strokeStyle = gradient;
                     ctx.lineWidth = lineWidth;
@@ -533,7 +533,7 @@ export class Scene8 extends Scene {
                         const radiusRatio = segment.radius / this.maxRadius;
                         const glowWidth = Math.max(2, 12 * Math.pow(1 - radiusRatio, 1.5));
                         
-                        ctx.strokeStyle = '#fff5b3'; // Light yellow instead of neon
+                        ctx.strokeStyle = '#DEFF96'; // Light yellow instead of neon
                         ctx.lineWidth = glowWidth;
                         ctx.stroke();
                     }
@@ -570,17 +570,17 @@ export class Scene8 extends Scene {
             if (pass === 0) {
                 // Outer glow
                 ctx.globalAlpha = 0.2;
-                ctx.strokeStyle = '#fff5b3'; // Light yellow instead of neon
+                ctx.strokeStyle = '#DEFF96'; // Light yellow instead of neon
                 ctx.lineWidth = 15;
             } else if (pass === 1) {
                 // Middle glow
                 ctx.globalAlpha = 0.4;
-                ctx.strokeStyle = '#fff5b3'; // Light yellow instead of neon
+                ctx.strokeStyle = '#DEFF96'; // Light yellow instead of neon
                 ctx.lineWidth = 8;
             } else {
                 // Core
                 ctx.globalAlpha = 0.8;
-                ctx.strokeStyle = '#ffffff';
+                ctx.strokeStyle = '#FAF8F3';
                 ctx.lineWidth = 3;
             }
             
@@ -596,7 +596,7 @@ export class Scene8 extends Scene {
             this.centerX, this.centerY, 0,
             this.centerX, this.centerY, 40  // Reduced from 100 to 40
         );
-        gradient.addColorStop(0, '#000000');
+        gradient.addColorStop(0, '#101010');
         gradient.addColorStop(1, 'rgba(10, 10, 10, 0.8)'); // Slight transparency at edge
         
         this.ctx.fillStyle = gradient;
@@ -626,14 +626,14 @@ export class Scene8 extends Scene {
             
             // Subtle glow for tiny stars
             const glow = this.ctx.createRadialGradient(x, y, 0, x, y, 6);
-            glow.addColorStop(0, 'rgba(255, 245, 179, 0.3)'); // Light yellow glow
-            glow.addColorStop(1, 'rgba(255, 245, 179, 0)');
+            glow.addColorStop(0, 'rgba(222, 255, 150, 0.3)'); // Green glow matching #DEFF96
+            glow.addColorStop(1, 'rgba(222, 255, 150, 0)');
             
             this.ctx.fillStyle = glow;
             this.ctx.fillRect(x - 6, y - 6, 12, 12);
             
             // Draw tiny star - 3px size
-            this.ctx.fillStyle = '#fff5b3'; // Light yellow
+            this.ctx.fillStyle = '#DEFF96'; // Light yellow
             this.draw4PointStar(this.ctx, x, y, 3, dot.rotation);
             this.ctx.fill();
         });
@@ -660,8 +660,8 @@ export class Scene8 extends Scene {
                 particle.x, particle.y, 0,
                 particle.x, particle.y, size * 3
             );
-            glow.addColorStop(0, `hsla(${particle.hue}, 70%, 80%, ${alpha * 0.6})`);
-            glow.addColorStop(1, `hsla(${particle.hue}, 70%, 80%, 0)`);
+            glow.addColorStop(0, `rgba(222, 255, 150, ${alpha * 0.6})`);
+            glow.addColorStop(1, 'rgba(222, 255, 150, 0)');
             
             this.ctx.fillStyle = glow;
             this.ctx.fillRect(
@@ -672,7 +672,7 @@ export class Scene8 extends Scene {
             );
             
             // Draw star shape
-            this.ctx.fillStyle = `hsla(${particle.hue}, 70%, 90%, ${alpha})`;
+            this.ctx.fillStyle = `rgba(222, 255, 150, ${alpha})`;
             this.draw4PointStar(this.ctx, particle.x, particle.y, size, particle.rotation);
             this.ctx.fill();
             
@@ -774,7 +774,7 @@ export class Scene8 extends Scene {
             blackOverlay.style.left = '0';
             blackOverlay.style.width = '100%';
             blackOverlay.style.height = '100%';
-            blackOverlay.style.backgroundColor = 'black';
+            blackOverlay.style.backgroundColor = '#101010';
             blackOverlay.style.opacity = '0';
             blackOverlay.style.zIndex = '1000';
             blackOverlay.style.pointerEvents = 'none';

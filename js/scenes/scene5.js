@@ -136,7 +136,7 @@ export class Scene5 extends Scene {
         // Create instruction text
         const instructions = document.createElement('div');
         instructions.className = 'game-instructions';
-        instructions.innerHTML = '<p>Click and HOLD while a white bar is in the BREATHE zone.<br>Release while the bar is still in the zone for perfect timing!</p>';
+        instructions.innerHTML = '<p>Click and HOLD while a light bar is in the BREATHE zone.<br>Release while the bar is still in the zone for perfect timing!</p>';
         
         // Create progress dots
         const progressDots = document.createElement('div');

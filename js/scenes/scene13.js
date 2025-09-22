@@ -4,7 +4,7 @@ import { Scene } from '../sceneManager.js';
 export class Scene13 extends Scene {
     constructor(container) {
         super(container);
-        this.text = "I love you forever, little bean";
+        this.text = "I love you forever, little bean.";
     }
     
     async init() {
@@ -12,7 +12,7 @@ export class Scene13 extends Scene {
         this.element = document.createElement('div');
         this.element.className = 'scene story-scene scene-13';
         
-        // Remove any white overlay from Scene 12 after a delay
+        // Remove any cream overlay from Scene 12 after a delay
         setTimeout(() => {
             const overlays = document.querySelectorAll('[data-overlay="white"]');
             overlays.forEach(overlay => overlay.remove());
@@ -23,21 +23,16 @@ export class Scene13 extends Scene {
         textContainer.className = 'story-text scene13-text';
         textContainer.innerHTML = `<h1>${this.text}</h1>`;
         
-        // Create interactive container - hearts
+        // Create interactive container - letter
         const interactiveContainer = document.createElement('div');
         interactiveContainer.className = 'interactive-container';
         interactiveContainer.innerHTML = `
             <div class="love-scene">
-                <div class="eternal-hearts">
-                    <span class="heart" style="animation-delay: 0s">💗</span>
-                    <span class="heart" style="animation-delay: 0.2s">💗</span>
-                    <span class="heart" style="animation-delay: 0.4s">💗</span>
-                    <span class="heart" style="animation-delay: 0.6s">💗</span>
-                    <span class="heart" style="animation-delay: 0.8s">💗</span>
-                </div>
-                <p class="love-text">Forever and always</p>
+                <img src="assets/images/last-image.png" alt="Smokey" class="last-photo" />
+                <img src="assets/images/Letter.png" alt="Letter to Smokey" class="letter-image" />
             </div>
             <button class="restart-btn">Start Again</button>
+            <div style="min-height: 40px; color: #FAF8F3;">Made with love</div>
         `;
         
         // Assemble scene

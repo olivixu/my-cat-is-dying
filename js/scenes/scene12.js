@@ -22,7 +22,7 @@ export class Scene12 extends Scene {
         text1Element.className = 'scene12-text1';
         text1Element.innerHTML = `<h2>${this.text1}</h2>`;
         
-        // Create the white line
+        // Create the cream line
         const whiteLine = document.createElement('div');
         whiteLine.className = 'white-line';
         
@@ -55,9 +55,9 @@ export class Scene12 extends Scene {
             text1.classList.add('fade-in');
         }, 500);
         
-        // Step 2: Create and animate white line overlay
+        // Step 2: Create and animate cream line overlay
         this.addTimer(() => {
-            console.log('[Scene12] Creating white overlay at 1500ms');
+            console.log('[Scene12] Creating cream overlay at 1500ms');
             const whiteOverlay = document.createElement('div');
             whiteOverlay.setAttribute('data-overlay', 'white');
             whiteOverlay.style.cssText = `
@@ -66,7 +66,7 @@ export class Scene12 extends Scene {
                 left: 0;
                 width: 0.5px;
                 height: 0.5px;
-                background: white;
+                background: #FAF8F3;
                 transform: translateX(-100vw) translateY(-50%);
                 z-index: 1500;
                 transition: none;
@@ -96,7 +96,7 @@ export class Scene12 extends Scene {
         
         // Step 5: Expand line to fill screen
         this.addTimer(() => {
-            console.log('[Scene12] Expanding white line to fill screen at 6000ms');
+            console.log('[Scene12] Expanding cream line to fill screen at 6000ms');
             const whiteOverlay = document.querySelector('[data-overlay="white"]');
             if (whiteOverlay) {
                 console.log('[Scene12] White overlay found, expanding...');
@@ -107,7 +107,7 @@ export class Scene12 extends Scene {
             } else {
                 console.log('[Scene12] WARNING: White overlay not found!');
                 // Try to create it if missing
-                console.log('[Scene12] Attempting to create white overlay as fallback');
+                console.log('[Scene12] Attempting to create cream overlay as fallback');
                 const fallbackOverlay = document.createElement('div');
                 fallbackOverlay.setAttribute('data-overlay', 'white');
                 fallbackOverlay.style.cssText = `
@@ -116,7 +116,7 @@ export class Scene12 extends Scene {
                     left: 0;
                     width: 100vw;
                     height: 0.5px;
-                    background: white;
+                    background: #FAF8F3;
                     transform: translateY(-50%);
                     z-index: 1500;
                     transition: all 3s ease;
@@ -136,12 +136,12 @@ export class Scene12 extends Scene {
             if (window.sceneManager) {
                 window.sceneManager.nextScene();
             }
-            // Keep white overlay for transition to Scene 13
+            // Keep cream overlay for transition to Scene 13
         }, 9000); // Extended to allow white expansion to complete
     }
     
     cleanup() {
-        // Don't remove white overlay - it needs to persist for Scene 13 transition
+        // Don't remove cream overlay - it needs to persist for Scene 13 transition
         // Clear reference so super.cleanup doesn't remove it
         this.whiteOverlay = null;
         super.cleanup();

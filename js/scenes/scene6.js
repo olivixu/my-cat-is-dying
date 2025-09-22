@@ -534,7 +534,7 @@ export class Scene6 extends Scene {
     }
     
     createFireworks() {
-        const colors = ['#FFD700', '#FF69B4', '#00CED1', '#FFF', '#FF6347', '#98FB98'];
+        const colors = ['#DEFF96', '#CBC6E3', '#B4AAD2', '#E8FFB5', '#A39BC7', '#D4F0A6'];
         const fireworkCount = 5;
         
         for (let i = 0; i < fireworkCount; i++) {
