@@ -1,7 +1,8 @@
 // Scene 3: "There is a lot she doesn't know because she is a cat."
 import { Scene } from '../sceneManager.js';
 import { PhysicsWrapper } from '../physics.js';
-import * as Matter from 'matter-js';
+// Use Matter from global scope (loaded via CDN)
+const Matter = window.Matter;
 
 export class Scene3 extends Scene {
     constructor(container) {

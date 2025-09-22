@@ -1,4 +1,5 @@
-import * as Matter from 'matter-js';
+// Use Matter from global scope (loaded via CDN in index.html)
+const Matter = window.Matter;
 
 export class PhysicsWrapper {
     constructor(canvas, options = {}) {
