@@ -118,7 +118,11 @@ export class Scene8 extends Scene {
         
         // Load cursor image
         this.cursorImage = new Image();
-        this.cursorImage.src = 'assets/svg/cursor.svg';
+        this.cursorImage.onerror = () => {
+            console.warn('Cursor image failed to load, continuing without guide cursors');
+            this.cursorImage = null;
+        };
+        this.cursorImage.src = 'assets/SVG/cursor.svg';
         
         // Initialize guide cursors
         this.initializeGuideCursors();
@@ -184,7 +188,7 @@ export class Scene8 extends Scene {
     }
     
     drawGuideCursors() {
-        if (!this.cursorImage || !this.cursorImage.complete) return;
+        if (!this.cursorImage || !this.cursorImage.complete || this.cursorImage.naturalWidth === 0) return;
         
         const ctx = this.ctx;
         
