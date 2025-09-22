@@ -1,5 +1,6 @@
 // Use Matter from global scope (loaded via CDN in index.html)
-const Matter = window.Matter;
+// Check if Matter is available, if not, wait for it
+const Matter = window.Matter || {};
 
 export class PhysicsWrapper {
     constructor(canvas, options = {}) {

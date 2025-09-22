@@ -2,7 +2,7 @@
 import { Scene } from '../sceneManager.js';
 import { PhysicsWrapper } from '../physics.js';
 // Use Matter from global scope (loaded via CDN)
-const Matter = window.Matter;
+const Matter = window.Matter || {};
 
 export class Scene3 extends Scene {
     constructor(container) {
