@@ -1,6 +1,8 @@
 // Scene 3: "There is a lot she doesn't know because she is a cat."
 import { Scene } from '../sceneManager.js';
 import { PhysicsWrapper } from '../physics.js';
+// Use Matter from global scope (loaded via CDN)
+const Matter = Matter || {};
 
 export class Scene3 extends Scene {
     constructor(container) {
@@ -264,10 +266,6 @@ export class Scene3 extends Scene {
             setTimeout(() => {
                 this.setupCollisionDetection();
             }, 500);  // Give time for open animation
-        } else if (!this.usePhysics) {
-            // Fallback: create animated books without physics
-            console.log('Physics not available, using fallback book animation');
-            this.createFallbackBooks();
         }
         
         console.log(`Smokey's head opened - physics mode: ${this.usePhysics}`);
@@ -371,7 +369,7 @@ export class Scene3 extends Scene {
         setTimeout(() => {
             // Remove floor so books can fall off screen
             if (this.floorBody && this.physics && this.physics.world) {
-                window.window.Matter.World.remove(this.physics.world, this.floorBody);
+                window.Matter.World.remove(this.physics.world, this.floorBody);
                 this.floorBody = null;
             }
             
@@ -379,7 +377,7 @@ export class Scene3 extends Scene {
             this.bookImagePairs.forEach(pair => {
                 if (pair.body && this.physics) {
                     // Apply strong downward force to make books fall
-                    window.Matter.Body.setVelocity(pair.body, { x: 0, y: 25 });
+                    Matter.Body.setVelocity(pair.body, { x: 0, y: 25 });
                 }
             });
             
@@ -430,16 +428,6 @@ export class Scene3 extends Scene {
     initPhysics(canvas) {
         console.log('Initializing physics for Scene 3');
         
-        // Check if Matter is available
-        if (!window.Matter || !window.window.Matter.Engine) {
-            console.log('window.Matter.js not yet loaded, retrying in 100ms...');
-            // Try again in a moment
-            setTimeout(() => {
-                this.initPhysics(canvas);
-            }, 100);
-            return;
-        }
-        
         try {
             // Create physics engine with mouse control, no auto boundaries
             this.physics = new PhysicsWrapper(canvas, {
@@ -488,69 +476,6 @@ export class Scene3 extends Scene {
             console.error('Physics initialization failed:', error);
             this.usePhysics = false;
             this.physics = null;
-        }
-    }
-    
-    createFallbackBooks() {
-        // Create static falling books without physics
-        const bookWidth = 140;
-        const bookHeight = 210;
-        const spacing = 180;
-        const startX = window.innerWidth / 2 - (4 * spacing) / 2 - 300;
-        
-        for (let i = 0; i < 5; i++) {
-            setTimeout(() => {
-                const x = startX + (i * spacing) + (Math.random() * 40 - 20);
-                const bookImage = document.createElement('img');
-                bookImage.src = this.bookCovers[i % this.bookCovers.length];
-                bookImage.className = 'fallback-book';
-                bookImage.style.position = 'absolute';
-                bookImage.style.width = bookWidth + 'px';
-                bookImage.style.height = bookHeight + 'px';
-                bookImage.style.left = x + 'px';
-                bookImage.style.top = '-200px';
-                bookImage.style.objectFit = 'cover';
-                bookImage.style.transition = 'transform 2s ease-in';
-                bookImage.style.zIndex = '2';
-                
-                this.booksContainer.appendChild(bookImage);
-                
-                // Animate falling
-                setTimeout(() => {
-                    bookImage.style.transform = `translateY(${window.innerHeight + 400}px) rotate(${Math.random() * 360}deg)`;
-                }, 100);
-                
-                // Handle "collision" with head area
-                setTimeout(() => {
-                    // Create star effect
-                    const headElement = this.element.querySelector('.smokey-head');
-                    if (headElement) {
-                        const rect = headElement.getBoundingClientRect();
-                        const containerRect = this.element.getBoundingClientRect();
-                        this.createStarStream(
-                            rect.left + rect.width/2 - containerRect.left,
-                            rect.top + rect.height/2 - containerRect.top - 100
-                        );
-                    }
-                    
-                    // Increment counter
-                    this.attemptCount++;
-                    if (this.attemptCount >= this.maxAttempts && !this.hasCompleted) {
-                        this.completeScene();
-                    }
-                    
-                    // Respawn book
-                    setTimeout(() => {
-                        bookImage.style.transition = 'none';
-                        bookImage.style.transform = 'translateY(0)';
-                        bookImage.style.top = '-200px';
-                        setTimeout(() => {
-                            bookImage.style.transition = 'transform 2s ease-in';
-                            bookImage.style.transform = `translateY(${window.innerHeight + 400}px) rotate(${Math.random() * 360}deg)`;
-                        }, 100);
-                    }, 1000);
-                }, 2000);
-            }, i * 200);
         }
     }
     
@@ -823,7 +748,7 @@ export class Scene3 extends Scene {
         
         // Listen for collision events on the bounce platform
         if (this.physics && this.physics.engine) {
-            window.Matter.Events.on(this.physics.engine, 'collisionStart', (event) => {
+            Matter.Events.on(this.physics.engine, 'collisionStart', (event) => {
                 const pairs = event.pairs;
                 
                 pairs.forEach(pair => {
@@ -852,13 +777,13 @@ export class Scene3 extends Scene {
                             }
                             
                             // Apply strong bounce velocity - left and up
-                            window.Matter.Body.setVelocity(book, { 
+                            Matter.Body.setVelocity(book, { 
                                 x: -15 - Math.random() * 5,  // Strong leftward velocity
                                 y: -20 - Math.random() * 5   // Strong upward velocity
                             });
                             
                             // Add spin for visual effect
-                            window.Matter.Body.setAngularVelocity(book, (Math.random() - 0.5) * 0.5);
+                            Matter.Body.setAngularVelocity(book, (Math.random() - 0.5) * 0.5);
                             
                             // Count the attempt
                             this.attemptCount++;
@@ -889,7 +814,7 @@ export class Scene3 extends Scene {
                                         }
                                         // Remove from world after fully faded
                                         if (this.physics && this.physics.world) {
-                                            window.Matter.World.remove(this.physics.world, book);
+                                            Matter.World.remove(this.physics.world, book);
                                         }
                                         // Remove DOM image
                                         if (bookImage && bookImage.parentNode) {
@@ -933,15 +858,15 @@ export class Scene3 extends Scene {
         // Make book bounce out instead of removing it
         if (this.physics && book) {
             // First, reset the book's current velocity to stop its downward motion
-            window.Matter.Body.setVelocity(book, { x: 0, y: 0 });
+            Matter.Body.setVelocity(book, { x: 0, y: 0 });
             
             // Set strong upward velocity with leftward horizontal component
             const velX = -12 - Math.random() * 3; // Strong leftward velocity (negative = left)
             const velY = -15 - Math.random() * 5; // Strong upward velocity (negative = up)
-            window.Matter.Body.setVelocity(book, { x: velX, y: velY });
+            Matter.Body.setVelocity(book, { x: velX, y: velY });
             
             // Add some angular velocity for spinning effect
-            window.Matter.Body.setAngularVelocity(book, (Math.random() - 0.5) * 0.5);
+            Matter.Body.setAngularVelocity(book, (Math.random() - 0.5) * 0.5);
             
             // Find corresponding image
             const pairIndex = this.bookImagePairs.findIndex(pair => pair.body === book);
@@ -956,7 +881,7 @@ export class Scene3 extends Scene {
                     // Fully faded - remove the book and image
                     clearInterval(fadeInterval);
                     if (this.physics && this.physics.world) {
-                        window.Matter.World.remove(this.physics.world, book);
+                        Matter.World.remove(this.physics.world, book);
                         const index = this.physicsBooks.indexOf(book);
                         if (index > -1) {
                             this.physicsBooks.splice(index, 1);
@@ -1033,7 +958,7 @@ export class Scene3 extends Scene {
             // Apply upward and random horizontal force
             const forceX = (Math.random() - 0.5) * 0.01;
             const forceY = -0.015 - Math.random() * 0.01;
-            window.Matter.Body.applyForce(book, book.position, { x: forceX, y: forceY });
+            Matter.Body.applyForce(book, book.position, { x: forceX, y: forceY });
             
             // Store reference
             this.physicsBooks.push(book);
@@ -1125,7 +1050,7 @@ export class Scene3 extends Scene {
             }
         });
         
-        // Physics engine runs automatically via window.Matter.Runner
+        // Physics engine runs automatically via Matter.Runner
         // No manual update needed for PhysicsWrapper
     }
     
