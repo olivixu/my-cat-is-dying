@@ -5,6 +5,7 @@ export class Scene13 extends Scene {
     constructor(container) {
         super(container);
         this.text = "I love you forever, little bean.";
+        this.isMobile = false; // Flag for mobile mode
     }
     
     async init() {
@@ -26,14 +27,29 @@ export class Scene13 extends Scene {
         // Create interactive container - letter
         const interactiveContainer = document.createElement('div');
         interactiveContainer.className = 'interactive-container';
-        interactiveContainer.innerHTML = `
-            <div class="love-scene">
-                <img src="assets/images/last-image.png" alt="Smokey" class="last-photo" />
-                <img src="assets/images/Letter.png" alt="Letter to Smokey" class="letter-image" />
-            </div>
-            <button class="restart-btn">Start Again</button>
-            <div style="min-height: 40px; color: #FAF8F3;">Made with love</div>
-        `;
+        
+        // Build HTML based on mobile or desktop
+        if (this.isMobile) {
+            interactiveContainer.innerHTML = `
+                <div class="love-scene">
+                    <img src="assets/images/last-image.png" alt="Smokey" class="last-photo" />
+                    <img src="assets/images/Letter.png" alt="Letter to Smokey" class="letter-image" />
+                </div>
+                <div style="min-height: 40px; color: #FAF8F3;">Made with love</div>
+                <div class="mobile-notice">
+                    <p>For the full interactive experience, please visit on desktop</p>
+                </div>
+            `;
+        } else {
+            interactiveContainer.innerHTML = `
+                <div class="love-scene">
+                    <img src="assets/images/last-image.png" alt="Smokey" class="last-photo" />
+                    <img src="assets/images/Letter.png" alt="Letter to Smokey" class="letter-image" />
+                </div>
+                <button class="restart-btn">Start Again</button>
+                <div style="min-height: 40px; color: #FAF8F3;">Made with love</div>
+            `;
+        }
         
         // Assemble scene
         this.element.appendChild(textContainer);
@@ -42,13 +58,15 @@ export class Scene13 extends Scene {
         // Add to container
         this.container.appendChild(this.element);
         
-        // Add restart button handler
-        const btn = this.element.querySelector('.restart-btn');
-        btn?.addEventListener('click', () => {
-            // Go back to first scene
-            if (window.sceneManager) {
-                window.sceneManager.loadScene(0);
-            }
-        });
+        // Add restart button handler (only for desktop)
+        if (!this.isMobile) {
+            const btn = this.element.querySelector('.restart-btn');
+            btn?.addEventListener('click', () => {
+                // Go back to first scene
+                if (window.sceneManager) {
+                    window.sceneManager.loadScene(0);
+                }
+            });
+        }
     }
 }

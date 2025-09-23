@@ -24,6 +24,16 @@ document.addEventListener('mousemove', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Check if user is on mobile device
+    const isMobile = () => {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+        const isSmallScreen = window.innerWidth <= 768;
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        
+        return mobileRegex.test(userAgent) || (isSmallScreen && isTouchDevice);
+    };
+    
     // Define scenes configuration - Story about my cat
     const scenes = [
         {
@@ -91,16 +101,32 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Matter.js is now imported as a module in physics.js
     
-    // Initialize the scene manager
-    try {
-        const sceneManager = new SceneManager(container, scenes);
+    // Check if on mobile and handle accordingly
+    if (isMobile()) {
+        console.log('Mobile device detected - loading final scene only');
         
-        // Store reference for debugging
-        window.sceneManager = sceneManager;
-        
-        console.log('Story slideshow initialized successfully');
-    } catch (error) {
-        console.error('Failed to initialize scene manager:', error);
+        // Load only Scene 13 for mobile with mobile flag
+        try {
+            const scene13 = new Scene13(container);
+            scene13.isMobile = true; // Set mobile flag
+            scene13.init();
+            
+            console.log('Mobile experience initialized - Scene 13 only');
+        } catch (error) {
+            console.error('Failed to initialize mobile experience:', error);
+        }
+    } else {
+        // Initialize the full scene manager for desktop
+        try {
+            const sceneManager = new SceneManager(container, scenes);
+            
+            // Store reference for debugging
+            window.sceneManager = sceneManager;
+            
+            console.log('Story slideshow initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize scene manager:', error);
+        }
     }
     
     // Keyboard shortcuts disabled
