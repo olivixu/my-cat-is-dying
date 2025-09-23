@@ -97,6 +97,7 @@ export class Scene2 extends Scene {
             { filename: 'acheaptoysheignores.png', name: 'A cheap toy she ignores' },
             { filename: 'afriendscatthatimet.png', name: "A friend's cat that I met" },
             { filename: 'afriendsdog.png', name: "A friend's dog" },
+            { filename: 'afriendspup.png', name: "A friend's pup" },
             { filename: 'afunnytoythatshelikes.png', name: 'A funny toy that she likes' },
             { filename: 'almostsmokey.png', name: 'Almost Smokey' },
             { filename: 'asuitablesittingspot.png', name: 'A suitable sitting spot' },
