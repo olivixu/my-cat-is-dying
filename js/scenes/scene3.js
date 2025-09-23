@@ -262,17 +262,17 @@ export class Scene3 extends Scene {
         // Create books when head is opened
         if (this.usePhysics && this.physicsBooks.length === 0) {
             this.createInitialBooks(this.physicsCanvas);
-        }
-        
-        // Set up collision detection after head opens
-        if (this.usePhysics && this.physics) {
-            // Wait for DOM updates and animations
+            // Set up collision detection after head opens
             setTimeout(() => {
                 this.setupCollisionDetection();
             }, 500);  // Give time for open animation
+        } else if (!this.usePhysics) {
+            // Fallback: create animated books without physics
+            console.log('Physics not available, using fallback book animation');
+            this.createFallbackBooks();
         }
         
-        console.log('Smokey\'s head opened - books spawned and collision detection will be set up');
+        console.log(`Smokey's head opened - physics mode: ${this.usePhysics}`);
     }
     
     handleDragStart(e) {
@@ -480,6 +480,69 @@ export class Scene3 extends Scene {
             console.error('Physics initialization failed:', error);
             this.usePhysics = false;
             this.physics = null;
+        }
+    }
+    
+    createFallbackBooks() {
+        // Create static falling books without physics
+        const bookWidth = 140;
+        const bookHeight = 210;
+        const spacing = 180;
+        const startX = window.innerWidth / 2 - (4 * spacing) / 2 - 300;
+        
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                const x = startX + (i * spacing) + (Math.random() * 40 - 20);
+                const bookImage = document.createElement('img');
+                bookImage.src = this.bookCovers[i % this.bookCovers.length];
+                bookImage.className = 'fallback-book';
+                bookImage.style.position = 'absolute';
+                bookImage.style.width = bookWidth + 'px';
+                bookImage.style.height = bookHeight + 'px';
+                bookImage.style.left = x + 'px';
+                bookImage.style.top = '-200px';
+                bookImage.style.objectFit = 'cover';
+                bookImage.style.transition = 'transform 2s ease-in';
+                bookImage.style.zIndex = '2';
+                
+                this.booksContainer.appendChild(bookImage);
+                
+                // Animate falling
+                setTimeout(() => {
+                    bookImage.style.transform = `translateY(${window.innerHeight + 400}px) rotate(${Math.random() * 360}deg)`;
+                }, 100);
+                
+                // Handle "collision" with head area
+                setTimeout(() => {
+                    // Create star effect
+                    const headElement = this.element.querySelector('.smokey-head');
+                    if (headElement) {
+                        const rect = headElement.getBoundingClientRect();
+                        const containerRect = this.element.getBoundingClientRect();
+                        this.createStarStream(
+                            rect.left + rect.width/2 - containerRect.left,
+                            rect.top + rect.height/2 - containerRect.top - 100
+                        );
+                    }
+                    
+                    // Increment counter
+                    this.attemptCount++;
+                    if (this.attemptCount >= this.maxAttempts && !this.hasCompleted) {
+                        this.completeScene();
+                    }
+                    
+                    // Respawn book
+                    setTimeout(() => {
+                        bookImage.style.transition = 'none';
+                        bookImage.style.transform = 'translateY(0)';
+                        bookImage.style.top = '-200px';
+                        setTimeout(() => {
+                            bookImage.style.transition = 'transform 2s ease-in';
+                            bookImage.style.transform = `translateY(${window.innerHeight + 400}px) rotate(${Math.random() * 360}deg)`;
+                        }, 100);
+                    }, 1000);
+                }, 2000);
+            }, i * 200);
         }
     }
     
@@ -1015,6 +1078,11 @@ export class Scene3 extends Scene {
     }
     
     update() {
+        // Safety check - don't update if element is cleaned up
+        if (!this.element || this.isCleanedUp) {
+            return;
+        }
+        
         // Update book image positions to match physics bodies
         if (this.bookImagePairs.length > 0) {
             console.log('Updating', this.bookImagePairs.length, 'book images');
@@ -1022,7 +1090,10 @@ export class Scene3 extends Scene {
         
         this.bookImagePairs.forEach((pair, index) => {
             if (pair.body && pair.image && pair.image.parentNode) {
-                const canvasRect = this.element.querySelector('.physics-canvas').getBoundingClientRect();
+                const canvas = this.element.querySelector('.physics-canvas');
+                if (!canvas) return; // Safety check
+                
+                const canvasRect = canvas.getBoundingClientRect();
                 const elRect = this.element.getBoundingClientRect();
                 
                 // Position image at physics body location
