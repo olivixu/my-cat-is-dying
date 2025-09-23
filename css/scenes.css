@@ -159,6 +159,21 @@
     }
 }
 
+/* Eye transition overlay */
+.eye-transition-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, calc(-50% + 40px)); /* Offset down by 40px to align with button */
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.eye-animation-gif {
+    width: 200px;
+    height: auto;
+}
+
 @keyframes rotateWithPosition {
     from {
         transform: translate(-50%, -50%) rotate(0deg);
@@ -2114,6 +2129,8 @@
     color: rgba(250, 248, 243, 0.8);
     font-style: italic;
     margin-bottom: 30px;
+    position: relative;
+    z-index: 1;
 }
 
 .card-grid {
@@ -2634,7 +2651,7 @@
         rgba(222, 255, 150, 0.1) 19px,
         rgba(222, 255, 150, 0.1) 20px
     );
-    transition: background-image 0.8s ease-out;
+    transition: background-image 1.5s ease-out, opacity 1.5s ease-out;
 }
 
 .bullet-hell-scene.retro-rpg.elements-visible::after {
@@ -2645,7 +2662,7 @@
         rgba(222, 255, 150, 0.1) 19px,
         rgba(222, 255, 150, 0.1) 20px
     );
-    transition: background-image 0.8s ease-out;
+    transition: background-image 1.5s ease-out, opacity 1.5s ease-out;
 }
 
 .bullet-hell-scene.retro-rpg .story-text.retro-title {
@@ -3163,6 +3180,9 @@ img.photo-placeholder {
 }
 
 @keyframes fadeInScene13 {
+    from {
+        opacity: 0;
+    }
     to {
         opacity: 1;
     }

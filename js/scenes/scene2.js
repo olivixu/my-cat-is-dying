@@ -9,6 +9,10 @@ export class Scene2 extends Scene {
     }
     
     async init() {
+        // Preload hand image for smooth transition
+        const handPreload = new Image();
+        handPreload.src = 'assets/images/Find smokey images/Hand.png';
+        
         // Create scene element
         this.element = document.createElement('div');
         this.element.className = 'scene story-scene scene-2';
@@ -136,6 +140,10 @@ export class Scene2 extends Scene {
             wrapper.style.left = position.left;
             wrapper.style.top = position.top;
             wrapper.style.width = `${imageWidth}px`; // Set wrapper width to match image
+            // Make Smokey appear above other items
+            if (imgData.isSmokey) {
+                wrapper.style.zIndex = '10';
+            }
             wrapper.appendChild(element);
             wrapper.appendChild(tooltip);
             
@@ -265,7 +273,7 @@ export class Scene2 extends Scene {
                     
                     // Animation parameters
                     let handX = -800; // Start off-screen left (matches CSS width)
-                    const sweepSpeed = 8; // pixels per frame (slower for better control)
+                    const sweepSpeed = 9; // pixels per frame
                     const screenWidth = window.innerWidth;
                     const gatheredItems = new Map(); // Store items with their state and offsets
                     
@@ -287,7 +295,7 @@ export class Scene2 extends Scene {
                                 
                                 if (itemCenterX < handX + 1200) {
                                     // Calculate position along the sweep line (items gather at front edge of hand)
-                                    const horizontalOffset = 1000 + Math.random() * 100 - 50; // Gather around the front of the hand
+                                    const horizontalOffset = 1000 + Math.random() * 100 - 50; // Random offset
                                     const rotation = Math.random() * 30 - 15; // Slight rotation
                                     
                                     gatheredItems.set(wrapper, {

@@ -161,14 +161,39 @@ export class Scene1 extends Scene {
             // Add expanding animation class to container
             buttonContainer.classList.add('expanding');
             
-            // Wait for animation to complete before transitioning
+            // Delay eye animation by 500ms
+            setTimeout(() => {
+                // Create eye animation overlay
+                const eyeOverlay = document.createElement('div');
+                eyeOverlay.className = 'eye-transition-overlay';
+                
+                const eyeAnimation = document.createElement('img');
+                // Add timestamp to ensure GIF plays from start and only once
+                eyeAnimation.src = `assets/images/Smokey-eye-animation.gif?t=${Date.now()}`;
+                eyeAnimation.className = 'eye-animation-gif';
+                
+                eyeOverlay.appendChild(eyeAnimation);
+                document.body.appendChild(eyeOverlay);
+                
+                // Store reference for later removal
+                beginButton.eyeOverlay = eyeOverlay;
+            }, 500);
+            
+            // Remove eye overlay after GIF completes
+            setTimeout(() => {
+                if (beginButton.eyeOverlay) {
+                    beginButton.eyeOverlay.remove();
+                }
+            }, 2600); // Remove just before GIF would loop
+            
+            // Wait for animation + delay to complete before transitioning
             setTimeout(() => {
                 this.onComplete();
                 // Advance to next scene
                 if (window.sceneManager) {
                     window.sceneManager.nextScene();
                 }
-            }, 1200); // Wait for expansion animation
+            }, 3000); // Total: 500ms delay + 2100ms GIF + 400ms pause
         });
         
         // Also allow space/enter to continue
@@ -180,13 +205,38 @@ export class Scene1 extends Scene {
                 // Trigger the button animation
                 buttonContainer.classList.add('expanding');
                 
-                // Wait for animation before transitioning
+                // Delay eye animation by 500ms
+                setTimeout(() => {
+                    // Create eye animation overlay
+                    const eyeOverlay = document.createElement('div');
+                    eyeOverlay.className = 'eye-transition-overlay';
+                    
+                    const eyeAnimation = document.createElement('img');
+                    // Add timestamp to ensure GIF plays from start and only once
+                    eyeAnimation.src = `assets/images/Smokey-eye-animation.gif?t=${Date.now()}`;
+                    eyeAnimation.className = 'eye-animation-gif';
+                    
+                    eyeOverlay.appendChild(eyeAnimation);
+                    document.body.appendChild(eyeOverlay);
+                    
+                    // Store reference for later removal
+                    beginButton.eyeOverlay = eyeOverlay;
+                }, 500);
+                
+                // Remove eye overlay after GIF completes
+                setTimeout(() => {
+                    if (beginButton.eyeOverlay) {
+                        beginButton.eyeOverlay.remove();
+                    }
+                }, 2600); // Remove just before GIF would loop
+                
+                // Wait for animation + delay to complete before transitioning
                 setTimeout(() => {
                     this.onComplete();
                     if (window.sceneManager) {
                         window.sceneManager.nextScene();
                     }
-                }, 1200);
+                }, 3000); // Total: 500ms delay + 2100ms GIF + 400ms pause
                 
                 // Remove the event listener after use
                 document.removeEventListener('keydown', handleKeyPress);

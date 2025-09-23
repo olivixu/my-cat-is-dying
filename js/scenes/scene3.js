@@ -487,8 +487,8 @@ export class Scene3 extends Scene {
         if (!this.physics) return;
         
         // Create 5 books falling from above the screen
-        const bookWidth = 160;
-        const bookHeight = 240;
+        const bookWidth = 140;
+        const bookHeight = 210;
         const spacing = 180;
         const startX = canvas.width / 2 - (4 * spacing) / 2 - 300; // Shift left by 300px to avoid Smokey
         const y = -200; // Start above the screen
@@ -534,8 +534,8 @@ export class Scene3 extends Scene {
     respawnBook(canvas) {
         if (!this.physics || !canvas) return;
         
-        const bookWidth = 160;
-        const bookHeight = 240;
+        const bookWidth = 140;
+        const bookHeight = 210;
         const spacing = 180;
         const startX = canvas.width / 2 - (4 * spacing) / 2 - 300; // Same left shift as original
         const y = -200; // Start above screen
@@ -920,8 +920,8 @@ export class Scene3 extends Scene {
     
     createPhysicsBook(x, y) {
         if (this.usePhysics && this.physics) {
-            // Create a physics book with random size and velocity - doubled size again
-            const size = 160 + Math.random() * 40;  // Doubled size again
+            // Create a physics book with random size and velocity - reduced size
+            const size = 130 + Math.random() * 30;  // Smaller: 130-160
             const book = this.physics.createRectangle(x, y, size, size * 0.7, {
                 restitution: 0.7,  // Bounciness
                 friction: 0.3,
