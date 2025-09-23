@@ -1,5 +1,38 @@
 # Claude Code Session Notes
 
+## Deployment Instructions
+
+### Building and Deploying to GitHub Pages
+
+1. **Build the project:**
+   ```bash
+   npm run build
+   ```
+   This creates optimized files in the `dist/` folder.
+
+2. **Copy build files to docs folder:**
+   ```bash
+   cp -r dist/* docs/
+   ```
+   GitHub Pages serves from the `docs/` folder.
+
+3. **Commit and push changes:**
+   ```bash
+   git add -A
+   git commit -m "Build and deploy latest changes"
+   git push origin main
+   ```
+
+4. **Wait for deployment:**
+   - GitHub Pages takes 1-3 minutes to update after pushing
+   - Check deployment status at: https://github.com/[username]/my-cat-is-dying/actions
+
+### Important Notes:
+- Always run `npm run build` before deploying
+- The `docs/` folder contains the production files served by GitHub Pages
+- Don't edit files directly in `docs/` - they get overwritten on build
+- Test locally with `npm run dev` before deploying
+
 ## Common Transition Issues and Fixes
 
 ### Scene 3 to 4: Background to Black Fade Issue
