@@ -1,8 +1,6 @@
 // Scene 3: "There is a lot she doesn't know because she is a cat."
 import { Scene } from '../sceneManager.js';
 import { PhysicsWrapper } from '../physics.js';
-// Use Matter from global scope (loaded via CDN)
-const Matter = window.Matter || {};
 
 export class Scene3 extends Scene {
     constructor(container) {
@@ -373,7 +371,7 @@ export class Scene3 extends Scene {
         setTimeout(() => {
             // Remove floor so books can fall off screen
             if (this.floorBody && this.physics && this.physics.world) {
-                Matter.World.remove(this.physics.world, this.floorBody);
+                window.window.Matter.World.remove(this.physics.world, this.floorBody);
                 this.floorBody = null;
             }
             
@@ -381,7 +379,7 @@ export class Scene3 extends Scene {
             this.bookImagePairs.forEach(pair => {
                 if (pair.body && this.physics) {
                     // Apply strong downward force to make books fall
-                    Matter.Body.setVelocity(pair.body, { x: 0, y: 25 });
+                    window.Matter.Body.setVelocity(pair.body, { x: 0, y: 25 });
                 }
             });
             
@@ -431,6 +429,16 @@ export class Scene3 extends Scene {
     
     initPhysics(canvas) {
         console.log('Initializing physics for Scene 3');
+        
+        // Check if Matter is available
+        if (!window.Matter || !window.window.Matter.Engine) {
+            console.log('window.Matter.js not yet loaded, retrying in 100ms...');
+            // Try again in a moment
+            setTimeout(() => {
+                this.initPhysics(canvas);
+            }, 100);
+            return;
+        }
         
         try {
             // Create physics engine with mouse control, no auto boundaries
@@ -815,7 +823,7 @@ export class Scene3 extends Scene {
         
         // Listen for collision events on the bounce platform
         if (this.physics && this.physics.engine) {
-            Matter.Events.on(this.physics.engine, 'collisionStart', (event) => {
+            window.Matter.Events.on(this.physics.engine, 'collisionStart', (event) => {
                 const pairs = event.pairs;
                 
                 pairs.forEach(pair => {
@@ -844,13 +852,13 @@ export class Scene3 extends Scene {
                             }
                             
                             // Apply strong bounce velocity - left and up
-                            Matter.Body.setVelocity(book, { 
+                            window.Matter.Body.setVelocity(book, { 
                                 x: -15 - Math.random() * 5,  // Strong leftward velocity
                                 y: -20 - Math.random() * 5   // Strong upward velocity
                             });
                             
                             // Add spin for visual effect
-                            Matter.Body.setAngularVelocity(book, (Math.random() - 0.5) * 0.5);
+                            window.Matter.Body.setAngularVelocity(book, (Math.random() - 0.5) * 0.5);
                             
                             // Count the attempt
                             this.attemptCount++;
@@ -881,7 +889,7 @@ export class Scene3 extends Scene {
                                         }
                                         // Remove from world after fully faded
                                         if (this.physics && this.physics.world) {
-                                            Matter.World.remove(this.physics.world, book);
+                                            window.Matter.World.remove(this.physics.world, book);
                                         }
                                         // Remove DOM image
                                         if (bookImage && bookImage.parentNode) {
@@ -925,15 +933,15 @@ export class Scene3 extends Scene {
         // Make book bounce out instead of removing it
         if (this.physics && book) {
             // First, reset the book's current velocity to stop its downward motion
-            Matter.Body.setVelocity(book, { x: 0, y: 0 });
+            window.Matter.Body.setVelocity(book, { x: 0, y: 0 });
             
             // Set strong upward velocity with leftward horizontal component
             const velX = -12 - Math.random() * 3; // Strong leftward velocity (negative = left)
             const velY = -15 - Math.random() * 5; // Strong upward velocity (negative = up)
-            Matter.Body.setVelocity(book, { x: velX, y: velY });
+            window.Matter.Body.setVelocity(book, { x: velX, y: velY });
             
             // Add some angular velocity for spinning effect
-            Matter.Body.setAngularVelocity(book, (Math.random() - 0.5) * 0.5);
+            window.Matter.Body.setAngularVelocity(book, (Math.random() - 0.5) * 0.5);
             
             // Find corresponding image
             const pairIndex = this.bookImagePairs.findIndex(pair => pair.body === book);
@@ -948,7 +956,7 @@ export class Scene3 extends Scene {
                     // Fully faded - remove the book and image
                     clearInterval(fadeInterval);
                     if (this.physics && this.physics.world) {
-                        Matter.World.remove(this.physics.world, book);
+                        window.Matter.World.remove(this.physics.world, book);
                         const index = this.physicsBooks.indexOf(book);
                         if (index > -1) {
                             this.physicsBooks.splice(index, 1);
@@ -1025,7 +1033,7 @@ export class Scene3 extends Scene {
             // Apply upward and random horizontal force
             const forceX = (Math.random() - 0.5) * 0.01;
             const forceY = -0.015 - Math.random() * 0.01;
-            Matter.Body.applyForce(book, book.position, { x: forceX, y: forceY });
+            window.Matter.Body.applyForce(book, book.position, { x: forceX, y: forceY });
             
             // Store reference
             this.physicsBooks.push(book);
@@ -1117,7 +1125,7 @@ export class Scene3 extends Scene {
             }
         });
         
-        // Physics engine runs automatically via Matter.Runner
+        // Physics engine runs automatically via window.Matter.Runner
         // No manual update needed for PhysicsWrapper
     }
     
